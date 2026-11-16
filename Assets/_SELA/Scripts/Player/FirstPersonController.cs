@@ -2,11 +2,12 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(CharacterController))]
-public class SelaFirstPerson : MonoBehaviour
+public class FirstPersonController : MonoBehaviour
 {
     [SerializeField] float moveSpeed = 3f;
     [SerializeField] float mouseSensitivity = 0.1f;
     [SerializeField] float gravity = -9.81f;
+    [SerializeField] float eyeForwardClearance = 0.18f;
 
     CharacterController controller;
     Animator animator;
@@ -27,13 +28,27 @@ public class SelaFirstPerson : MonoBehaviour
         }
         else
         {
-            Debug.LogError("SelaFirstPerson requires a child camera.", this);
+            Debug.LogError("FirstPersonController requires a child camera.", this);
             enabled = false;
         }
     }
 
+    void AlignCameraToEyes()
+    {
+        if (!animator) return;
+        var left = animator.GetBoneTransform(HumanBodyBones.LeftEye);
+        var right = animator.GetBoneTransform(HumanBodyBones.RightEye);
+        if (!left || !right) return;
+
+        Vector3 eyes = (left.position + right.position) * 0.5f;
+        Vector3 local = transform.InverseTransformPoint(eyes);
+        local.z += eyeForwardClearance;
+        playerCamera.transform.localPosition = local;
+    }
+
     void Start()
     {
+        AlignCameraToEyes();
         SetCursorLocked(true);
     }
 
@@ -44,6 +59,8 @@ public class SelaFirstPerson : MonoBehaviour
 
     void Update()
     {
+        if (!controller.enabled) return;
+
         var keyboard = Keyboard.current;
         var mouse = Mouse.current;
 

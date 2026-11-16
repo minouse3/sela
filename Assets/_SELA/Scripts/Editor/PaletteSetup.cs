@@ -3,7 +3,7 @@
 using UnityEditor;
 using UnityEngine;
 
-public static class SELAPaletteSetup
+public static class PaletteSetup
 {
     [MenuItem("SELA/Setup Palette Material")]
     static void Setup()

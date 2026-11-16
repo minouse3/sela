@@ -7,7 +7,7 @@ Total geometri seluruh aset sekitar 6.7 ribu triangle (target GDD < 80.000 untuk
 - `Art/Environments/` dan `Art/Props/` : model FBX, dikelompokkan berdasarkan fungsi.
 - `Art/Textures/T_SELA_Palette.png` : atlas palet 1024x1024 (8x8 sel, 24 warna terpakai).
 - `Art/Textures/Preview/` : render cek tata letak.
-- `Scripts/Editor/SELAPaletteSetup.cs` : script editor untuk pengaturan material.
+- `Scripts/Editor/PaletteSetup.cs` : script editor untuk pengaturan material.
 
 ## Kenapa fleksibel di Unity
 1. **Satu material, satu tekstur**: semua mesh memakai `M_SELA_Palette`. Ganti warna di PNG = seluruh game ikut berubah. Tiap face di-UV ke satu sel warna, jadi mudah diedit di editor gambar mana pun.
