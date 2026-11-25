@@ -101,18 +101,21 @@ namespace SELA.EditorTools
 
             var backdropRoot = new GameObject("MenuBackdrop_Kos");
 
-            // Warm ceiling light + desk lamp light matching Kos_Main Kamar 07
+            // Warm ceiling light matching Kos_Main Kamar 07
             AddPointLight(backdropRoot.transform, "RoomCeilingLight", new Vector3(4.32f, 2.55f, -1.93f), new Color(1.0f, 0.88f, 0.72f), 1.15f, 6.5f);
-            AddPointLight(backdropRoot.transform, "DeskLampLight", new Vector3(5.46f, 1.04f, -3.40f), new Color(1.0f, 0.84f, 0.62f), 0.75f, 3.0f);
 
             // Actual Kamar 07 room shell (SM_Kamar_Kiri) at its exact Kos_Main transform
             PlaceFbx(backdropRoot.transform, "Assets/_SELA/Art/Environments/Kos/SM_Kamar_Kiri.fbx", new Vector3(-0.09f, 0f, 0.58f), 0f, preservePrefabRotation: true);
 
-            // Room furniture & props (zero overlaps, aligned to SM_Kamar_Kiri walls & floor)
             PlaceFbx(backdropRoot.transform, "Assets/_SELA/Art/Props/Furniture/SM_Meja.fbx", new Vector3(4.90f, 0f, -3.44f), 0f);
             PlaceFbx(backdropRoot.transform, "Assets/_SELA/Art/Props/Electronics/SM_Laptop.fbx", new Vector3(4.92f, 0.752f, -3.37f), 0f);
             PlaceFbx(backdropRoot.transform, "Assets/_SELA/Art/Props/Electronics/SM_Ponsel.fbx", new Vector3(4.56f, 0.752f, -3.33f), 15f);
-            PlaceFbx(backdropRoot.transform, "Assets/_SELA/Art/Props/Electronics/SM_Lampu_Meja.fbx", new Vector3(5.46f, 0.76f, -3.40f), -18f);
+            var deskLamp = PlaceFbx(backdropRoot.transform, "Assets/_SELA/Art/Props/Electronics/SM_Lampu_Meja.fbx", new Vector3(5.46f, 0.76f, -3.40f), -18f);
+            var deskLampShade = deskLamp
+                ? deskLamp.transform.TransformPoint(new Vector3(-0.0765f, 0.225f, 0f))
+                : new Vector3(5.387244f, 0.985f, -3.42364f);
+            AddSpotLight(backdropRoot.transform, "DeskLampLight", deskLampShade, Quaternion.Euler(90f, 0f, 0f),
+                         new Color(1.0f, 0.84f, 0.62f), 0.4f, 1.8f, 78f);
             PlaceFbx(backdropRoot.transform, "Assets/_SELA/Art/Props/Furniture/SM_Papan_Bukti.fbx", new Vector3(4.91f, 1.29f, -3.72f), 0f);
             PlaceFbx(backdropRoot.transform, "Assets/_SELA/Art/Props/Furniture/SM_Kursi_Jendela.fbx", new Vector3(5.04f, 0f, -2.72f), 172f);
             PlaceFbx(backdropRoot.transform, "Assets/_SELA/Art/Environments/Kos/SM_Jendela.fbx", new Vector3(5.66f, 0.97f, -1.92f), -90f);
@@ -122,16 +125,16 @@ namespace SELA.EditorTools
             var curtainR = PlaceFbx(backdropRoot.transform, "Assets/_SELA/Art/Props/Decorations/SM_Tirai.fbx", new Vector3(5.64f, 0.96f, -1.36f), -90f);
             if (curtainR != null) { curtainR.name = "SM_Tirai_R"; curtainR.transform.localScale = new Vector3(0.26f, 0.90f, 1f); }
 
-            PlaceFbx(backdropRoot.transform, "Assets/_SELA/Art/Props/Furniture/SM_Rak.fbx", new Vector3(3.79f, 0f, -3.73f), 0f);
-            PlaceFbx(backdropRoot.transform, "Assets/_SELA/Art/Props/Documents/SM_Buku_Berdiri.fbx", new Vector3(3.67f, 0.795f, -3.69f), 0f);
-            PlaceFbx(backdropRoot.transform, "Assets/_SELA/Art/Props/Documents/SM_Buku_Berdiri.fbx", new Vector3(3.87f, 0.795f, -3.69f), 0f);
-            PlaceFbx(backdropRoot.transform, "Assets/_SELA/Art/Props/Documents/SM_Buku_Berdiri.fbx", new Vector3(3.69f, 0.41f, -3.69f), 0f);
+            PlaceFbx(backdropRoot.transform, "Assets/_SELA/Art/Props/Furniture/SM_Rak.fbx", new Vector3(3.79f, 0f, -3.69f), 0f);
+            PlaceFbx(backdropRoot.transform, "Assets/_SELA/Art/Props/Documents/SM_Buku_Berdiri.fbx", new Vector3(3.67f, 0.795f, -3.65f), 0f);
+            PlaceFbx(backdropRoot.transform, "Assets/_SELA/Art/Props/Documents/SM_Buku_Berdiri.fbx", new Vector3(3.87f, 0.795f, -3.65f), 0f);
+            PlaceFbx(backdropRoot.transform, "Assets/_SELA/Art/Props/Documents/SM_Buku_Berdiri.fbx", new Vector3(3.69f, 0.41f, -3.65f), 0f);
             PlaceFbx(backdropRoot.transform, "Assets/_SELA/Art/Props/Documents/SM_Kalender.fbx", new Vector3(5.60f, 1.41f, -0.69f), -90f);
             PlaceFbx(backdropRoot.transform, "Assets/_SELA/Art/Props/Electronics/SM_Kipas.fbx", new Vector3(5.27f, 0f, -1.41f), -88f);
 
             // Clean courtyard backdrop visible through the open morning window
             var wallMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/_SELA/Art/Materials/M_CatPoster_RoomFinish.mat");
-            var capMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/_SELA/Art/Materials/M_SELA_ExtRoof.mat");
+            var capMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/_SELA/Art/Materials/Exterior/M_Ext_Terracotta.mat");
             var yardWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
             yardWall.name = "MenuExterior_CourtyardWall";
             yardWall.transform.SetParent(backdropRoot.transform, false);
@@ -157,6 +160,21 @@ namespace SELA.EditorTools
             l.color = color;
             l.intensity = intensity;
             l.range = range;
+            l.shadows = LightShadows.None;
+        }
+
+        static void AddSpotLight(Transform parent, string name, Vector3 pos, Quaternion rotation, Color color, float intensity, float range, float angle)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            go.transform.SetPositionAndRotation(pos, rotation);
+            var l = go.AddComponent<Light>();
+            l.type = LightType.Spot;
+            l.color = color;
+            l.intensity = intensity;
+            l.range = range;
+            l.spotAngle = angle;
+            l.innerSpotAngle = angle * 0.58f;
             l.shadows = LightShadows.None;
         }
 

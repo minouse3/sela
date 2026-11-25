@@ -44,6 +44,7 @@ public class FirstPersonController : MonoBehaviour
         if (animator != null)
         {
             animator.applyRootMotion = false;
+            animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
             leftEyeBone = animator.GetBoneTransform(HumanBodyBones.LeftEye);
             rightEyeBone = animator.GetBoneTransform(HumanBodyBones.RightEye);
             headBone = animator.GetBoneTransform(HumanBodyBones.Head);
@@ -244,6 +245,15 @@ public class FirstPersonController : MonoBehaviour
     {
         StopAllCoroutines();
         isSeated = false;
+    }
+
+    public void ResetStandingView()
+    {
+        if (!playerCamera) return;
+        playerCamera.transform.localPosition = standingCamLocalPos;
+        playerCamera.transform.localRotation = Quaternion.identity;
+        pitch = 0f;
+        crouchOffset = 0f;
     }
 
     IEnumerator UnlockAfter(float t)

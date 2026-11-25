@@ -4,7 +4,7 @@ Dibuat dari GDD SELA dengan geometri low-poly, material matte, dan palet warna b
 
 ## Isi
 - `Art/Environments/` dan `Art/Props/` : model FBX, dikelompokkan berdasarkan fungsi.
-- `Art/Textures/T_SELA_Palette.png` : atlas palet 1024x1024 (8x8 sel, 24 warna terpakai).
+- `Art/Textures/T_SELA_Palette.png` : atlas swatch untuk model lama, 1024 × 1024 (8 × 8 sel).
 - `Art/Textures/Preview/` : render cek tata letak.
 - `Scripts/Editor/PaletteSetup.cs` : script editor untuk pengaturan material.
 
@@ -37,6 +37,12 @@ Kipas berlapis enamel hijau kelabu, lampu meja berwarna oker, lampu plafon dan n
 Penjepit foto kuning dan lembar penolakan tanpa teks untuk Retakan 1 memakai `Art/Materials/M_CatPoster_Utility.mat`. Material ini juga dipakai untuk perlengkapan kamar mandi, saklar, sandal, kabel sambungan, dan bangku lorong. Sumber Blender: `SourceArt/Utility/Utility.blend`.
 
 Keempat varian `SM_Pintu` memiliki gagang di kedua sisi daun pintu dan lis penahan pada kusen. Gagang mengikuti gerak daun pintu karena menyatu dengan mesh `_Panel`; pivot dan acuan interaksi tetap sama. `KosV2_PlayerTest`, `kamar2`, dan `progress` memakai model terpisah, bukan FBX rakitan lama. Gunakan model terpisah saat menata scene baru agar perubahan aset ikut diterapkan.
+
+Bukaan pada `SM_Lorong_3Kamar` dan modul sambung berpintu tidak menggambar ulang bidang yang sudah tertutup kusen. Kunci dan pelat nomor 07 terhubung melalui cincin gantungan; label tetap berupa mesh terpisah.
+
+Di `Kos_Main`, `KosV2_PlayerTest`, dan `progress`, beri celah antara furnitur dan dinding tanpa menggeser titik duduk atau tidur relatif terhadap furniturnya. Bangku, meja, rak, dan kursi utama mengikuti permukaan mesh, bukan kotak yang menutup ruang kosong. Barang bawaan tetap di tangan jika posisi peletakan bertabrakan dengan benda padat; untuk bidang kecil atau menjorok, pemeriksaan memakai tapak tengah lalu mencari posisi bebas terdekat, dan badan pemain sendiri tidak dihitung. Setelah bangun dari kasur, kamera kembali ke pandangan berdiri yang datar.
+
+Di kedua scene gameplay, `Seat View` kursi mengarah ke tengah laptop tanpa menggeser posisi badan pemain. Rig pemain memakai `AlwaysAnimate` agar tulang mata tetap mengikuti animasi meski badan berada di luar pandangan orang pertama. Kamera kasur mengikuti posisi mata selama animasi berbaring. Setelah pose Tidur tercapai, kamera tetap di atas mata dan baru dibatasi pada 40° ke kiri atau kanan serta 15°–65° ke atas. Lampu meja memakai sorot dari dalam kap lampu yang mengarah ke meja, tanpa bayangan. Lampu plafon memakai sorot dari dalam diffuser yang mengarah ke bawah. Hanya piringan bawahnya memakai material bercahaya `M_SELA_CeilingLamp`; bodi dan sisi lampu tetap memakai material ruangan.
 
 ## Kenapa fleksibel di Unity
 1. **Material bersama**: model awal memakai `M_SELA_Palette` dengan tiap face mengambil satu warna. Set meja Cat Poster memakai atlas terpisah agar detail yang dilukis tidak memengaruhi model awal.

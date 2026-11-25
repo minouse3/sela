@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -14,6 +15,10 @@ public class PlayerCarry : MonoBehaviour
     Pickupable item;
     FlyCamera flyCamera;
     bool busy;
+    readonly RaycastHit[] placementHits = new RaycastHit[32];
+    readonly Collider[] placementOverlap = new Collider[16];
+    readonly List<Renderer> itemRenderers = new List<Renderer>();
+    readonly List<Collider> itemColliders = new List<Collider>();
 
     public bool Carrying => item != null;
     public string CarriedItemName => item != null ? item.itemName : "";
@@ -65,61 +70,137 @@ public class PlayerCarry : MonoBehaviour
     IEnumerator PlaceRoutine()
     {
         var ray = new Ray(cam.transform.position, cam.transform.forward);
-        var hits = Physics.RaycastAll(ray, placeRange, ~0, QueryTriggerInteraction.Ignore);
-        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+        int count = Physics.RaycastNonAlloc(ray, placementHits, placeRange, ~0, QueryTriggerInteraction.Ignore);
+        if (count == placementHits.Length) yield break;
 
-        bool found = false;
+        float nearest = float.PositiveInfinity;
         RaycastHit target = default;
-        foreach (var h in hits)
+        for (int i = 0; i < count; i++)
         {
-            if (h.collider.transform.IsChildOf(transform)) continue;
-            if (h.collider.transform.IsChildOf(item.transform)) continue;
+            var h = placementHits[i];
+            if (h.distance >= nearest || h.collider.transform.IsChildOf(transform) ||
+                h.collider.transform.IsChildOf(item.transform)) continue;
             string hitName = h.collider.gameObject.name;
             if (hitName.Contains("Tirai") || hitName.Contains("Jendela")) continue;
             target = h;
-            found = h.normal.y > 0.65f;
-            break;
+            nearest = h.distance;
         }
-        if (!found) yield break;
+        if (!target.collider || target.normal.y <= 0.65f) yield break;
 
         busy = true;
         if (driver) driver.PutDown();
         yield return new WaitForSeconds(placeDelay);
 
-        var p = item;
-        p.transform.SetParent(null, true);
-        p.transform.rotation = Quaternion.Euler(0f, cam.transform.eulerAngles.y, 0f);
-        p.transform.position = target.point;
-
-        // Snap item's actual visual mesh bottom flush onto the placement surface
-        float bottomOffset = ComputeMeshBottomOffset(p.gameObject);
-        p.transform.position = new Vector3(
-            target.point.x,
-            target.point.y - bottomOffset + p.placeYOffset,
-            target.point.z);
-
-        SetPhysics(p, true);
-        item = null;
+        if (target.collider)
+            TryPlace(target.point, Quaternion.Euler(0f, cam.transform.eulerAngles.y, 0f));
         busy = false;
     }
 
-    static float ComputeMeshBottomOffset(GameObject go)
+    bool TryPlace(Vector3 surface, Quaternion rotation)
     {
-        var renderers = go.GetComponentsInChildren<Renderer>();
+        var p = item;
+        var t = p.transform;
+        var parent = t.parent;
+        var localPosition = t.localPosition;
+        var localRotation = t.localRotation;
+        var localScale = t.localScale;
+        t.SetParent(null, true);
+        t.SetPositionAndRotation(surface, rotation);
+        t.position += Vector3.up * (p.placeYOffset - ComputeMeshBottomOffset(p.gameObject));
+
+        var box = p.GetComponent<BoxCollider>();
+        var center = t.TransformPoint(box.center);
+        var half = Vector3.Scale(box.size, t.lossyScale) * 0.5f;
+        // Exclude the support plane, not the rest of the new pose.
+        float top = center.y + half.y;
+        float bottom = Mathf.Max(center.y - half.y, surface.y + 0.002f);
+        half.y = (top - bottom) * 0.5f;
+        center.y = (top + bottom) * 0.5f;
+        var physics = p.gameObject.scene.GetPhysicsScene();
+
+        bool blocked = half.y > 0f && OverlapsPlacement(physics, center, half, rotation, p.transform);
+        if (blocked)
+        {
+            var narrow = new Vector3(half.x * 0.72f, half.y, half.z * 0.72f);
+            blocked = OverlapsPlacement(physics, center, narrow, rotation, p.transform);
+            if (!blocked)
+                half = narrow;
+            else
+            {
+                blocked = FindPlacementOffset(physics, ref center, ref t, half, rotation, p.transform, 0.55f) ||
+                          FindPlacementOffset(physics, ref center, ref t, half, rotation, p.transform, 0.35f);
+            }
+        }
+
+        if (blocked)
+        {
+            t.SetParent(parent, false);
+            t.SetLocalPositionAndRotation(localPosition, localRotation);
+            t.localScale = localScale;
+            return false;
+        }
+
+        SetPhysics(p, true);
+        item = null;
+        return true;
+    }
+
+    bool FindPlacementOffset(PhysicsScene physics, ref Vector3 center, ref Transform t, Vector3 half,
+                             Quaternion rotation, Transform placed, float footprint)
+    {
+        var probe = new Vector3(half.x * footprint, half.y, half.z * footprint);
+        for (int ring = 1; ring <= 6; ring++)
+        {
+            float radius = ring * 0.05f;
+            for (int step = 0; step < 8; step++)
+            {
+                float angle = step * Mathf.PI * 0.25f;
+                var offset = rotation * new Vector3(Mathf.Cos(angle) * radius, 0f, Mathf.Sin(angle) * radius);
+                var candidate = center + offset;
+                if (OverlapsPlacement(physics, candidate, probe, rotation, placed)) continue;
+                t.position += offset;
+                center = candidate;
+                return false;
+            }
+        }
+        return true;
+    }
+
+    bool OverlapsPlacement(PhysicsScene physics, Vector3 center, Vector3 half, Quaternion rotation, Transform placed)
+    {
+        int count = physics.OverlapBox(center, half, placementOverlap, rotation, ~0, QueryTriggerInteraction.Ignore);
+        if (count == placementOverlap.Length) return true;
+        for (int i = 0; i < count; i++)
+        {
+            var other = placementOverlap[i];
+            if (!other) continue;
+            if (other.transform == transform || other.transform.IsChildOf(transform)) continue; // the player's own body
+            if (other.transform == placed || other.transform.IsChildOf(placed)) continue;       // the carried item
+            return true;
+        }
+        return false;
+    }
+
+    float ComputeMeshBottomOffset(GameObject go)
+    {
+        go.GetComponentsInChildren(itemRenderers);
         bool has = false;
         float minY = 0f;
-        foreach (var r in renderers)
+        foreach (var r in itemRenderers)
         {
             if (!r.enabled) continue;
             if (!has) { minY = r.bounds.min.y; has = true; }
             else if (r.bounds.min.y < minY) minY = r.bounds.min.y;
         }
+        itemRenderers.Clear();
         return has ? (minY - go.transform.position.y) : 0f;
     }
 
-    static void SetPhysics(Pickupable p, bool on)
+    void SetPhysics(Pickupable p, bool on)
     {
-        foreach (var c in p.GetComponentsInChildren<Collider>()) c.enabled = on;
+        p.GetComponentsInChildren(itemColliders);
+        foreach (var c in itemColliders) c.enabled = on;
+        itemColliders.Clear();
         var rb = p.GetComponent<Rigidbody>();
         if (rb)
         {

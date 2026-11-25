@@ -29,7 +29,7 @@ public class SeatInteraction : MonoBehaviour
     public Vector3 bodyOffset = new Vector3(0f, -1.1f, 0f);
 
     [Header("Kamera")]
-    public float cameraForward = 0.22f;  // maju dari SeatView
+    public float cameraForward = 0.22f;  // jarak bebas ke depan saat duduk, ke atas saat berbaring
     public bool followEyes = false;      // nyalakan nanti kalau mau kamera ikut mata
 
     [HideInInspector] public bool lookLocked;   // dikunci LaptopInteraction
@@ -37,12 +37,11 @@ public class SeatInteraction : MonoBehaviour
     FirstPersonController player;
     PlayerInteractor interactor;
     Camera playerCamera;
-    Animator anim;
-    Vector3 savedCameraPosition;
-    Quaternion savedCameraRotation;
+    Transform leftEye, rightEye;
     Coroutine moveRoutine;
-    float yaw, pitch;
-    bool seated, settled, standingUp;
+    float seatYaw, yaw, pitch;
+    bool seated, settled, standingUp, lyingSettled;
+    Animator animator;
 
     Vector3 TargetPos() => bodyPoint ? bodyPoint.position : seatView.TransformPoint(bodyOffset);
 
@@ -55,19 +54,17 @@ public class SeatInteraction : MonoBehaviour
         if (!player || !seatView || !standingPosition) return;
         playerCamera = player.GetComponentInChildren<Camera>();
         if (!playerCamera) return;
-        anim = player.GetComponentInChildren<Animator>();
+        animator = player.GetComponentInChildren<Animator>();
+        leftEye = animator ? animator.GetBoneTransform(HumanBodyBones.LeftEye) : null;
+        rightEye = animator ? animator.GetBoneTransform(HumanBodyBones.RightEye) : null;
         interactor = player.GetComponent<PlayerInteractor>();
-
-        savedCameraPosition = playerCamera.transform.localPosition;
-        savedCameraRotation = playerCamera.transform.localRotation;
 
         player.enabled = false;
 
         var cc = player.GetComponent<CharacterController>();
         if (cc) cc.enabled = false;
 
-        yaw = seatView.eulerAngles.y;
-        pitch = Mathf.DeltaAngle(0f, seatView.eulerAngles.x);
+        ResetLook();
 
         settled = false;
         standingUp = false;
@@ -117,13 +114,40 @@ public class SeatInteraction : MonoBehaviour
             float sens = GameSettings.MouseSensitivity;
             float ySign = GameSettings.InvertY ? -1f : 1f;
             var delta = mouse.delta.ReadValue() * sens;
-            yaw += delta.x;
-            pitch = Mathf.Clamp(pitch - delta.y * ySign, -70f, 70f);
+            ApplyLook(delta.x, -delta.y * ySign);
         }
         if (PlayerInteractor.Blocked) return;
 
         if (Keyboard.current.qKey.wasPressedThisFrame)
             StandUp();
+    }
+
+    void ResetLook()
+    {
+        seatYaw = yaw = seatView.eulerAngles.y;
+        pitch = Mathf.DeltaAngle(0f, seatView.eulerAngles.x);
+        lyingSettled = pose != Pose.Kasur;
+        if (lyingSettled) ApplyLook(0f, 0f);
+    }
+
+    void ApplyLook(float yawDelta, float pitchDelta)
+    {
+        yaw += yawDelta;
+        pitch += pitchDelta;
+        if (pose != Pose.Kasur) { pitch = Mathf.Clamp(pitch, -70f, 70f); return; }
+        if (!lyingSettled) return;   // biarkan bebas saat animasi berbaring masih berjalan
+        yaw = Mathf.Clamp(yaw, seatYaw - 40f, seatYaw + 40f);
+        pitch = Mathf.Clamp(pitch, -65f, -15f);
+    }
+
+    bool LyingIdleSettled()
+    {
+        if (!animator) return true;
+        if (animator.IsInTransition(0)) return false;
+        if (animator.GetCurrentAnimatorStateInfo(0).IsName("Tidur")) return true;
+        foreach (var clip in animator.GetCurrentAnimatorClipInfo(0))
+            if (clip.clip && clip.clip.name == "Tidur") return true;
+        return false;
     }
 
     void LateUpdate()
@@ -132,22 +156,30 @@ public class SeatInteraction : MonoBehaviour
 
         if (settled && !standingUp) player.transform.position = TargetPos();
 
+        if (pose == Pose.Kasur && !lyingSettled && !standingUp && animator && LyingIdleSettled())
+        {
+            lyingSettled = true;
+            yaw = Mathf.Clamp(yaw, seatYaw - 40f, seatYaw + 40f);
+            pitch = Mathf.Clamp(pitch, -65f, -15f);
+        }
+
         if (lookLocked || !playerCamera) return;   // laptop terbuka: kamera diatur LaptopInteraction
 
         var flyCamera = playerCamera.GetComponent<FlyCamera>();
         if (flyCamera && flyCamera.IsFlying) return;   // freecam aktif: jangan timpa posisi kamera
 
         Quaternion rot = Quaternion.Euler(pitch, yaw, 0f);
-        Vector3 camPos = seatView.position + rot * Vector3.forward * cameraForward;
-
-        if (followEyes && anim)
+        bool lying = pose == Pose.Kasur;
+        Vector3 clearanceAxis = lying ? Vector3.up : rot * Vector3.forward;
+        Vector3 origin = seatView.position;
+        float clearance = cameraForward;
+        if (followEyes && leftEye && rightEye)
         {
-            var l = anim.GetBoneTransform(HumanBodyBones.LeftEye);
-            var r = anim.GetBoneTransform(HumanBodyBones.RightEye);
-            if (l && r) camPos = (l.position + r.position) * 0.5f + rot * Vector3.forward * 0.12f;
+            origin = (leftEye.position + rightEye.position) * 0.5f;
+            if (!lying) clearance = 0.12f;
         }
 
-        playerCamera.transform.SetPositionAndRotation(camPos, rot);
+        playerCamera.transform.SetPositionAndRotation(origin + clearanceAxis * clearance, rot);
     }
 
     public void StandUp()
@@ -194,10 +226,7 @@ public class SeatInteraction : MonoBehaviour
         if (controller) controller.enabled = true;
 
         if (playerCamera != null)
-        {
-            playerCamera.transform.localPosition = savedCameraPosition;
-            playerCamera.transform.localRotation = savedCameraRotation;
-        }
+            player.ResetStandingView();
 
         player.FinishStandUp();
         player.enabled = true;

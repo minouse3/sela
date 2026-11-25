@@ -1,5 +1,6 @@
 using UnityEngine;
 
+[RequireComponent(typeof(BoxCollider))]
 public class Pickupable : MonoBehaviour
 {
     public string itemName = "Hp";

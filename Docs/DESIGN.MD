@@ -80,7 +80,7 @@ Potret manusia untuk tokoh lain tetap diperlakukan sebagai desain karakter 2D, b
 
 Tekstur dibuat dengan blok warna, dua tingkat bayangan lukis, dan beberapa sapuan kuas yang mengikuti bentuk. Tidak diperlukan toon shader. Efek anime berasal dari ilustrasi tekstur dan pemilihan bentuk, bukan pencahayaan cel-shading realtime.
 
-Gunakan palet tekstur bersama (`T_SELA_Palette.png`, `1024 × 1024`) untuk seluruh modul lingkungan dan properti kos agar *draw call* tetap rendah dan warna konsisten. Potret 2D (atau fallback) disimpan terpisah pada `512 × 512`, dan ikon memakai atlas kecil bersama. Tekstur ilustrasi UI memakai filtering bilinear, sedangkan tekstur palet blok warna (`T_SELA_Palette.png`) memakai pengaturan *Point* tanpa *mipmap* agar tidak terjadi *bleeding* antarsel warna.
+Modul dan properti Cat Poster berbagi atlas menurut jenis permukaan: `RoomFinish`, `DeskSet`, `Architecture`, dan `Utility`. Model lama dengan UV swatch memakai `T_SELA_Palette.png` (1024 × 1024, *Point*, tanpa *mipmap*); posisi sel tetap sama agar FBX rakitan lama tidak perlu dipetakan ulang. Potret dan ikon tetap terpisah dari atlas lingkungan.
 
 Detail permukaan harus terpilih:
 
