@@ -60,6 +60,24 @@ namespace SELA.Core
         public ActivityAvailability Availability;
     }
 
+    public struct SleepPreview
+    {
+        public SleepTarget Target;
+        public string Label;
+        public bool IsAvailable;
+        public string UnavailableReason;
+        public int TargetDay;
+        public int TargetHour;
+        public SessionType TargetSession;
+        public bool OpensFinalDecision;
+        public bool WillMissScheduledInterview;
+        public CompanyId MissedInterviewCompany;
+        public int EnergyBefore;
+        public int EnergyAfter;
+        public int PressureBefore;
+        public int PressureAfter;
+    }
+
     public static class ActivitySystem
     {
         public static string GetCompanyName(CompanyId company)
@@ -77,17 +95,17 @@ namespace SELA.Core
         {
             switch (req.Type)
             {
-                case ActivityType.ImproveUiExample: return "Rapikan contoh antarmuka";
-                case ActivityType.CompleteTestNotes: return "Lengkapi catatan pengujian";
-                case ActivityType.VerifyCompany: return "Periksa " + GetCompanyName(req.Company);
-                case ActivityType.SubmitApplication: return "Kirim lamaran " + GetCompanyName(req.Company);
-                case ActivityType.AttendInterview: return "Ikuti interview " + GetCompanyName(req.Company);
-                case ActivityType.Rest: return "Beristirahat";
+                case ActivityType.ImproveUiExample: return "Rapikan bukti E1";
+                case ActivityType.CompleteTestNotes: return "Lengkapi catatan E2";
+                case ActivityType.VerifyCompany: return "Cek " + GetCompanyName(req.Company);
+                case ActivityType.SubmitApplication: return "Lamar " + GetCompanyName(req.Company);
+                case ActivityType.AttendInterview: return "Interview " + GetCompanyName(req.Company);
+                case ActivityType.Rest: return "Istirahat";
                 case ActivityType.Shower: return "Mandi";
-                case ActivityType.CallDita: return "Temui / Hubungi Dita";
-                case ActivityType.SitWithoutScreen: return "Duduk tanpa layar";
+                case ActivityType.CallDita: return "Temui Dita";
+                case ActivityType.SitWithoutScreen: return "Duduk di jendela";
                 case ActivityType.TidyDesk: return "Rapikan meja";
-                case ActivityType.FinalPrep: return "Kemas barang & siapkan jawaban";
+                case ActivityType.FinalPrep: return "Kemas barang & putuskan";
                 default: return req.Type.ToString();
             }
         }
@@ -175,7 +193,7 @@ namespace SELA.Core
                 case CompanyId.KoperasiPijar:
                     if (state.day < 3)
                     {
-                        unavailableReason = "Lowongan Koperasi Pijar dibuka mulai Hari 3.";
+                        unavailableReason = "Buka mulai Hari 3.";
                         return false;
                     }
                     unavailableReason = "";
@@ -183,7 +201,7 @@ namespace SELA.Core
                 case CompanyId.AksesPrima:
                     if (state.day < 4)
                     {
-                        unavailableReason = "Pesan Akses Prima belum masuk (hadir mulai Hari 4).";
+                        unavailableReason = "Masuk mulai Hari 4.";
                         return false;
                     }
                     unavailableReason = "";
@@ -201,7 +219,7 @@ namespace SELA.Core
                 case CompanyId.StudioLajur:
                     if (state.day > 3)
                     {
-                        unavailableReason = "Jendela lamaran Studio Lajur sudah berakhir (Hari 3 · 22:00).";
+                        unavailableReason = "Tutup di akhir Hari 3.";
                         return false;
                     }
                     unavailableReason = "";
@@ -209,18 +227,18 @@ namespace SELA.Core
                 case CompanyId.KoperasiPijar:
                     if (state.day < 3)
                     {
-                        unavailableReason = "Lamaran Koperasi Pijar dibuka mulai Hari 3 pukul 08:00.";
+                        unavailableReason = "Buka mulai Hari 3.";
                         return false;
                     }
                     if (state.day > 5)
                     {
-                        unavailableReason = "Jendela lamaran Koperasi Pijar sudah berakhir (Hari 5 · 22:00).";
+                        unavailableReason = "Tutup di akhir Hari 5.";
                         return false;
                     }
                     unavailableReason = "";
                     return true;
                 case CompanyId.AksesPrima:
-                    unavailableReason = "Akses Prima merupakan tawaran langsung tanpa lamaran.";
+                    unavailableReason = "Tawaran langsung, tanpa lamaran.";
                     return false;
                 default:
                     unavailableReason = "Perusahaan tidak dikenal.";
@@ -234,16 +252,15 @@ namespace SELA.Core
 
             if (state.phase != GamePhase.FreeRoam)
             {
-                result.Reason = "Selesaikan peristiwa yang sedang berlangsung terlebih dahulu.";
+                result.Reason = "Selesaikan momen ini dulu.";
                 return result;
             }
 
-            // FinalPrep is never blocked by the 22:00 cutoff so Day 7 can never softlock.
             if (req.Type != ActivityType.FinalPrep)
             {
                 if (state.IsLateNight)
                 {
-                    result.Reason = "Sudah larut malam (22:00). Gunakan kasur untuk tidur.";
+                    result.Reason = "Sudah jam 22:00. Tidur dulu.";
                     return result;
                 }
 
@@ -251,7 +268,7 @@ namespace SELA.Core
                 if (endHour > GameState.LateNightHour)
                 {
                     int remaining = GameState.LateNightHour - state.currentHour;
-                    result.Reason = $"Waktu hari ini tidak cukup (tersisa {remaining} jam sebelum 22:00).";
+                    result.Reason = $"Sisa waktu cuma {remaining} jam sebelum 22:00.";
                     return result;
                 }
             }
@@ -259,7 +276,7 @@ namespace SELA.Core
             GetBaseDeltas(req.Type, out int energyDelta, out _);
             if (energyDelta < 0 && state.energy < -energyDelta)
             {
-                result.Reason = "Tenaga tidak cukup (butuh Tenaga 1). Aktivitas pemulihan tetap tersedia.";
+                result.Reason = "Tenaga habis. Istirahat dulu.";
                 return result;
             }
 
@@ -268,7 +285,7 @@ namespace SELA.Core
                 case ActivityType.ImproveUiExample:
                     if (state.hasE1)
                     {
-                        result.Reason = "E1 sudah tersedia.";
+                        result.Reason = "E1 sudah beres.";
                         return result;
                     }
                     break;
@@ -276,17 +293,17 @@ namespace SELA.Core
                 case ActivityType.CompleteTestNotes:
                     if (state.hasE2)
                     {
-                        result.Reason = "E2 sudah tersedia.";
+                        result.Reason = "E2 sudah beres.";
                         return result;
                     }
                     if (state.day < 3)
                     {
-                        result.Reason = "Tersedia mulai Hari 3.";
+                        result.Reason = "Buka mulai Hari 3.";
                         return result;
                     }
                     if (!state.hasE1)
                     {
-                        result.Reason = "Selesaikan contoh antarmuka (E1) terlebih dahulu.";
+                        result.Reason = "Bereskan E1 dulu.";
                         return result;
                     }
                     break;
@@ -300,7 +317,7 @@ namespace SELA.Core
                     var ver = state.GetVerification(req.Company);
                     if (ver != null && ver.isVerified)
                     {
-                        result.Reason = "Perusahaan sudah diperiksa. Hasil dapat dibaca gratis.";
+                        result.Reason = "Sudah dicek.";
                         return result;
                     }
                     break;
@@ -314,18 +331,18 @@ namespace SELA.Core
                     var app = state.GetApplication(req.Company);
                     if (app == null)
                     {
-                        result.Reason = "Perusahaan ini tidak menerima lamaran.";
+                        result.Reason = "Tidak menerima lamaran.";
                         return result;
                     }
                     if (app.status != ApplicationStatus.NotSent)
                     {
-                        result.Reason = "Lamaran ke " + GetCompanyName(req.Company) + " sudah pernah dikirim.";
+                        result.Reason = "Lamaran sudah terkirim.";
                         return result;
                     }
                     int interviewDay = state.day + 1;
                     if (state.HasScheduledInterviewOn(interviewDay, out CompanyId conflictCompany))
                     {
-                        result.Reason = $"Hari {interviewDay} pukul 13:00 sudah dipakai untuk interview {GetCompanyName(conflictCompany)}.";
+                        result.Reason = $"Bentrok dengan interview {GetCompanyName(conflictCompany)} besok jam 13:00.";
                         return result;
                     }
                     break;
@@ -334,17 +351,17 @@ namespace SELA.Core
                     var intApp = state.GetApplication(req.Company);
                     if (intApp == null || intApp.status != ApplicationStatus.Scheduled)
                     {
-                        result.Reason = "Tidak ada undangan interview aktif untuk " + GetCompanyName(req.Company) + ".";
+                        result.Reason = "Belum ada jadwal interview.";
                         return result;
                     }
                     if (state.day != intApp.interviewDay)
                     {
-                        result.Reason = $"Interview terjadwal pada Hari {intApp.interviewDay} · 13:00 (Siang).";
+                        result.Reason = $"Jadwalnya Hari {intApp.interviewDay}, jam 13:00.";
                         return result;
                     }
                     if (state.currentHour > GameState.InterviewHour)
                     {
-                        result.Reason = "Jadwal interview pukul 13:00 sudah terlewat.";
+                        result.Reason = "Jam 13:00 sudah lewat.";
                         return result;
                     }
                     break;
@@ -352,7 +369,7 @@ namespace SELA.Core
                 case ActivityType.Rest:
                     if (state.CanSleepNow)
                     {
-                        result.Reason = "Sudah malam (18:00+). Gunakan Tidur / Tutup hari di kasur.";
+                        result.Reason = "Sudah malam. Tidur saja sampai pagi.";
                         return result;
                     }
                     break;
@@ -368,7 +385,7 @@ namespace SELA.Core
                 case ActivityType.TidyDesk:
                     if (state.deskTidiedToday)
                     {
-                        result.Reason = "Meja sudah dirapikan hari ini.";
+                        result.Reason = "Meja sudah rapi hari ini.";
                         return result;
                     }
                     break;
@@ -376,7 +393,7 @@ namespace SELA.Core
                 case ActivityType.FinalPrep:
                     if (state.day < GameState.EarlyFinalizationMinDay)
                     {
-                        result.Reason = $"Persiapan keputusan akhir tersedia mulai Hari {GameState.EarlyFinalizationMinDay}.";
+                        result.Reason = $"Buka mulai Hari {GameState.EarlyFinalizationMinDay}.";
                         return result;
                     }
                     break;
@@ -467,6 +484,111 @@ namespace SELA.Core
             };
         }
 
+        public static void GetSleepDeltas(SleepTarget target, out int energyDelta, out int pressureDelta)
+        {
+            switch (target)
+            {
+                case SleepTarget.UntilNoon:
+                    energyDelta = +2;
+                    pressureDelta = -1;
+                    break;
+                case SleepTarget.UntilNight:
+                    energyDelta = +3;
+                    pressureDelta = -2;
+                    break;
+                case SleepTarget.UntilMorning:
+                default:
+                    energyDelta = +2;
+                    pressureDelta = -1;
+                    break;
+            }
+        }
+
+        public static SleepPreview BuildSleepPreview(GameState state, SleepTarget target)
+        {
+            var preview = new SleepPreview
+            {
+                Target = target,
+                IsAvailable = false,
+                EnergyBefore = state.energy,
+                PressureBefore = state.pressure
+            };
+
+            if (state.phase != GamePhase.FreeRoam)
+            {
+                preview.UnavailableReason = "Selesaikan momen ini dulu.";
+                return preview;
+            }
+
+            GetSleepDeltas(target, out int eDelta, out int pDelta);
+
+            switch (target)
+            {
+                case SleepTarget.UntilNoon:
+                    preview.Label = "Tidur sampai Siang · 12:00";
+                    preview.TargetDay = state.day;
+                    preview.TargetHour = GameState.SiangStartHour;
+                    preview.TargetSession = SessionType.Siang;
+                    if (state.currentHour >= GameState.SiangStartHour)
+                    {
+                        preview.UnavailableReason = "Sudah lewat jam 12:00.";
+                        return preview;
+                    }
+                    preview.IsAvailable = true;
+                    break;
+
+                case SleepTarget.UntilNight:
+                    preview.Label = "Tidur sampai Malam · 18:00";
+                    preview.TargetDay = state.day;
+                    preview.TargetHour = GameState.MalamStartHour;
+                    preview.TargetSession = SessionType.Malam;
+                    if (state.currentHour >= GameState.MalamStartHour)
+                    {
+                        preview.UnavailableReason = "Sudah malam.";
+                        return preview;
+                    }
+                    if (state.HasScheduledInterviewOn(state.day, out CompanyId missedNoon) &&
+                        state.currentHour <= GameState.InterviewHour)
+                    {
+                        preview.WillMissScheduledInterview = true;
+                        preview.MissedInterviewCompany = missedNoon;
+                    }
+                    preview.IsAvailable = true;
+                    break;
+
+                case SleepTarget.UntilMorning:
+                    if (state.day >= GameState.MaxDay)
+                    {
+                        preview.Label = "Tutup Hari 7 → Keputusan Akhir";
+                        preview.TargetDay = state.day;
+                        preview.TargetHour = state.currentHour;
+                        preview.TargetSession = state.session;
+                        preview.OpensFinalDecision = true;
+                        preview.EnergyAfter = state.energy;
+                        preview.PressureAfter = state.pressure;
+                        preview.IsAvailable = true;
+                        return preview;
+                    }
+                    preview.Label = $"Tidur sampai Pagi · Hari {state.day + 1}";
+                    preview.TargetDay = state.day + 1;
+                    preview.TargetHour = GameState.StartHour;
+                    preview.TargetSession = SessionType.Pagi;
+                    if (state.HasScheduledInterviewOn(state.day, out CompanyId missedToday) &&
+                        state.currentHour <= GameState.InterviewHour)
+                    {
+                        preview.WillMissScheduledInterview = true;
+                        preview.MissedInterviewCompany = missedToday;
+                    }
+                    preview.IsAvailable = true;
+                    break;
+            }
+
+            int missPenalty = preview.WillMissScheduledInterview ? 1 : 0;
+            preview.EnergyAfter = Mathf.Clamp(state.energy + eDelta, GameState.MinEnergy, GameState.MaxEnergy);
+            preview.PressureAfter = Mathf.Clamp(state.pressure + pDelta + missPenalty, GameState.MinPressure, GameState.MaxPressure);
+            return preview;
+        }
+
         public static InterviewOutcome EvaluateInterview(ApplicationRecord app, InterviewInput input)
         {
             if (input.CorrectExaggeratedClaims && app.SnapshotHasExaggeration)
@@ -493,11 +615,11 @@ namespace SELA.Core
 
             var reasons = new List<string>();
             if (!hasMandatoryEvidence)
-                reasons.Add("Bukti wajib belum ikut dikirim pada snapshot lamaran.");
+                reasons.Add("Bukti wajib belum ikut terlampir.");
             if (app.HasUncorrectedExaggeration)
-                reasons.Add("Klaim CV yang berlebihan belum diluruskan saat interview.");
+                reasons.Add("Klaim berlebihan di CV belum diluruskan.");
             if (q1Score < 1 || q2Score < 1 || (q1Score + q2Score) < 3)
-                reasons.Add("Penjelasan jawaban belum cukup menunjukkan bukti dan ruang lingkup kerja.");
+                reasons.Add("Jawaban belum cukup meyakinkan.");
 
             bool offered = reasons.Count == 0;
             app.status = offered ? ApplicationStatus.Offered : ApplicationStatus.Rejected;
@@ -559,13 +681,13 @@ namespace SELA.Core
             switch (state.phase)
             {
                 case GamePhase.InRift:
-                    return $"Retakan Ruang {state.activeRiftIndex} aktif — temukan benda jangkar untuk menenangkan ruang";
+                    return $"Retakan {state.activeRiftIndex} — temukan benda jangkar di kamar.";
                 case GamePhase.AwaitingJeda:
-                    return "Tekanan mencapai puncak — ambil Jeda sejenak";
+                    return "Tekanan memuncak — ambil jeda sebentar.";
                 case GamePhase.FinalDecision:
-                    return "Pilih tawaran atau Pulang, tentukan catatan, lalu kunci keputusan";
+                    return "Tentukan tawaran atau pulang, lalu kunci keputusan.";
                 case GamePhase.Epilogue:
-                    return "Cerita selesai — lihat ringkasan atau tinjau ulang keputusan";
+                    return "Cerita selesai.";
             }
 
             if (state.HasScheduledInterviewOn(state.day, out CompanyId scheduled) &&
@@ -573,29 +695,29 @@ namespace SELA.Core
             {
                 string company = GetCompanyName(scheduled);
                 return state.energy < 1
-                    ? $"Pulihkan Tenaga sebelum interview {company} pukul 13:00"
-                    : $"Interview {company} hari ini pukul 13:00 (butuh Tenaga 1)";
+                    ? $"Isi tenaga dulu sebelum interview {company} jam 13:00."
+                    : $"Interview {company} hari ini jam 13:00.";
             }
 
             if (state.day >= GameState.MaxDay)
-                return "Hari terakhir — jalankan Kemas barang & siapkan jawaban saat siap";
+                return "Hari terakhir. Kemas barang saat kamu siap memutuskan.";
 
             if (state.IsLateNight)
-                return "Sudah 22:00 — menuju Kasur untuk tidur";
+                return "Sudah 22:00. Waktunya tidur.";
 
             if (state.pressure >= 4)
-                return "Tekanan tinggi (mendekati Retakan 5) — pertimbangkan Mandi atau istirahat";
+                return "Kepala mulai penuh. Mandi atau istirahat dulu.";
 
             if (state.CanSleepNow)
-                return "Malam tiba — lanjut aktivitas atau Tidur lebih awal di Kasur";
+                return "Malam tiba. Lanjut sebentar atau langsung tidur.";
 
             if (!state.hasE1)
-                return "Siapkan bukti E1 di Papan Bukti atau cek lowongan Studio Lajur di Laptop";
+                return "Rapikan bukti E1 di papan, atau cek Studio Lajur di laptop.";
 
             if (state.day >= GameState.EarlyFinalizationMinDay)
-                return "Tinjau tawaran di Laptop/Map, atau jalankan Persiapan Akhir jika sudah siap";
+                return "Cek tawaran di laptop, atau mulai kemas barang.";
 
-            return "Kelola bukti, lamaran, dan pemulihan sesuai jam harian";
+            return "Atur waktu antara bukti, lamaran, dan istirahat.";
         }
     }
 }

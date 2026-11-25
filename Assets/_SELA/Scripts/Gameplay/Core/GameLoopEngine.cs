@@ -14,6 +14,17 @@ namespace SELA.Core
         public InterviewOutcome? InterviewOutcome;
     }
 
+    public struct SleepExecutionResult
+    {
+        public bool Executed;
+        public SleepTarget Target;
+        public string Summary;
+        public string WakeCaption;
+        public bool AdvancedDay;
+        public bool OpenedFinalDecision;
+        public bool MissedInterview;
+    }
+
     /// <summary>
     /// Pure UI-free core loop engine following revised SELA GDD §3.1 - §3.13:
     /// - Action-driven clock (08:00 - 22:00) with Pagi/Siang/Malam environment lighting
@@ -35,6 +46,7 @@ namespace SELA.Core
         public event Action<int, GameState> OnRiftTriggered;
         public event Action<int, bool, GameState> OnRiftResolved;
         public event Action<int, GameState> OnDayStarted;
+        public event Action<SleepTarget, SleepExecutionResult, GameState> OnSleepResolved;
         public event Action<GameState> OnFinalDecisionOpened;
         public event Action<EndingType, GameState> OnEndingReached;
 
@@ -47,7 +59,7 @@ namespace SELA.Core
         public void StartNewGame(bool saveInitialCheckpoints = true)
         {
             State = GameState.CreateInitial();
-            LastStatusMessage = "Permainan baru dimulai: Hari 1 · 08:00 (Pagi).";
+            LastStatusMessage = "Hari 1 dimulai.";
             if (saveInitialCheckpoints)
             {
                 Save.SaveDayStartCheckpoint(State);
@@ -95,6 +107,11 @@ namespace SELA.Core
             return ActivitySystem.BuildPreview(State, request);
         }
 
+        public SleepPreview GetSleepPreview(SleepTarget target)
+        {
+            return ActivitySystem.BuildSleepPreview(State, target);
+        }
+
         /// <summary>
         /// Executes one timed activity following revised GDD §3.2 resolution order:
         /// 1. Validate availability & remaining hours before 22:00
@@ -138,25 +155,24 @@ namespace SELA.Core
             State.energy += eDelta;
             State.pressure += pDelta;
 
-            // 3. Apply activity-specific domain effects.
             switch (request.Type)
             {
                 case ActivityType.ImproveUiExample:
                     State.AddEvidence(EvidenceId.E1);
                     State.isDeskTidy = false;
-                    extraNotes += " Kartu bukti E1 diperoleh.";
+                    extraNotes += " Bukti E1 siap.";
                     break;
 
                 case ActivityType.CompleteTestNotes:
                     State.AddEvidence(EvidenceId.E2);
                     State.isDeskTidy = false;
-                    extraNotes += " Kartu bukti E2 diperoleh.";
+                    extraNotes += " Bukti E2 siap.";
                     break;
 
                 case ActivityType.VerifyCompany:
                     var ver = State.GetVerification(request.Company);
                     if (ver != null) ver.isVerified = true;
-                    extraNotes += $" Ringkasan verifikasi {ActivitySystem.GetCompanyName(request.Company)} terbuka.";
+                    extraNotes += $" Info {ActivitySystem.GetCompanyName(request.Company)} terbuka.";
                     break;
 
                 case ActivityType.SubmitApplication:
@@ -170,13 +186,12 @@ namespace SELA.Core
                         app.interviewDay = State.day + 1;
                         app.interviewHour = GameState.InterviewHour;
 
-                        // Freeze CV snapshot (only attach evidence actually owned & selected).
                         app.snapshotClaim1 = State.cvDraft.claim1;
                         app.snapshotClaim2 = State.cvDraft.claim2;
                         app.snapshotHasE1 = State.hasE1 && State.cvDraft.attachE1;
                         app.snapshotHasE2 = State.hasE2 && State.cvDraft.attachE2;
 
-                        extraNotes += $" Lamaran terkirim. Interview dijadwalkan Hari {app.interviewDay} · 13:00 (perlu Tenaga 1).";
+                        extraNotes += $" Terkirim. Interview Hari {app.interviewDay}, jam 13:00.";
                     }
                     break;
 
@@ -195,48 +210,46 @@ namespace SELA.Core
 
                         if (outcome.Offered)
                         {
-                            extraNotes += $" {ActivitySystem.GetCompanyName(request.Company)} memberikan tawaran kerja!";
+                            extraNotes += $" {ActivitySystem.GetCompanyName(request.Company)} kirim tawaran.";
                         }
                         else
                         {
-                            State.pressure += 1; // Rejection adds +1 Tekanan before Rift/Jeda check.
-                            extraNotes += $" Lamaran ditolak ({outcome.PrimaryReason}) Tekanan +1.";
+                            State.pressure += 1;
+                            extraNotes += $" Ditolak ({outcome.PrimaryReason}) +1 Tekanan.";
                         }
                     }
                     break;
 
                 case ActivityType.Rest:
-                    extraNotes += " Istirahat singkat memulihkan tenaga.";
+                    extraNotes += " Badan terasa lebih ringan.";
                     break;
 
                 case ActivityType.Shower:
                     State.showeredToday = true;
                     State.showerObservationsSeen++;
-                    extraNotes += " Mandi segar meredakan tekanan secara signifikan.";
+                    extraNotes += " Kepala lebih segar.";
                     break;
 
                 case ActivityType.CallDita:
                     bool firstToday = !State.ditaCalledToday;
                     State.ditaCalledToday = true;
-                    extraNotes += firstToday
-                        ? " Percakapan harian dengan Dita selesai."
-                        : " Pesan singkat dengan Dita selesai.";
+                    extraNotes += firstToday ? " Ngobrol sebentar sama Dita." : " Balas pesan Dita.";
                     break;
 
                 case ActivityType.SitWithoutScreen:
                     State.sitObservationsSeen++;
-                    extraNotes += " Duduk sejenak menjauh dari layar.";
+                    extraNotes += " Sebentar jauh dari layar.";
                     break;
 
                 case ActivityType.TidyDesk:
                     State.deskTidiedToday = true;
                     State.isDeskTidy = true;
                     State.tidyObservationsSeen++;
-                    extraNotes += " Meja terlihat lebih rapi.";
+                    extraNotes += " Meja rapi lagi.";
                     break;
 
                 case ActivityType.FinalPrep:
-                    extraNotes += " Barang dikemas dan jawaban siap dikunci.";
+                    extraNotes += " Tas siap. Tinggal memutuskan.";
                     break;
             }
 
@@ -340,53 +353,115 @@ namespace SELA.Core
         }
 
         /// <summary>
+        /// Sleep until a chosen time of day:
+        /// - UntilNoon (12:00 Siang, available Pagi): +2 Tenaga, -1 Tekanan
+        /// - UntilNight (18:00 Malam, available Pagi/Siang): +3 Tenaga, -2 Tekanan (misses 13:00 interview if pending today)
+        /// - UntilMorning (08:00 Pagi next day, or FinalDecision on Day 7): +2 Tenaga, -1 Tekanan, resets daily flags & saves DayStart
+        /// </summary>
+        public SleepExecutionResult SleepUntil(SleepTarget target)
+        {
+            var preview = ActivitySystem.BuildSleepPreview(State, target);
+            if (!preview.IsAvailable)
+            {
+                LastStatusMessage = preview.UnavailableReason;
+                return new SleepExecutionResult { Executed = false, Target = target, Summary = preview.UnavailableReason };
+            }
+
+            var res = new SleepExecutionResult { Executed = true, Target = target };
+            string extraNotes = "";
+
+            // Day 7 overnight sleep opens FinalDecision directly.
+            if (preview.OpensFinalDecision)
+            {
+                LastSaveResult = Save.SaveAutosave(State);
+                State.phase = GamePhase.FinalDecision;
+                res.OpenedFinalDecision = true;
+                res.WakeCaption = $"Hari {State.day} · Keputusan Akhir";
+                res.Summary = $"Hari {State.day} · {State.FormattedTime}. Tentukan keputusan akhir Raka.";
+                LastStatusMessage = res.Summary;
+                OnSleepResolved?.Invoke(target, res, State);
+                OnFinalDecisionOpened?.Invoke(State);
+                NotifyStateChanged();
+                return res;
+            }
+
+            // Handle missed interview if sleeping past today's 13:00 scheduled interview.
+            if (preview.WillMissScheduledInterview)
+            {
+                var missedApp = State.GetApplication(preview.MissedInterviewCompany);
+                if (missedApp != null && missedApp.status == ApplicationStatus.Scheduled)
+                {
+                    missedApp.status = ApplicationStatus.Rejected;
+                    missedApp.missedInterview = true;
+                    missedApp.rejectionReasons.Clear();
+                    missedApp.rejectionReasons.Add("Interview pukul 13:00 terlewat karena tertidur.");
+                    State.pressure += 1;
+                    res.MissedInterview = true;
+                    extraNotes += $" Interview {ActivitySystem.GetCompanyName(preview.MissedInterviewCompany)} terlewat (Tekanan +1).";
+                }
+            }
+
+            ActivitySystem.GetSleepDeltas(target, out int eDelta, out int pDelta);
+            State.energy += eDelta;
+            State.pressure += pDelta;
+
+            if (target == SleepTarget.UntilMorning)
+            {
+                State.day += 1;
+                State.currentHour = GameState.StartHour;
+                State.ClampStats();
+
+                // Reset daily flags & cluttered desk for new day.
+                State.deskTidiedToday = false;
+                State.showeredToday = false;
+                State.jedaTriggeredToday = false;
+                State.ditaCalledToday = false;
+                State.riftTriggeredToday = false;
+                State.isDeskTidy = false;
+
+                Save.SaveDayStartCheckpoint(State);
+                LastSaveResult = Save.SaveAutosave(State);
+
+                res.AdvancedDay = true;
+                res.WakeCaption = $"Hari {State.day}  ·  08:00  ·  Pagi";
+                string interviewNote = State.HasScheduledInterviewOn(State.day, out CompanyId scheduled)
+                    ? $" Interview {ActivitySystem.GetCompanyName(scheduled)} jam 13:00."
+                    : "";
+                res.Summary = $"Hari {State.day} dimulai.{extraNotes}{interviewNote}";
+                LastStatusMessage = res.Summary;
+
+                OnSleepResolved?.Invoke(target, res, State);
+                OnDayStarted?.Invoke(State.day, State);
+                NotifyStateChanged();
+                return res;
+            }
+
+            State.currentHour = preview.TargetHour;
+            State.ClampStats();
+            LastSaveResult = Save.SaveAutosave(State);
+
+            res.WakeCaption = $"Hari {State.day}  ·  {State.FormattedTime}  ·  {State.session}";
+            res.Summary = $"Bangun — {State.FormattedTime} ({State.session}).{extraNotes}";
+            LastStatusMessage = res.Summary;
+
+            OnSleepResolved?.Invoke(target, res, State);
+            NotifyStateChanged();
+            return res;
+        }
+
+        /// <summary>
         /// Called from the Bed anytime during Malam (currentHour >= 18:00).
-        /// Days 1-6: sleeps, advances to Day+1 08:00 (Pagi), recovers Tenaga +2 / Tekanan -1, resets daily flags.
-        /// Day 7: opens FinalDecision directly (preserving pre-finalization autosave).
+        /// Preserves existing Malam-sleep contract for callers & tests.
         /// </summary>
         public bool SleepOrOpenFinalDecision()
         {
             if (State.phase != GamePhase.FreeRoam || !State.CanSleepNow)
             {
-                LastStatusMessage = "Belum waktunya tidur (tidur tersedia mulai pukul 18:00 · Malam).";
+                LastStatusMessage = "Belum waktunya tidur (tidur malam tersedia mulai pukul 18:00 · Malam).";
                 return false;
             }
 
-            if (State.day >= GameState.MaxDay)
-            {
-                LastSaveResult = Save.SaveAutosave(State);
-                State.phase = GamePhase.FinalDecision;
-                LastStatusMessage = $"Hari 7 · {State.FormattedTime}. Tentukan keputusan akhir Raka.";
-                OnFinalDecisionOpened?.Invoke(State);
-                NotifyStateChanged();
-                return true;
-            }
-
-            State.day += 1;
-            State.currentHour = GameState.StartHour;
-            State.energy += 2;
-            State.pressure -= 1;
-            State.ClampStats();
-
-            // Reset daily flags & cluttered desk for new day.
-            State.deskTidiedToday = false;
-            State.showeredToday = false;
-            State.jedaTriggeredToday = false;
-            State.ditaCalledToday = false;
-            State.riftTriggeredToday = false;
-            State.isDeskTidy = false;
-
-            Save.SaveDayStartCheckpoint(State);
-            LastSaveResult = Save.SaveAutosave(State);
-
-            string interviewNote = State.HasScheduledInterviewOn(State.day, out CompanyId scheduled)
-                ? $" Pengingat: Interview {ActivitySystem.GetCompanyName(scheduled)} hari ini pukul 13:00 (perlu Tenaga 1)."
-                : "";
-            LastStatusMessage = $"Hari {State.day} · 08:00 (Pagi) dimulai (Tenaga {State.energy}/4, Tekanan {State.pressure}/6).{interviewNote}";
-
-            OnDayStarted?.Invoke(State.day, State);
-            NotifyStateChanged();
-            return true;
+            return SleepUntil(SleepTarget.UntilMorning).Executed;
         }
 
         // --- Free (Zero-Time) Interactions ---

@@ -6,8 +6,17 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/_SELA/Scenes/Test/SampleScene.unity
-    guid: 99c9720ab356a0642a771bea13969a05
+    path: Assets/_SELA/Scenes/MainMenu/MainMenu.unity
+    guid: bf8944b253a1f0c419c27b8f610b18b0
+  - enabled: 1
+    path: Assets/_SELA/Scenes/Gameplay/Kos_Main.unity
+    guid: 68152f0d4a42cd44b9fb6ec8894b095e
+  - enabled: 1
+    path: Assets/_SELA/Scenes/Test/KosV2_PlayerTest.unity
+    guid: b3560f1bd832b7046a06e41790a9cb5f
+  - enabled: 1
+    path: Assets/progress.unity
+    guid: f524e65e919926e44bd87c217ac740f1
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

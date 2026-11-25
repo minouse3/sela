@@ -22,10 +22,21 @@ public class LaptopInteraction : MonoBehaviour
     Coroutine routine;
     bool isOpen;
 
+    public static bool AnyOpen { get; private set; }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStatics()
+    {
+        AnyOpen = false;
+    }
+
+    public bool IsOpen => isOpen;
+    public bool IsLookingAtLaptop => !isOpen && LookingAtLaptop();
+
     // Dipanggil dari Interactable -> On Interact (tetap boleh dipakai)
     public void Open()
     {
-        if (isOpen || !laptopView) return;
+        if (isOpen || !laptopView || PlayerInteractor.Blocked) return;
 
         seat = SeatInteraction.Current;
         if (requireSeated && (seat == null || seat.pose == SeatInteraction.Pose.Kasur)) return;
@@ -34,17 +45,20 @@ public class LaptopInteraction : MonoBehaviour
         if (!player) return;
         cam = player.GetComponentInChildren<Camera>();
         if (!cam) return;
+        var fly = cam.GetComponent<FlyCamera>();
+        if (fly && fly.IsFlying) return;
         interactor = player.GetComponent<PlayerInteractor>();
 
         savedPos = cam.transform.position;
         savedRot = cam.transform.rotation;
 
         if (seat) seat.lookLocked = true;
-        if (interactor) interactor.enabled = false;
+        PlayerInteractor.Blocked = true;
 
         player.SetTyping(true);
 
         isOpen = true;
+        AnyOpen = true;
         if (routine != null) StopCoroutine(routine);
         routine = StartCoroutine(MoveCamera());
     }
@@ -79,7 +93,7 @@ public class LaptopInteraction : MonoBehaviour
         }
 
         // Saat duduk: E pada laptop yang sedang dilihat
-        if (kb.eKey.wasPressedThisFrame && LookingAtLaptop())
+        if (!PlayerInteractor.Blocked && kb.eKey.wasPressedThisFrame && LookingAtLaptop())
             Open();
     }
 
@@ -90,6 +104,8 @@ public class LaptopInteraction : MonoBehaviour
 
         var c = Camera.main;
         if (!c) return false;
+        var fly = c.GetComponent<FlyCamera>();
+        if (fly && fly.IsFlying) return false;
 
         var hits = Physics.RaycastAll(c.transform.position, c.transform.forward, reach,
                                       ~0, QueryTriggerInteraction.Collide);
@@ -98,10 +114,16 @@ public class LaptopInteraction : MonoBehaviour
         return false;
     }
 
+    void OnDisable()
+    {
+        if (isOpen) Close();
+    }
+
     public void Close()
     {
         if (!isOpen) return;
         isOpen = false;
+        AnyOpen = false;
 
         if (routine != null) { StopCoroutine(routine); routine = null; }
         if (laptopUI) laptopUI.SetActive(false);
@@ -114,7 +136,7 @@ public class LaptopInteraction : MonoBehaviour
 
         if (player) player.SetTyping(false);
         if (seat) seat.lookLocked = false;
-        if (interactor) interactor.enabled = true;
+        PlayerInteractor.Blocked = false;
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;

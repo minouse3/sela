@@ -2,8 +2,8 @@ Shader "SELA/Interaction Outline"
 {
     Properties
     {
-        _OutlineColor ("Outline Color", Color) = (1, 0.85, 0.2, 1)
-        _OutlineWidth ("Outline Width", Float) = 0.015
+        _OutlineColor ("Outline Color", Color) = (0.96, 0.84, 0.48, 0.94)
+        _OutlineWidth ("Outline Width", Float) = 1.0
     }
     SubShader
     {
@@ -14,6 +14,7 @@ Shader "SELA/Interaction Outline"
             Cull Front
             ZWrite Off
             ZTest LEqual
+            Blend SrcAlpha OneMinusSrcAlpha
 
             HLSLPROGRAM
             #pragma vertex Vert
@@ -30,18 +31,24 @@ Shader "SELA/Interaction Outline"
                 float4 positionOS : POSITION;
                 float3 normalOS : NORMAL;
             };
+
             struct Varyings
             {
                 float4 positionHCS : SV_POSITION;
             };
+
             Varyings Vert(Attributes input)
             {
                 Varyings output;
                 float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
-                positionWS += TransformObjectToWorldNormal(input.normalOS) * _OutlineWidth;
+                float3 normalWS = normalize(TransformObjectToWorldNormal(input.normalOS));
+                float dist = distance(positionWS, GetCameraPositionWS());
+                float worldWidth = clamp(dist * 0.0052, 0.0035, 0.013) * _OutlineWidth;
+                positionWS += normalWS * worldWidth;
                 output.positionHCS = TransformWorldToHClip(positionWS);
                 return output;
             }
+
             half4 Frag(Varyings input) : SV_Target
             {
                 return _OutlineColor;

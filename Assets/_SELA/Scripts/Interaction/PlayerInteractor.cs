@@ -1,25 +1,44 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
+using TMPro;
 
-// Pasang di Player. Raycast 2 m dari kamera, tekan E untuk interaksi.
 public class PlayerInteractor : MonoBehaviour
 {
     public Camera cam;
     public float range = 2f;
     public Key key = Key.E;
-    public Text promptText;               // teks di bagian bawah layar
+    public Text promptText;
+    public TMP_Text promptTmpText;
+    public GameObject promptContainer;
     public LayerMask mask = ~0;
 
-    public static bool Blocked;           // true saat sedang fokus (laptop, puzzle, dll.)
+    public static bool Blocked;
+
     readonly RaycastHit[] hits = new RaycastHit[32];
     InteractionOutline outline;
+    PlayerCarry carry;
+    LaptopInteraction laptop;
     Interactable target;
     string message;
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStatics()
+    {
+        Blocked = false;
+    }
+
     void Awake()
     {
+        Blocked = false;
         outline = GetComponent<InteractionOutline>();
+        carry = GetComponent<PlayerCarry>();
+        if (promptContainer != null) promptContainer.SetActive(false);
+    }
+
+    void Start()
+    {
+        laptop = Object.FindFirstObjectByType<LaptopInteraction>();
     }
 
     void OnDisable()
@@ -32,11 +51,18 @@ public class PlayerInteractor : MonoBehaviour
     {
         if (Blocked || !cam) { SetTarget(null); SetMessage(null); return; }
 
-        // Saat duduk, berdiri memakai tombol Q agar E tetap bebas dipakai untuk membuka Laptop.
         if (SeatInteraction.Current != null)
         {
             SetTarget(null);
-            SetMessage("Q · Berdiri");
+            if (SeatInteraction.Current.pose == SeatInteraction.Pose.Kasur)
+            {
+                SetMessage($"[{key}] Tidur   ·   [Q] Bangun");
+            }
+            else
+            {
+                bool canOpenLaptop = laptop != null && laptop.IsLookingAtLaptop;
+                SetMessage(canOpenLaptop ? $"[{key}] Buka laptop   ·   [Q] Berdiri" : "[Q] Berdiri");
+            }
             return;
         }
 
@@ -54,11 +80,31 @@ public class PlayerInteractor : MonoBehaviour
 
         if (found != null && !found.canInteract) found = null;
         SetTarget(found);
-        string promptLabel = found != null
-            ? (string.IsNullOrWhiteSpace(found.prompt) ? $"{key} · Interaksi" : $"{key} · {found.prompt}")
-            : null;
+
+        string promptLabel = null;
+        bool blockedBySeat = false;
+        if (found != null)
+        {
+            var lap = found.GetComponent<LaptopInteraction>();
+            if (lap != null && lap.requireSeated && SeatInteraction.Current == null)
+            {
+                blockedBySeat = true;
+                promptLabel = "Duduk dulu untuk buka laptop";
+            }
+            else
+            {
+                promptLabel = string.IsNullOrWhiteSpace(found.prompt) ? $"[{key}] Interaksi" : $"[{key}] {found.prompt}";
+            }
+        }
+
+        if (carry != null && carry.Carrying)
+        {
+            string dropHint = $"[G] Letakkan {carry.CarriedItemName}";
+            promptLabel = string.IsNullOrEmpty(promptLabel) ? dropHint : $"{promptLabel}   ·   {dropHint}";
+        }
+
         SetMessage(promptLabel);
-        if (found != null && Keyboard.current != null && Keyboard.current[key].wasPressedThisFrame)
+        if (found != null && !blockedBySeat && Keyboard.current != null && Keyboard.current[key].wasPressedThisFrame)
         {
             found.Interact();
             if (!found || !found.canInteract || Blocked) { SetTarget(null); SetMessage(null); }
@@ -76,6 +122,10 @@ public class PlayerInteractor : MonoBehaviour
     {
         if (message == value) return;
         message = value;
-        if (promptText) promptText.text = value ?? "";
+
+        bool hasMessage = !string.IsNullOrEmpty(value);
+        if (promptContainer != null) promptContainer.SetActive(hasMessage);
+        if (promptTmpText != null) promptTmpText.text = value ?? "";
+        if (promptText != null) promptText.text = value ?? "";
     }
 }

@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using SELA.UI;
 
 // FlyCamera murni berfungsi sebagai freecam bebas (tekan F).
 // Tidak mengintervensi atau mengubah sistem animasi karakter.
@@ -11,18 +12,21 @@ public class FlyCamera : MonoBehaviour
     [SerializeField] float sensitivity = 0.1f;
 
     FirstPersonController player;
+    PlayerInteractor interactor;
     Transform originalParent;
     Vector3 originalPosition;
     Quaternion originalRotation;
     bool flying;
     public bool IsFlying => flying;
     bool playerWasEnabled;
+    bool interactorWasEnabled;
     float yaw;
     float pitch;
 
     void Awake()
     {
         player = GetComponentInParent<FirstPersonController>();
+        interactor = GetComponentInParent<PlayerInteractor>();
     }
 
     void Update()
@@ -33,6 +37,7 @@ public class FlyCamera : MonoBehaviour
 
         if (keyboard.fKey.wasPressedThisFrame)
         {
+            if (!flying && PlayerInteractor.Blocked) return;
             if (flying) ExitFlyMode();
             else EnterFlyMode();
             return;
@@ -54,9 +59,11 @@ public class FlyCamera : MonoBehaviour
 
         if (mouse != null)
         {
-            Vector2 delta = mouse.delta.ReadValue() * sensitivity;
+            float sens = GameSettings.MouseSensitivity * (sensitivity > 0f ? sensitivity / 0.1f : 1f);
+            float ySign = GameSettings.InvertY ? -1f : 1f;
+            Vector2 delta = mouse.delta.ReadValue() * sens;
             yaw += delta.x;
-            pitch = Mathf.Clamp(pitch - delta.y, -89f, 89f);
+            pitch = Mathf.Clamp(pitch - delta.y * ySign, -89f, 89f);
             transform.rotation = Quaternion.Euler(pitch, yaw, 0f);
         }
 
@@ -80,6 +87,12 @@ public class FlyCamera : MonoBehaviour
 
         playerWasEnabled = player.enabled;
         player.enabled = false;
+
+        if (interactor != null)
+        {
+            interactorWasEnabled = interactor.enabled;
+            interactor.enabled = false;
+        }
 
         var cc = player.GetComponent<CharacterController>();
         if (cc) cc.enabled = false;
@@ -106,6 +119,9 @@ public class FlyCamera : MonoBehaviour
             player.enabled = playerWasEnabled;
         }
 
+        if (interactor != null)
+            interactor.enabled = interactorWasEnabled;
+
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
         flying = false;
@@ -122,6 +138,8 @@ public class FlyCamera : MonoBehaviour
                 if (cc && playerWasEnabled) cc.enabled = true;
                 player.enabled = playerWasEnabled;
             }
+            if (interactor != null)
+                interactor.enabled = interactorWasEnabled;
         }
     }
 }

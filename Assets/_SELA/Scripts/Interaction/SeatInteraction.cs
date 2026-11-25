@@ -1,12 +1,19 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using SELA.UI;
 
 public class SeatInteraction : MonoBehaviour
 {
     public enum Pose { Duduk, Laptop, Kasur }
 
     public static SeatInteraction Current { get; private set; }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStatics()
+    {
+        Current = null;
+    }
 
     [Header("Pose")]
     public Pose pose = Pose.Duduk;
@@ -43,7 +50,7 @@ public class SeatInteraction : MonoBehaviour
 
     public void Sit()
     {
-        if (seated || standingUp) return;
+        if (seated || standingUp || Current != null || PlayerInteractor.Blocked) return;
         player = Object.FindFirstObjectByType<FirstPersonController>();
         if (!player || !seatView || !standingPosition) return;
         playerCamera = player.GetComponentInChildren<Camera>();
@@ -55,7 +62,6 @@ public class SeatInteraction : MonoBehaviour
         savedCameraRotation = playerCamera.transform.localRotation;
 
         player.enabled = false;
-        if (pose == Pose.Kasur && interactor) interactor.enabled = false;
 
         var cc = player.GetComponent<CharacterController>();
         if (cc) cc.enabled = false;
@@ -108,9 +114,11 @@ public class SeatInteraction : MonoBehaviour
         var mouse = Mouse.current;
         if (mouse != null && Cursor.lockState == CursorLockMode.Locked)
         {
-            var delta = mouse.delta.ReadValue() * 0.1f;
+            float sens = GameSettings.MouseSensitivity;
+            float ySign = GameSettings.InvertY ? -1f : 1f;
+            var delta = mouse.delta.ReadValue() * sens;
             yaw += delta.x;
-            pitch = Mathf.Clamp(pitch - delta.y, -70f, 70f);
+            pitch = Mathf.Clamp(pitch - delta.y * ySign, -70f, 70f);
         }
         if (PlayerInteractor.Blocked) return;
 
@@ -125,6 +133,9 @@ public class SeatInteraction : MonoBehaviour
         if (settled && !standingUp) player.transform.position = TargetPos();
 
         if (lookLocked || !playerCamera) return;   // laptop terbuka: kamera diatur LaptopInteraction
+
+        var flyCamera = playerCamera.GetComponent<FlyCamera>();
+        if (flyCamera && flyCamera.IsFlying) return;   // freecam aktif: jangan timpa posisi kamera
 
         Quaternion rot = Quaternion.Euler(pitch, yaw, 0f);
         Vector3 camPos = seatView.position + rot * Vector3.forward * cameraForward;
@@ -142,6 +153,8 @@ public class SeatInteraction : MonoBehaviour
     public void StandUp()
     {
         if (!seated || lookLocked || standingUp) return;
+        var flyCamera = playerCamera ? playerCamera.GetComponent<FlyCamera>() : null;
+        if (flyCamera && flyCamera.IsFlying) return;
 
         if (moveRoutine != null) { StopCoroutine(moveRoutine); moveRoutine = null; }
         settled = false;
@@ -186,6 +199,7 @@ public class SeatInteraction : MonoBehaviour
             playerCamera.transform.localRotation = savedCameraRotation;
         }
 
+        player.FinishStandUp();
         player.enabled = true;
         if (interactor) interactor.enabled = true;
 

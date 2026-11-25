@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using SELA.UI;
 
 [RequireComponent(typeof(CharacterController))]
 public class FirstPersonController : MonoBehaviour
@@ -12,9 +13,9 @@ public class FirstPersonController : MonoBehaviour
     [SerializeField] float gravity = -9.81f;
     [SerializeField] float eyeForwardClearance = 0.18f;
 
-    [Header("Jongkok")]
-    [SerializeField] float crouchCameraDrop = 0.5f;   // seberapa turun pandangan (meter)
-    [SerializeField] float crouchSmooth = 8f;
+    [Header("Jongkok & Kamera")]
+    [SerializeField] float crouchCameraDrop = 0.5f;   // fallback turun pandangan jika bone mata tidak tersedia
+    [SerializeField] float cameraSmooth = 12f;        // kehalusan kamera mengikuti kepala saat jongkok/lari
 
     [Header("Animasi SELA")]
     [SerializeField] SELAAnimDriver driver;
@@ -22,12 +23,17 @@ public class FirstPersonController : MonoBehaviour
     CharacterController controller;
     Animator animator;
     Camera playerCamera;
+    FlyCamera flyCamera;
+    Transform leftEyeBone;
+    Transform rightEyeBone;
+    Transform headBone;
     float pitch;
     float verticalVelocity;
     bool isSeated;
     bool isCrouching;
-    float standingCamY;      // tinggi kamera saat berdiri
-    float crouchOffset;      // 0 = berdiri, crouchCameraDrop = jongkok penuh
+    bool isRunning;
+    Vector3 standingCamLocalPos;
+    float crouchOffset;
 
     public bool IsSeated => isSeated;
 
@@ -36,13 +42,19 @@ public class FirstPersonController : MonoBehaviour
         controller = GetComponent<CharacterController>();
         animator = GetComponentInChildren<Animator>();
         if (animator != null)
+        {
             animator.applyRootMotion = false;
+            leftEyeBone = animator.GetBoneTransform(HumanBodyBones.LeftEye);
+            rightEyeBone = animator.GetBoneTransform(HumanBodyBones.RightEye);
+            headBone = animator.GetBoneTransform(HumanBodyBones.Head);
+        }
 
-        if (driver == null) driver = GetComponent<SELAAnimDriver>();
+        if (driver == null) driver = GetComponent<SELAAnimDriver>() ?? GetComponentInChildren<SELAAnimDriver>();
 
         playerCamera = GetComponentInChildren<Camera>();
         if (playerCamera != null)
         {
+            flyCamera = playerCamera.GetComponent<FlyCamera>();
             pitch = Mathf.DeltaAngle(0f, playerCamera.transform.localEulerAngles.x);
         }
         else
@@ -52,23 +64,39 @@ public class FirstPersonController : MonoBehaviour
         }
     }
 
+    bool TryGetEyesLocalPosition(out Vector3 eyesLocal)
+    {
+        if (leftEyeBone && rightEyeBone)
+        {
+            Vector3 eyesWorld = (leftEyeBone.position + rightEyeBone.position) * 0.5f;
+            eyesLocal = transform.InverseTransformPoint(eyesWorld);
+            return true;
+        }
+        if (headBone)
+        {
+            eyesLocal = transform.InverseTransformPoint(headBone.position);
+            eyesLocal.y += 0.08f;
+            return true;
+        }
+        eyesLocal = Vector3.zero;
+        return false;
+    }
+
     void AlignCameraToEyes()
     {
-        if (!animator || !playerCamera) return;
-        var left = animator.GetBoneTransform(HumanBodyBones.LeftEye);
-        var right = animator.GetBoneTransform(HumanBodyBones.RightEye);
-        if (!left || !right) return;
-
-        Vector3 eyes = (left.position + right.position) * 0.5f;
-        Vector3 local = transform.InverseTransformPoint(eyes);
+        if (!playerCamera || !TryGetEyesLocalPosition(out Vector3 local)) return;
+        local.x = 0f;
         local.z += eyeForwardClearance;
         playerCamera.transform.localPosition = local;
     }
 
     void Start()
     {
+        GameSettings.ApplyAudio();
+        if (playerCamera != null)
+            playerCamera.fieldOfView = GameSettings.FieldOfView;
         AlignCameraToEyes();
-        standingCamY = playerCamera.transform.localPosition.y;
+        standingCamLocalPos = playerCamera.transform.localPosition;
         SetCursorLocked(true);
     }
 
@@ -84,22 +112,25 @@ public class FirstPersonController : MonoBehaviour
         var keyboard = Keyboard.current;
         var mouse = Mouse.current;
 
-        if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
+        if (PauseMenuController.IsPaused) return;
+        if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame && PauseMenuController.Instance == null)
             SetCursorLocked(false);
         else if (Cursor.lockState != CursorLockMode.Locked && mouse != null && mouse.leftButton.wasPressedThisFrame)
             SetCursorLocked(true);
 
         if (Cursor.lockState == CursorLockMode.Locked && mouse != null)
         {
-            Vector2 look = mouse.delta.ReadValue() * mouseSensitivity;
+            float sens = GameSettings.MouseSensitivity * (mouseSensitivity > 0f ? mouseSensitivity / 0.1f : 1f);
+            float ySign = GameSettings.InvertY ? -1f : 1f;
+            Vector2 look = mouse.delta.ReadValue() * sens;
             transform.Rotate(Vector3.up * look.x);
-            pitch = Mathf.Clamp(pitch - look.y, -89f, 89f);
+            pitch = Mathf.Clamp(pitch - look.y * ySign, -89f, 89f);
             playerCamera.transform.localRotation = Quaternion.Euler(pitch, 0f, 0f);
         }
 
         // Input WASD
         Vector2 input = Vector2.zero;
-        bool isRunning = false;
+        isRunning = false;
 
         if (keyboard != null && Cursor.lockState == CursorLockMode.Locked)
         {
@@ -107,17 +138,16 @@ public class FirstPersonController : MonoBehaviour
             input.y = (keyboard.wKey.isPressed ? 1f : 0f) - (keyboard.sKey.isPressed ? 1f : 0f);
             input = Vector2.ClampMagnitude(input, 1f);
 
-            if (keyboard.leftShiftKey.isPressed && input.sqrMagnitude > 0.01f)
+            // Toggle jongkok (C) hanya saat kursor terkunci
+            if (keyboard.cKey.wasPressedThisFrame)
+            {
+                isCrouching = !isCrouching;
+                if (driver) driver.SetCrouch(isCrouching);
+            }
+
+            if (keyboard.leftShiftKey.isPressed && input.sqrMagnitude > 0.01f && !isCrouching)
                 isRunning = true;
         }
-
-        // Toggle jongkok (C)
-        if (keyboard != null && keyboard.cKey.wasPressedThisFrame)
-        {
-            isCrouching = !isCrouching;
-            if (driver) driver.SetCrouch(isCrouching);
-        }
-        if (isCrouching && isRunning) isRunning = false;   // tidak lari saat jongkok
 
         // Gravitasi
         if (controller.isGrounded && verticalVelocity < 0f)
@@ -132,15 +162,32 @@ public class FirstPersonController : MonoBehaviour
         controller.Move(movement * Time.deltaTime);
     }
 
-    // Pandangan turun halus saat jongkok
+    // Ikuti posisi mata/kepala secara halus agar kamera tidak menembus kepala/rambut saat lari atau jongkok
     void LateUpdate()
     {
-        if (!playerCamera || isSeated) return;
-        float target = isCrouching ? crouchCameraDrop : 0f;
-        crouchOffset = Mathf.Lerp(crouchOffset, target, Time.deltaTime * crouchSmooth);
-        var p = playerCamera.transform.localPosition;
-        p.y = standingCamY - crouchOffset;
-        playerCamera.transform.localPosition = p;
+        if (!playerCamera || isSeated || (flyCamera && flyCamera.IsFlying)) return;
+
+        Vector3 targetLocal = standingCamLocalPos;
+        if (TryGetEyesLocalPosition(out Vector3 eyesLocal))
+        {
+            // Dorong kamera maju di depan kepala saat animasi condong ke depan (lari / jongkok)
+            targetLocal.z = Mathf.Max(standingCamLocalPos.z, eyesLocal.z + eyeForwardClearance);
+
+            // Ikuti tinggi mata aktual saat jongkok atau lari; jaga tetap stabil saat berdiri/jalan
+            if (isCrouching || isRunning)
+                targetLocal.y = eyesLocal.y;
+        }
+        else
+        {
+            float targetDrop = isCrouching ? crouchCameraDrop : 0f;
+            crouchOffset = Mathf.Lerp(crouchOffset, targetDrop, Time.deltaTime * cameraSmooth);
+            targetLocal.y = standingCamLocalPos.y - crouchOffset;
+        }
+
+        playerCamera.transform.localPosition = Vector3.Lerp(
+            playerCamera.transform.localPosition,
+            targetLocal,
+            Time.deltaTime * cameraSmooth);
     }
 
     // ---------- Pose (dipanggil SeatInteraction) ----------
@@ -191,6 +238,12 @@ public class FirstPersonController : MonoBehaviour
     public void SetTyping(bool typing)
     {
         if (driver) driver.SetTyping(typing);
+    }
+
+    public void FinishStandUp()
+    {
+        StopAllCoroutines();
+        isSeated = false;
     }
 
     IEnumerator UnlockAfter(float t)

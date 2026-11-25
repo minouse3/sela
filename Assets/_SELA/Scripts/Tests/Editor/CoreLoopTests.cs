@@ -225,5 +225,51 @@ namespace SELA.Core.Tests
             Assert.IsTrue(engine.ConfirmFinalDecision());
             Assert.AreEqual(EndingType.KontrakYangMengunci, engine.State.ending);
         }
+
+        [Test]
+        public void SleepUntil_SupportsNoonNightAndMorning_AndHandlesMissedInterview()
+        {
+            // Day 1 08:00 (Pagi): Sleep until Noon -> 12:00 (Siang)
+            engine.State.energy = 1;
+            engine.State.pressure = 3;
+            var noonRes = engine.SleepUntil(SleepTarget.UntilNoon);
+            Assert.IsTrue(noonRes.Executed);
+            Assert.AreEqual(1, engine.State.day);
+            Assert.AreEqual(12, engine.State.currentHour);
+            Assert.AreEqual(SessionType.Siang, engine.State.session);
+            Assert.AreEqual(3, engine.State.energy);   // +2
+            Assert.AreEqual(2, engine.State.pressure); // -1
+
+            // Noon is no longer available once at 12:00
+            Assert.IsFalse(engine.SleepUntil(SleepTarget.UntilNoon).Executed);
+
+            // Schedule a Day 2 13:00 interview and sleep until Night on Day 1 (12 -> 18)
+            Assert.IsTrue(engine.ExecuteActivity(new ActivityRequest(ActivityType.SubmitApplication, CompanyId.StudioLajur)).Executed); // 12->14
+            var nightRes = engine.SleepUntil(SleepTarget.UntilNight);
+            Assert.IsTrue(nightRes.Executed);
+            Assert.AreEqual(18, engine.State.currentHour);
+            Assert.AreEqual(SessionType.Malam, engine.State.session);
+
+            // Night is no longer available once at 18:00
+            Assert.IsFalse(engine.SleepUntil(SleepTarget.UntilNight).Executed);
+
+            // Sleep until Morning -> Day 2 08:00 (Pagi), daily flags reset
+            engine.State.showeredToday = true;
+            var morningRes = engine.SleepUntil(SleepTarget.UntilMorning);
+            Assert.IsTrue(morningRes.Executed);
+            Assert.IsTrue(morningRes.AdvancedDay);
+            Assert.AreEqual(2, engine.State.day);
+            Assert.AreEqual(8, engine.State.currentHour);
+            Assert.AreEqual(SessionType.Pagi, engine.State.session);
+            Assert.IsFalse(engine.State.showeredToday);
+
+            // Day 2 has scheduled 13:00 interview: sleeping until Night warns & misses it
+            var missPreview = engine.GetSleepPreview(SleepTarget.UntilNight);
+            Assert.IsTrue(missPreview.WillMissScheduledInterview);
+            var missRes = engine.SleepUntil(SleepTarget.UntilNight);
+            Assert.IsTrue(missRes.Executed);
+            Assert.IsTrue(missRes.MissedInterview);
+            Assert.AreEqual(ApplicationStatus.Rejected, engine.State.applicationA.status);
+        }
     }
 }

@@ -106,4 +106,11 @@ namespace SELA.Core
         FinalDecision = 3,
         Epilogue = 4
     }
+
+    public enum SleepTarget
+    {
+        UntilNoon = 0,    // Tidur sampai Siang (12:00)
+        UntilNight = 1,   // Tidur sampai Malam (18:00)
+        UntilMorning = 2  // Tidur sampai Pagi (08:00 hari berikutnya / Keputusan Akhir di Hari 7)
+    }
 }
