@@ -3,7 +3,7 @@ using UnityEngine.InputSystem;
 using SELA.Core;
 
 /// <summary>
-/// Temporary developer OnGUI overlay so the full 7-day SELA core loop can be playtested
+/// Temporary developer OnGUI overlay so the revised SELA core loop can be playtested
 /// in Play Mode before final uGUI screens are built.
 /// Press Tab or F1 (or interact with room props) to toggle the control panel.
 /// </summary>
@@ -15,7 +15,7 @@ public class CoreLoopDebugUI : MonoBehaviour
     string activeSection = "Overview";
     Vector2 scrollPos;
 
-    // Pending confirmation / interview / finalization inputs.
+    // Pending confirmation / interview inputs.
     ActivityRequest? pendingRequest;
     bool interviewCorrectClaims = true;
     int interviewQ1Choice;
@@ -93,14 +93,13 @@ public class CoreLoopDebugUI : MonoBehaviour
         var engine = ctrl.Engine;
         var state = ctrl.State;
 
-        // Always-visible minimal HUD strip (top-left) matching GDD §3.1.
-        DrawCompactHud(state, engine);
+        DrawCompactHud(state);
 
         if (!panelOpen) return;
 
-        float w = Mathf.Min(640f, Screen.width - 40f);
-        float h = Mathf.Min(560f, Screen.height - 90f);
-        Rect panelRect = new Rect((Screen.width - w) * 0.5f, 70f, w, h);
+        float w = Mathf.Min(680f, Screen.width - 40f);
+        float h = Mathf.Min(580f, Screen.height - 105f);
+        Rect panelRect = new Rect((Screen.width - w) * 0.5f, 88f, w, h);
 
         GUI.Box(panelRect, "");
         GUILayout.BeginArea(new Rect(panelRect.x + 12f, panelRect.y + 10f, panelRect.width - 24f, panelRect.height - 20f));
@@ -151,24 +150,25 @@ public class CoreLoopDebugUI : MonoBehaviour
         GUILayout.EndArea();
     }
 
-    void DrawCompactHud(GameState state, GameLoopEngine engine)
+    void DrawCompactHud(GameState state)
     {
-        string nightTag = state.IsNightFinished ? " (Selesai - Tidur)" : "";
         string energyBoxes = new string('■', state.energy) + new string('□', GameState.MaxEnergy - state.energy);
         string pressureBars = new string('|', state.pressure) + new string('·', GameState.MaxPressure - state.pressure);
+        string objective = ActivitySystem.GetHudObjectiveHint(state);
 
-        GUI.Box(new Rect(14, 12, 430, 52), "");
-        GUI.Label(new Rect(24, 16, 410, 22),
-            $"Hari {state.day}/7 · {state.session}{nightTag}   |   Fase: {state.phase}");
-        GUI.Label(new Rect(24, 38, 410, 22),
+        GUI.Box(new Rect(14, 10, 520, 70), "");
+        GUI.Label(new Rect(24, 14, 500, 20),
+            $"Hari {state.day}/7 · {state.FormattedTime} ({state.session})   |   Fase: {state.phase}");
+        GUI.Label(new Rect(24, 34, 500, 20),
             $"Tenaga [{energyBoxes}] {state.energy}/4    Tekanan [{pressureBars}] {state.pressure}/6    [Tab/F1 Panel]");
+        GUI.Label(new Rect(24, 54, 500, 20),
+            $"Tujuan: {objective}");
     }
 
     void DrawFreeRoamControlPanel(GameLoopEngine engine, GameState state)
     {
-        // Section tabs.
         GUILayout.BeginHorizontal();
-        string[] tabs = { "Overview", "Laptop", "EvidenceBoard", "Bed", "Phone", "Save" };
+        string[] tabs = { "Overview", "Laptop", "EvidenceBoard", "Bathroom", "Bed", "Phone", "BagAndOffers", "Save" };
         foreach (string tab in tabs)
         {
             GUI.enabled = activeSection != tab;
@@ -180,18 +180,21 @@ public class CoreLoopDebugUI : MonoBehaviour
 
         if (activeSection == "Overview" || activeSection == "Calendar" || activeSection == "Desk" || activeSection == "WindowChair")
         {
-            GUILayout.Label("<b>Aktivitas Kerja & Portofolio (1 sesi)</b>", RichSub());
+            GUILayout.Label("<b>Aktivitas Portofolio (Papan Bukti)</b>", RichSub());
             DrawActivityButton(engine, new ActivityRequest(ActivityType.ImproveUiExample));
             DrawActivityButton(engine, new ActivityRequest(ActivityType.CompleteTestNotes));
 
             GUILayout.Space(6);
-            GUILayout.Label("<b>Aktivitas Pemulihan (1 sesi)</b>", RichSub());
+            GUILayout.Label("<b>Aktivitas Pemulihan</b>", RichSub());
             DrawActivityButton(engine, new ActivityRequest(ActivityType.Rest));
+            DrawActivityButton(engine, new ActivityRequest(ActivityType.Shower));
             DrawActivityButton(engine, new ActivityRequest(ActivityType.CallDita));
             DrawActivityButton(engine, new ActivityRequest(ActivityType.SitWithoutScreen));
             DrawActivityButton(engine, new ActivityRequest(ActivityType.TidyDesk));
 
             GUILayout.Space(6);
+            GUILayout.Label("<b>Penutup Hari & Keputusan Akhir</b>", RichSub());
+            DrawActivityButton(engine, new ActivityRequest(ActivityType.FinalPrep));
             DrawSleepSection(engine, state);
         }
         else if (activeSection == "Bed")
@@ -200,9 +203,14 @@ public class CoreLoopDebugUI : MonoBehaviour
             GUILayout.Space(6);
             DrawSleepSection(engine, state);
         }
-        else if (activeSection == "Phone")
+        else if (activeSection == "Bathroom")
         {
-            GUILayout.Label("Ponsel: Baca pesan gratis sesi, atau Hubungi Dita (1 sesi).");
+            GUILayout.Label("Kamar Mandi: Mandi (1 jam, +2 Tenaga, -3 Tekanan, sekali per hari).");
+            DrawActivityButton(engine, new ActivityRequest(ActivityType.Shower));
+        }
+        else if (activeSection == "Phone" || activeSection == "DitaRoom")
+        {
+            GUILayout.Label("Kamar Dita (06) / Ponsel: Baca pesan Ibu & Dita gratis waktu, atau Temui / Hubungi Dita (2 jam).");
             DrawActivityButton(engine, new ActivityRequest(ActivityType.CallDita));
         }
         else if (activeSection == "EvidenceBoard")
@@ -224,6 +232,13 @@ public class CoreLoopDebugUI : MonoBehaviour
             GUILayout.Space(8);
             DrawOfferChoiceSection(engine, state);
         }
+        else if (activeSection == "BagAndOffers")
+        {
+            DrawOfferChoiceSection(engine, state);
+            GUILayout.Space(8);
+            GUILayout.Label("<b>Persiapan Keputusan Akhir (tersedia mulai Hari 4)</b>", RichSub());
+            DrawActivityButton(engine, new ActivityRequest(ActivityType.FinalPrep));
+        }
         else if (activeSection == "Save")
         {
             GUILayout.Label($"Autosave: {(engine.Save.HasAutosave() ? "Ada" : "Belum ada")}");
@@ -242,12 +257,13 @@ public class CoreLoopDebugUI : MonoBehaviour
         GUILayout.BeginHorizontal();
         GUI.enabled = preview.Availability.IsAvailable;
         string warn = preview.Availability.WillMissScheduledInterview ? " [LEWATKAN INTERVIEW!]" : "";
-        if (GUILayout.Button($"{preview.Title}{warn}", GUILayout.Width(270)))
+        if (preview.WillTriggerRift > 0) warn += $" [RETAKAN {preview.WillTriggerRift}!]";
+        if (GUILayout.Button($"{preview.Title} ({preview.DurationHours}j){warn}", GUILayout.Width(285)))
             pendingRequest = req;
         GUI.enabled = true;
 
         string info = preview.Availability.IsAvailable
-            ? $"Tenaga {preview.EnergyBefore}→{preview.EnergyAfter} | Tekanan {preview.PressureBefore}→{preview.PressureAfter}"
+            ? $"{preview.StartHour:00}:00→{preview.EndHour:00}:00 | Tenaga {preview.EnergyBefore}→{preview.EnergyAfter} | Tekanan {preview.PressureBefore}→{preview.PressureAfter}"
             : preview.Availability.Reason;
         GUILayout.Label(info);
         GUILayout.EndHorizontal();
@@ -255,10 +271,10 @@ public class CoreLoopDebugUI : MonoBehaviour
 
     void DrawSleepSection(GameLoopEngine engine, GameState state)
     {
-        GUI.enabled = state.IsNightFinished;
+        GUI.enabled = state.CanSleepNow;
         string label = state.day >= GameState.MaxDay
-            ? "Kasur: Tinjau Keputusan Terakhir (Malam Hari 7)"
-            : $"Kasur: Tutup Hari {state.day} → Hari {state.day + 1} (Tenaga +2, Tekanan -1)";
+            ? "Kasur: Tinjau Keputusan Akhir (Hari 7 · Malam)"
+            : $"Kasur: Tidur / Tutup Hari {state.day} → Hari {state.day + 1} 08:00 (Tenaga +2, Tekanan -1)";
         if (GUILayout.Button(label, GUILayout.Height(30)))
             engine.SleepOrOpenFinalDecision();
         GUI.enabled = true;
@@ -266,7 +282,7 @@ public class CoreLoopDebugUI : MonoBehaviour
 
     void DrawCvDraftEditor(GameLoopEngine engine, GameState state)
     {
-        GUILayout.Label("<b>Draf CV (Gratis sesi)</b>", RichSub());
+        GUILayout.Label("<b>Draf CV (Gratis waktu)</b>", RichSub());
         var d = state.cvDraft;
         bool c1Exag = GUILayout.Toggle(d.claim1 == ClaimChoice.Exaggerated, "Klaim 1 Berlebihan (Memimpin sistem produksi — bukti belum mendukung)");
         bool c2Exag = GUILayout.Toggle(d.claim2 == ClaimChoice.Exaggerated, "Klaim 2 Berlebihan (Menjamin bebas seluruh kesalahan — bukti belum mendukung)");
@@ -317,17 +333,25 @@ public class CoreLoopDebugUI : MonoBehaviour
     void DrawConfirmationView(GameLoopEngine engine, GameState state, ActivityRequest req)
     {
         var preview = engine.GetPreview(req);
-        GUILayout.Label($"<b>Konfirmasi Aktivitas (1 Sesi)</b>", RichSub());
+        GUILayout.Label($"<b>Konfirmasi Aktivitas ({preview.DurationHours} Jam)</b>", RichSub());
         GUILayout.Label($"Aktivitas : {preview.Title}");
         GUILayout.Label($"Lokasi    : {preview.Location}");
+        GUILayout.Label($"Waktu     : {preview.StartHour:00}:00 → {preview.EndHour:00}:00 ({preview.NextSession})");
         GUILayout.Label($"Tenaga    : {preview.EnergyBefore} → {preview.EnergyAfter}");
-        GUILayout.Label($"Tekanan   : {preview.PressureBefore} → {preview.PressureAfter}" + (preview.WillTriggerJeda ? " (Memicu Jeda otomatis)" : ""));
-        GUILayout.Label($"Sesi berikutnya: {(preview.NextSessionIsNightEnd ? "Malam selesai (Tutup hari)" : preview.NextSession.ToString())}");
+
+        string pressureNote = preview.WillTriggerRift > 0
+            ? $" (Memicu Retakan Ruang {preview.WillTriggerRift} → turun ke 3 setelah selesai)"
+            : preview.WillTriggerJeda
+                ? " (Memicu Jeda cadangan → turun ke 4)"
+                : preview.RejectionCouldTriggerRiftOrJeda
+                    ? " (Jika ditolak, +1 Tekanan dapat memicu Retakan/Jeda)"
+                    : "";
+        GUILayout.Label($"Tekanan   : {preview.PressureBefore} → {preview.PressureAfter}{pressureNote}");
 
         if (preview.Availability.WillMissScheduledInterview)
         {
             GUI.color = new Color(1f, 0.7f, 0.7f);
-            GUILayout.Box($"PERINGATAN: Memilih aktivitas ini akan melewatkan interview {ActivitySystem.GetCompanyName(preview.Availability.MissedInterviewCompany)} (Ditolak, Tekanan +1).");
+            GUILayout.Box($"PERINGATAN: Aktivitas ini melewati interview pukul 13:00 {ActivitySystem.GetCompanyName(preview.Availability.MissedInterviewCompany)} (Ditolak, Tekanan +1).");
             GUI.color = Color.white;
         }
 
@@ -347,7 +371,7 @@ public class CoreLoopDebugUI : MonoBehaviour
 
         GUILayout.Space(8);
         GUILayout.BeginHorizontal();
-        if (GUILayout.Button("Gunakan satu sesi", GUILayout.Height(30)))
+        if (GUILayout.Button("Jalankan aktivitas", GUILayout.Height(30)))
         {
             InterviewInput? input = req.Type == ActivityType.AttendInterview
                 ? new InterviewInput
@@ -368,8 +392,8 @@ public class CoreLoopDebugUI : MonoBehaviour
 
     void DrawJedaView(GameLoopEngine engine)
     {
-        GUILayout.Label("<b>Jeda Otomatis (Tekanan mencapai 6)</b>", RichSub());
-        GUILayout.Label("Tekanan akan turun ke 4 dan Tenaga minimal 1, tanpa menghabiskan sesi.");
+        GUILayout.Label("<b>Jeda Cadangan (Tekanan mencapai 6)</b>", RichSub());
+        GUILayout.Label("Tekanan akan turun ke 4 dan Tenaga minimal 1, tanpa memajukan jam.");
         GUILayout.Space(8);
         if (GUILayout.Button("Duduk sebentar", GUILayout.Height(32)))
             engine.ResolveJeda(JedaChoice.SitBriefly);
@@ -381,10 +405,10 @@ public class CoreLoopDebugUI : MonoBehaviour
     {
         string riftTitle = state.activeRiftIndex == 1 ? "Retakan 1: Meja yang Menjauh (Pasang E0)"
             : state.activeRiftIndex == 2 ? "Retakan 2: Pintu Bernama (Gunakan Kunci 07 pada Pintu 07)"
-            : "Retakan 3: Kursi Kosong (Pasang Kartu Pesan Ibu)";
+            : "Retakan 3: Kursi Kosong (Pasang Kartu Pesan Ibu di Kursi Jendela)";
 
         GUILayout.Label($"<b>{riftTitle}</b>", RichSub());
-        GUILayout.Label("Puzzle Retakan Ruang sedang aktif (placeholder debug hingga adegan 3D Retakan dipasang).");
+        GUILayout.Label("Dipicu oleh Tekanan ≥ 5. Menyelesaikan Retakan menurunkan Tekanan ke 3 dan Tenaga minimal 1.");
         GUILayout.Space(8);
         if (GUILayout.Button("Selesaikan Puzzle Retakan", GUILayout.Height(32)))
             engine.ResolveRift(skippedViaHelp: false);
@@ -394,7 +418,7 @@ public class CoreLoopDebugUI : MonoBehaviour
 
     void DrawFinalDecisionView(GameLoopEngine engine, GameState state)
     {
-        GUILayout.Label("<b>Hari 7 · Malam Selesai — Keputusan Akhir</b>", RichSub());
+        GUILayout.Label($"<b>Hari {state.day} · {state.FormattedTime} — Keputusan Akhir</b>", RichSub());
         DrawOfferChoiceSection(engine, state);
         GUILayout.Space(8);
 
@@ -434,13 +458,14 @@ public class CoreLoopDebugUI : MonoBehaviour
     void DrawEpilogueView(GameLoopEngine engine, GameState state)
     {
         GUILayout.Label($"<b>EPILOG SELA — {state.ending}</b>", RichHeader());
+        GUILayout.Label($"Hari Final    : Hari {state.day} · {state.FormattedTime}");
         GUILayout.Label($"Pilihan Akhir : {state.offerChoice}");
         GUILayout.Label($"Catatan       : {state.decisionNote}");
         GUILayout.Label($"Bukti Selesai : E0={state.hasE0}, E1={state.hasE1}, E2={state.hasE2}");
         GUILayout.Label($"Retakan       : 1={state.IsRiftSolved(1)}, 2={state.IsRiftSolved(2)}, 3={state.IsRiftSolved(3)}");
         GUILayout.Space(10);
         GUILayout.BeginHorizontal();
-        if (GUILayout.Button("Lanjutkan (Kembali ke Keputusan Hari 7)", GUILayout.Height(30)))
+        if (GUILayout.Button("Lanjutkan (Kembali ke Keputusan Terakhir)", GUILayout.Height(30)))
             engine.LoadAutosave(true);
         if (GUILayout.Button("Mulai Permainan Baru", GUILayout.Height(30)))
             engine.StartNewGame(true);

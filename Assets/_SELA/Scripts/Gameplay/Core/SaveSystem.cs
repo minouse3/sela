@@ -58,7 +58,7 @@ namespace SELA.Core
                     Success = true,
                     LoadedFromDayStartFallback = false,
                     State = state,
-                    Message = $"Autosave terakhir: Hari {state.day} · {state.session}"
+                    Message = $"Autosave terakhir: Hari {state.day} · {state.FormattedTime} ({state.session})"
                 };
             }
 
@@ -69,7 +69,7 @@ namespace SELA.Core
                     Success = true,
                     LoadedFromDayStartFallback = true,
                     State = fallback,
-                    Message = $"Autosave tidak terbaca ({err}). Tersedia awal hari: Hari {fallback.day} · Pagi."
+                    Message = $"Autosave tidak terbaca ({err}). Tersedia awal hari: Hari {fallback.day} · 08:00 (Pagi)."
                 };
             }
 
@@ -91,7 +91,7 @@ namespace SELA.Core
                     Success = true,
                     LoadedFromDayStartFallback = false,
                     State = state,
-                    Message = $"Awal hari: Hari {state.day} · Pagi"
+                    Message = $"Awal hari: Hari {state.day} · 08:00 (Pagi)"
                 };
             }
 

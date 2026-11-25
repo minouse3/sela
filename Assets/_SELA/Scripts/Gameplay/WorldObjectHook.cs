@@ -3,7 +3,7 @@ using SELA.Core;
 
 /// <summary>
 /// Connects a 3D room prop's Interactable event to the core loop & temporary/final UI.
-/// Automatically updates dynamic prompts (such as the Bed switching to "Tutup hari" at night).
+/// Automatically updates dynamic prompts (such as the Bed switching to "Tidur / Tutup hari" at 18:00+).
 /// </summary>
 [RequireComponent(typeof(Interactable))]
 public class WorldObjectHook : MonoBehaviour
@@ -13,9 +13,12 @@ public class WorldObjectHook : MonoBehaviour
         Laptop,
         EvidenceBoard,
         Bed,
+        Bathroom,
         Phone,
+        DitaRoom,
         Desk,
         WindowChair,
+        BagAndOffers,
         Calendar
     }
 
@@ -72,22 +75,33 @@ public class WorldObjectHook : MonoBehaviour
                 interactable.prompt = "Lihat papan bukti";
                 break;
             case StationKind.Bed:
-                if (state.IsNightFinished)
-                    interactable.prompt = state.day >= GameState.MaxDay ? "Tinjau keputusan terakhir" : "Tutup hari";
+                if (state.CanSleepNow)
+                    interactable.prompt = state.day >= GameState.MaxDay ? "Tinjau keputusan terakhir" : "Tidur / Tutup hari";
                 else
-                    interactable.prompt = "Beristirahat";
+                    interactable.prompt = "Beristirahat · 2 jam";
+                break;
+            case StationKind.Bathroom:
+                interactable.prompt = state.showeredToday ? "Kamar mandi (sudah mandi hari ini)" : "Mandi · 1 jam";
                 break;
             case StationKind.Phone:
                 interactable.prompt = "Periksa ponsel / Hubungi Dita";
                 break;
+            case StationKind.DitaRoom:
+                interactable.prompt = "Temui Dita (Kamar 06) · 2 jam";
+                break;
             case StationKind.Desk:
-                interactable.prompt = state.deskTidiedToday ? "Lihat meja" : "Rapikan meja";
+                interactable.prompt = state.deskTidiedToday ? "Lihat meja" : "Rapikan meja · 1 jam";
                 break;
             case StationKind.WindowChair:
-                interactable.prompt = "Duduk tanpa layar";
+                interactable.prompt = "Duduk tanpa layar · 1 jam";
+                break;
+            case StationKind.BagAndOffers:
+                interactable.prompt = state.day >= GameState.EarlyFinalizationMinDay
+                    ? "Map tawaran & Kemas barang"
+                    : "Lihat map tawaran";
                 break;
             case StationKind.Calendar:
-                interactable.prompt = $"Lihat kalender (Hari {state.day}/7)";
+                interactable.prompt = $"Lihat kalender (Hari {state.day}/7 · {state.FormattedTime})";
                 break;
         }
     }

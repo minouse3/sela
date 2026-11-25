@@ -9,13 +9,17 @@ namespace SELA.Core
         public string Summary;
         public bool TriggeredJeda;
         public int TriggeredRift;
+        public bool OpenedFinalDecision;
         public bool MissedInterview;
         public InterviewOutcome? InterviewOutcome;
     }
 
     /// <summary>
-    /// Pure UI-free core loop engine following SELA GDD §3.1 - §3.13.
-    /// Subscribe to its events from any UI, audio, lighting, or world system.
+    /// Pure UI-free core loop engine following revised SELA GDD §3.1 - §3.13:
+    /// - Action-driven clock (08:00 - 22:00) with Pagi/Siang/Malam environment lighting
+    /// - Option B: Pure Pressure-Driven Retakan Ruang (Tekanan >= 5, unlocked Day 1/3/5)
+    /// - Option 2A: 7-day ceiling + flexible 1 Final Prep Session (Day 4+ / Day 7)
+    /// - Option 3A: Bathroom Mandi recovery (+2 Tenaga, -3 Tekanan, 1 jam, 1x/day)
     /// </summary>
     public class GameLoopEngine
     {
@@ -43,7 +47,7 @@ namespace SELA.Core
         public void StartNewGame(bool saveInitialCheckpoints = true)
         {
             State = GameState.CreateInitial();
-            LastStatusMessage = "Permainan baru dimulai: Hari 1 · Pagi.";
+            LastStatusMessage = "Permainan baru dimulai: Hari 1 · 08:00 (Pagi).";
             if (saveInitialCheckpoints)
             {
                 Save.SaveDayStartCheckpoint(State);
@@ -92,13 +96,13 @@ namespace SELA.Core
         }
 
         /// <summary>
-        /// Executes one timed session activity following GDD §3.2 resolution order:
-        /// 1. Validate availability
-        /// 2. Apply missed-interview penalty if replacing a scheduled interview
-        /// 3. Apply activity effects + stat deltas once
-        /// 4. Check Jeda (Tekanan == 6, once/day)
-        /// 5. Check scheduled Retakan Ruang (Day 2/4/6 Siang)
-        /// 6. Advance session (or lock finished night) & autosave on stable state
+        /// Executes one timed activity following revised GDD §3.2 resolution order:
+        /// 1. Validate availability & remaining hours before 22:00
+        /// 2. Apply missed-interview penalty if activity crosses 13:00 interview
+        /// 3. Apply activity effects + stat deltas (summed before clamp) & advance clock
+        /// 4. If FinalPrep -> save pre-finalization checkpoint & open FinalDecision
+        /// 5. Save stable checkpoint BEFORE Rift/Jeda (so quitting mid-Rift never erases interviews)
+        /// 6. Check Option B Pressure Rift (Tekanan >= 5) -> else Jeda fallback (Tekanan == 6)
         /// </summary>
         public ActivityExecutionResult ExecuteActivity(ActivityRequest request, InterviewInput? interviewInput = null)
         {
@@ -111,8 +115,9 @@ namespace SELA.Core
 
             var exec = new ActivityExecutionResult { Executed = true };
             string extraNotes = "";
+            int endHour = ActivitySystem.ComputeEndHour(State, request);
 
-            // 1. Handle missed interview if player replaced their scheduled Siang interview.
+            // 1. Handle missed interview if player ran past today's 13:00 interview.
             if (availability.WillMissScheduledInterview)
             {
                 var missedApp = State.GetApplication(availability.MissedInterviewCompany);
@@ -121,14 +126,14 @@ namespace SELA.Core
                     missedApp.status = ApplicationStatus.Rejected;
                     missedApp.missedInterview = true;
                     missedApp.rejectionReasons.Clear();
-                    missedApp.rejectionReasons.Add("Interview terlewat.");
+                    missedApp.rejectionReasons.Add("Interview pukul 13:00 terlewat.");
                     State.pressure += 1;
                     exec.MissedInterview = true;
                     extraNotes += $" Interview {ActivitySystem.GetCompanyName(availability.MissedInterviewCompany)} terlewat (Tekanan +1).";
                 }
             }
 
-            // 2. Apply base stat deltas.
+            // 2. Apply base stat deltas (summed before clamp).
             ActivitySystem.GetBaseDeltas(request.Type, out int eDelta, out int pDelta);
             State.energy += eDelta;
             State.pressure += pDelta;
@@ -160,8 +165,10 @@ namespace SELA.Core
                     {
                         app.status = ApplicationStatus.Scheduled;
                         app.submittedDay = State.day;
+                        app.submittedHour = State.currentHour;
                         app.submittedSession = State.session;
                         app.interviewDay = State.day + 1;
+                        app.interviewHour = GameState.InterviewHour;
 
                         // Freeze CV snapshot (only attach evidence actually owned & selected).
                         app.snapshotClaim1 = State.cvDraft.claim1;
@@ -169,7 +176,7 @@ namespace SELA.Core
                         app.snapshotHasE1 = State.hasE1 && State.cvDraft.attachE1;
                         app.snapshotHasE2 = State.hasE2 && State.cvDraft.attachE2;
 
-                        extraNotes += $" Lamaran terkirim. Interview dijadwalkan Hari {app.interviewDay} · Siang (perlu Tenaga 1).";
+                        extraNotes += $" Lamaran terkirim. Interview dijadwalkan Hari {app.interviewDay} · 13:00 (perlu Tenaga 1).";
                     }
                     break;
 
@@ -192,7 +199,7 @@ namespace SELA.Core
                         }
                         else
                         {
-                            State.pressure += 1; // GDD §3.7: rejection adds +1 Tekanan before Jeda check.
+                            State.pressure += 1; // Rejection adds +1 Tekanan before Rift/Jeda check.
                             extraNotes += $" Lamaran ditolak ({outcome.PrimaryReason}) Tekanan +1.";
                         }
                     }
@@ -200,6 +207,12 @@ namespace SELA.Core
 
                 case ActivityType.Rest:
                     extraNotes += " Istirahat singkat memulihkan tenaga.";
+                    break;
+
+                case ActivityType.Shower:
+                    State.showeredToday = true;
+                    State.showerObservationsSeen++;
+                    extraNotes += " Mandi segar meredakan tekanan secara signifikan.";
                     break;
 
                 case ActivityType.CallDita:
@@ -221,15 +234,50 @@ namespace SELA.Core
                     State.tidyObservationsSeen++;
                     extraNotes += " Meja terlihat lebih rapi.";
                     break;
+
+                case ActivityType.FinalPrep:
+                    extraNotes += " Barang dikemas dan jawaban siap dikunci.";
+                    break;
             }
 
+            // Advance clock and sync Pagi / Siang / Malam environment state.
+            State.currentHour = endHour;
             State.ClampStats();
-            State.sessionResolved = true;
 
-            exec.Summary = $"{ActivitySystem.GetActivityTitle(request)} selesai.{extraNotes}";
+            exec.Summary = $"{ActivitySystem.GetActivityTitle(request)} selesai ({State.FormattedTime} · {State.session}).{extraNotes}";
             LastStatusMessage = exec.Summary;
 
-            // 4. Check automatic Jeda (once per day when Tekanan hits 6).
+            // 4. FinalPrep opens FinalDecision immediately (saving pre-finalization checkpoint first).
+            if (request.Type == ActivityType.FinalPrep)
+            {
+                LastSaveResult = Save.SaveAutosave(State);
+                State.phase = GamePhase.FinalDecision;
+                exec.OpenedFinalDecision = true;
+                OnActivityResolved?.Invoke(request, exec);
+                OnFinalDecisionOpened?.Invoke(State);
+                NotifyStateChanged();
+                return exec;
+            }
+
+            // 5. Save stable checkpoint BEFORE Rift/Jeda so quitting mid-Rift never erases completed work/interviews.
+            LastSaveResult = Save.SaveAutosave(State);
+
+            // 6. Option B: Check Pressure-Driven Retakan Ruang (Tekanan >= 5, unlocked by Day 1/3/5, max 1/day).
+            int eligibleRift = ActivitySystem.GetEligiblePressureRift(State, State.pressure);
+            if (eligibleRift > 0)
+            {
+                State.phase = GamePhase.InRift;
+                State.activeRiftIndex = eligibleRift;
+                State.riftTriggeredToday = true;
+                exec.TriggeredRift = eligibleRift;
+                LastStatusMessage += $" Tekanan mencapai {State.pressure} — Retakan Ruang {eligibleRift} dimulai!";
+                OnActivityResolved?.Invoke(request, exec);
+                OnRiftTriggered?.Invoke(eligibleRift, State);
+                NotifyStateChanged();
+                return exec;
+            }
+
+            // 7. Fallback Jeda (only if Tekanan == 6 when no Rift is eligible, once per day).
             if (State.pressure >= GameState.MaxPressure && !State.jedaTriggeredToday)
             {
                 State.phase = GamePhase.AwaitingJeda;
@@ -240,9 +288,6 @@ namespace SELA.Core
                 return exec;
             }
 
-            // 5. Continue to Rift check / Session advance / Autosave.
-            int rift = ContinueAfterActivityOrJeda();
-            exec.TriggeredRift = rift;
             OnActivityResolved?.Invoke(request, exec);
             NotifyStateChanged();
             return exec;
@@ -260,10 +305,10 @@ namespace SELA.Core
             State.phase = GamePhase.FreeRoam;
 
             string label = choice == JedaChoice.SitBriefly ? "Duduk sebentar" : "Kirim pesan kepada Dita";
-            LastStatusMessage = $"Jeda selesai ({label}): Tekanan menjadi 4, Tenaga minimal 1 (tanpa sesi).";
+            LastStatusMessage = $"Jeda selesai ({label}): Tekanan menjadi 4, Tenaga minimal 1 (tanpa memajukan jam).";
             OnJedaResolved?.Invoke(choice, State);
 
-            ContinueAfterActivityOrJeda();
+            AutosaveIfStable();
             NotifyStateChanged();
             return true;
         }
@@ -278,68 +323,73 @@ namespace SELA.Core
             State.activeRiftIndex = 0;
             State.phase = GamePhase.FreeRoam;
 
+            // Option B payoff: grounding Raka relieves Tekanan to 3 and guarantees Tenaga >= 1.
+            State.pressure = 3;
+            State.energy = Mathf.Max(1, State.energy);
+            State.ClampStats();
+
             LastStatusMessage = skippedViaHelp
-                ? $"Retakan Ruang {solvedIndex} dipulihkan melalui bantuan. Ruang kembali normal."
-                : $"Retakan Ruang {solvedIndex} terselesaikan. Ruang kembali normal.";
+                ? $"Retakan Ruang {solvedIndex} dipulihkan melalui bantuan. Tekanan turun ke 3, Tenaga minimal 1."
+                : $"Retakan Ruang {solvedIndex} terselesaikan. Ruang kembali normal (Tekanan → 3, Tenaga ≥ 1).";
 
             OnRiftResolved?.Invoke(solvedIndex, skippedViaHelp, State);
 
-            AdvanceSessionAndAutosave();
+            AutosaveIfStable();
             NotifyStateChanged();
             return true;
         }
 
         /// <summary>
-        /// Called from the Bed after Night finishes (session == Malam && sessionResolved).
-        /// Days 1-6: sleeps, recovers Tenaga +2 / Tekanan -1, resets daily flags, saves day_start + autosave.
-        /// Day 7: opens FinalDecision phase (preserving pre-finalization autosave).
+        /// Called from the Bed anytime during Malam (currentHour >= 18:00).
+        /// Days 1-6: sleeps, advances to Day+1 08:00 (Pagi), recovers Tenaga +2 / Tekanan -1, resets daily flags.
+        /// Day 7: opens FinalDecision directly (preserving pre-finalization autosave).
         /// </summary>
         public bool SleepOrOpenFinalDecision()
         {
-            if (State.phase != GamePhase.FreeRoam || !State.IsNightFinished)
+            if (State.phase != GamePhase.FreeRoam || !State.CanSleepNow)
             {
-                LastStatusMessage = "Belum waktunya menutup hari. Selesaikan sesi Malam terlebih dahulu.";
+                LastStatusMessage = "Belum waktunya tidur (tidur tersedia mulai pukul 18:00 · Malam).";
                 return false;
             }
 
             if (State.day >= GameState.MaxDay)
             {
-                // Save pre-finalization autosave so Continue after epilogue returns to Night 7 decision.
                 LastSaveResult = Save.SaveAutosave(State);
                 State.phase = GamePhase.FinalDecision;
-                LastStatusMessage = "Hari 7 · Malam selesai. Tentukan keputusan akhir Raka.";
+                LastStatusMessage = $"Hari 7 · {State.FormattedTime}. Tentukan keputusan akhir Raka.";
                 OnFinalDecisionOpened?.Invoke(State);
                 NotifyStateChanged();
                 return true;
             }
 
             State.day += 1;
-            State.session = SessionType.Pagi;
-            State.sessionResolved = false;
+            State.currentHour = GameState.StartHour;
             State.energy += 2;
             State.pressure -= 1;
             State.ClampStats();
 
             // Reset daily flags & cluttered desk for new day.
             State.deskTidiedToday = false;
+            State.showeredToday = false;
             State.jedaTriggeredToday = false;
             State.ditaCalledToday = false;
+            State.riftTriggeredToday = false;
             State.isDeskTidy = false;
 
             Save.SaveDayStartCheckpoint(State);
             LastSaveResult = Save.SaveAutosave(State);
 
             string interviewNote = State.HasScheduledInterviewOn(State.day, out CompanyId scheduled)
-                ? $" Pengingat: Interview {ActivitySystem.GetCompanyName(scheduled)} siang ini memerlukan Tenaga 1."
+                ? $" Pengingat: Interview {ActivitySystem.GetCompanyName(scheduled)} hari ini pukul 13:00 (perlu Tenaga 1)."
                 : "";
-            LastStatusMessage = $"Hari {State.day} · Pagi dimulai (Tenaga {State.energy}/4, Tekanan {State.pressure}/6).{interviewNote}";
+            LastStatusMessage = $"Hari {State.day} · 08:00 (Pagi) dimulai (Tenaga {State.energy}/4, Tekanan {State.pressure}/6).{interviewNote}";
 
             OnDayStarted?.Invoke(State.day, State);
             NotifyStateChanged();
             return true;
         }
 
-        // --- Free (Zero-Session) Interactions ---
+        // --- Free (Zero-Time) Interactions ---
 
         public void UpdateCvDraft(ClaimChoice claim1, ClaimChoice claim2, bool attachE1, bool attachE2)
         {
@@ -427,7 +477,7 @@ namespace SELA.Core
         {
             if (State.phase != GamePhase.FinalDecision)
             {
-                LastStatusMessage = "Keputusan akhir hanya dapat dikunci pada akhir Malam Hari 7.";
+                LastStatusMessage = "Jalankan persiapan keputusan akhir terlebih dahulu.";
                 return false;
             }
 
@@ -439,59 +489,31 @@ namespace SELA.Core
                 return false;
             }
 
-            // Keep pre-finalization autosave intact per GDD §3.13 (Continue returns to Day 7 Night decision).
+            // Preserve pre-finalization autosave so Continue after epilogue returns to review state.
             State.ending = ActivitySystem.ResolveEnding(State);
             State.phase = GamePhase.Epilogue;
-            LastStatusMessage = $"Keputusan dikunci. Ending: {State.ending}.";
+            LastStatusMessage = $"Keputusan dikunci pada Hari {State.day}. Ending: {State.ending}.";
 
             OnEndingReached?.Invoke(State.ending, State);
             NotifyStateChanged();
             return true;
         }
 
-        // --- Internal Resolution Helpers ---
-
-        int ContinueAfterActivityOrJeda()
-        {
-            int scheduledRift = ActivitySystem.GetScheduledRiftFor(State);
-            if (scheduledRift > 0)
-            {
-                State.phase = GamePhase.InRift;
-                State.activeRiftIndex = scheduledRift;
-                LastStatusMessage += $" Retakan Ruang {scheduledRift} dimulai!";
-                OnRiftTriggered?.Invoke(scheduledRift, State);
-                return scheduledRift;
-            }
-
-            AdvanceSessionAndAutosave();
-            return 0;
-        }
-
-        void AdvanceSessionAndAutosave()
-        {
-            if (State.session == SessionType.Pagi)
-            {
-                State.session = SessionType.Siang;
-                State.sessionResolved = false;
-            }
-            else if (State.session == SessionType.Siang)
-            {
-                State.session = SessionType.Malam;
-                State.sessionResolved = false;
-            }
-            else
-            {
-                // Night finished: stay on Malam with sessionResolved = true until sleeping.
-                State.sessionResolved = true;
-            }
-
-            AutosaveIfStable();
-        }
+        // --- Internal Helpers ---
 
         void AutosaveIfStable()
         {
             if (State.phase == GamePhase.FreeRoam)
+            {
                 LastSaveResult = Save.SaveAutosave(State);
+            }
+            else if (State.phase == GamePhase.FinalDecision)
+            {
+                // Persist offerChoice / decisionNote changes while keeping reloadable FreeRoam state.
+                var snapshot = State.Clone();
+                snapshot.phase = GamePhase.FreeRoam;
+                LastSaveResult = Save.SaveAutosave(snapshot);
+            }
         }
 
         void NotifyStateChanged()

@@ -48,6 +48,6 @@ Lembar 12-25 memakai ruang, warna, material kertas, serta gaya potret pada ilust
 
 ## Implementation Notes
 
-Teks serta aturan implementasi mengikuti [GDD](../GDD.md) dan [DESIGN bagian 9 dan 13](../DESIGN.MD), bukan tulisan dekoratif di dalam ilustrasi. Contohnya, Tekanan memiliki enam segmen, E2 memuat tiga kasus uji yang ditentukan, dan surat resmi hanya aktif setelah diperoleh. Catatan penyesuaian ilustrasi 00-11 tersedia di DESIGN 13.2.
+Teks serta aturan implementasi mengikuti [GDD](../GDD.md) dan [DESIGN bagian 9 dan 12](../DESIGN.MD), bukan tulisan dekoratif di dalam ilustrasi. Contohnya, Tekanan memiliki enam segmen, E2 memuat tiga kasus uji yang ditentukan, dan surat resmi hanya aktif setelah diperoleh. Catatan penyesuaian ilustrasi 00-11 tersedia di DESIGN 12.2.
 
 Semua gambar adalah referensi desain, bukan screenshot produk jadi. Lembar mekanik tidak menambahkan fitur game, skor klinis, aplikasi laptop, atau slot save baru.

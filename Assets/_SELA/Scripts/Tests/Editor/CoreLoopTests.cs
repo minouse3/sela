@@ -27,37 +27,39 @@ namespace SELA.Core.Tests
         }
 
         [Test]
-        public void RecoveryOnlyPlaythrough_ReachesDay7AndPulangEndingWithoutSoftlock()
+        public void CalmPlaythrough_KeepsPressureLow_AvoidsAllRifts_AndReachesPulangEnding()
         {
             for (int day = 1; day <= 7; day++)
             {
                 Assert.AreEqual(day, engine.State.day);
+                Assert.AreEqual(GameState.StartHour, engine.State.currentHour);
                 Assert.AreEqual(SessionType.Pagi, engine.State.session);
 
-                // Pagi
+                // 08:00 -> 10:00 (Pagi), 10:00 -> 12:00 (Siang), 12:00 -> 14:00 (Siang),
+                // 14:00 -> 16:00 (Siang), 16:00 -> 18:00 (Malam) -> Sleep early!
                 Assert.IsTrue(engine.ExecuteActivity(new ActivityRequest(ActivityType.Rest)).Executed);
+                Assert.AreEqual(10, engine.State.currentHour);
+                Assert.AreEqual(SessionType.Pagi, engine.State.session);
+
+                Assert.IsTrue(engine.ExecuteActivity(new ActivityRequest(ActivityType.Rest)).Executed);
+                Assert.AreEqual(12, engine.State.currentHour);
                 Assert.AreEqual(SessionType.Siang, engine.State.session);
 
-                // Siang (Days 2, 4, 6 trigger Retakan Ruang)
-                var siangRes = engine.ExecuteActivity(new ActivityRequest(ActivityType.SitWithoutScreen));
-                Assert.IsTrue(siangRes.Executed);
-                if (day == 2 || day == 4 || day == 6)
-                {
-                    Assert.AreEqual(GamePhase.InRift, engine.State.phase);
-                    Assert.AreEqual(day / 2, engine.State.activeRiftIndex);
-                    Assert.IsTrue(engine.ResolveRift(skippedViaHelp: true));
-                }
+                Assert.IsTrue(engine.ExecuteActivity(new ActivityRequest(ActivityType.Shower)).Executed); // 12->13
+                Assert.IsTrue(engine.State.showeredToday);
+                Assert.IsFalse(engine.ExecuteActivity(new ActivityRequest(ActivityType.Shower)).Executed); // max 1x/day
+
+                Assert.IsTrue(engine.ExecuteActivity(new ActivityRequest(ActivityType.CallDita)).Executed); // 13->15
+                Assert.IsTrue(engine.ExecuteActivity(new ActivityRequest(ActivityType.Rest)).Executed);     // 15->17
+                Assert.IsTrue(engine.ExecuteActivity(new ActivityRequest(ActivityType.SitWithoutScreen)).Executed); // 17->18 (Malam)
                 Assert.AreEqual(SessionType.Malam, engine.State.session);
+                Assert.IsTrue(engine.State.CanSleepNow);
 
-                // Malam
-                Assert.IsTrue(engine.ExecuteActivity(new ActivityRequest(ActivityType.CallDita)).Executed);
-                Assert.IsTrue(engine.State.IsNightFinished);
+                // Option B: Calm player never hits Tekanan >= 5, so NO Rift triggers!
+                Assert.AreEqual(GamePhase.FreeRoam, engine.State.phase);
+                Assert.IsFalse(engine.State.IsRiftSolved(1));
 
-                // Cannot buy another session once night is finished
-                var blocked = engine.ExecuteActivity(new ActivityRequest(ActivityType.Rest));
-                Assert.IsFalse(blocked.Executed);
-
-                // Sleep or open Night 7 Final Decision
+                // Sleep early at 18:00 (Days 1-6) or open FinalDecision on Day 7 Malam
                 Assert.IsTrue(engine.SleepOrOpenFinalDecision());
             }
 
@@ -67,134 +69,153 @@ namespace SELA.Core.Tests
             Assert.AreEqual(EndingType.PulangBukanSelesai, engine.State.ending);
             Assert.AreEqual(GamePhase.Epilogue, engine.State.phase);
 
-            // GDD §3.13: Continue after epilogue returns to Day 7 Night pre-finalization state.
+            // Continue after epilogue returns to Day 7 pre-finalization state.
             var reload = engine.LoadAutosave();
             Assert.IsTrue(reload.Success);
             Assert.AreEqual(7, engine.State.day);
-            Assert.AreEqual(SessionType.Malam, engine.State.session);
-            Assert.IsTrue(engine.State.IsNightFinished);
             Assert.AreEqual(GamePhase.FreeRoam, engine.State.phase);
         }
 
         [Test]
-        public void CvSnapshot_IsImmutableAfterSubmission_AndInterviewRespectsClaimCorrection()
+        public void OptionB_HighPressureTriggersRift_AndSolvingLowersPressureTo3()
         {
-            // Day 1 Pagi: get E1
-            Assert.IsTrue(engine.ExecuteActivity(new ActivityRequest(ActivityType.ImproveUiExample)).Executed);
-            Assert.IsTrue(engine.State.hasE1);
+            // Day 1: push Tekanan to 5 -> Rift 1 triggers automatically!
+            engine.State.pressure = 4;
+            engine.State.energy = 2;
 
-            // Attach E1 with exaggerated claim 1, then submit Application A on Day 1 Siang
+            var preview = engine.GetPreview(new ActivityRequest(ActivityType.ImproveUiExample));
+            Assert.AreEqual(5, preview.PressureAfter);
+            Assert.AreEqual(1, preview.WillTriggerRift);
+
+            var res = engine.ExecuteActivity(new ActivityRequest(ActivityType.ImproveUiExample));
+            Assert.IsTrue(res.Executed);
+            Assert.AreEqual(1, res.TriggeredRift);
+            Assert.AreEqual(GamePhase.InRift, engine.State.phase);
+            Assert.AreEqual(1, engine.State.activeRiftIndex);
+
+            // Solving Rift 1 grounds Raka: Tekanan -> 3, Tenaga >= 1.
+            Assert.IsTrue(engine.ResolveRift(skippedViaHelp: false));
+            Assert.AreEqual(GamePhase.FreeRoam, engine.State.phase);
+            Assert.IsTrue(engine.State.IsRiftSolved(1));
+            Assert.AreEqual(3, engine.State.pressure);
+            Assert.GreaterOrEqual(engine.State.energy, 1);
+
+            // Hitting Tekanan 6 again same day (no Rift eligible) -> Jeda fallback triggers!
+            engine.State.pressure = 5;
+            engine.State.energy = 1;
+            var res2 = engine.ExecuteActivity(new ActivityRequest(ActivityType.SubmitApplication, CompanyId.StudioLajur));
+            Assert.IsTrue(res2.Executed);
+            Assert.AreEqual(0, res2.TriggeredRift);
+            Assert.IsTrue(res2.TriggeredJeda);
+            Assert.AreEqual(GamePhase.AwaitingJeda, engine.State.phase);
+
+            Assert.IsTrue(engine.ResolveJeda(JedaChoice.SitBriefly));
+            Assert.AreEqual(4, engine.State.pressure);
+            Assert.GreaterOrEqual(engine.State.energy, 1);
+            Assert.IsTrue(engine.State.jedaTriggeredToday);
+        }
+
+        [Test]
+        public void EarlyFinalization2A_AllowedFromDay4ViaFinalPrepSession()
+        {
+            // Blocked before Day 4
+            Assert.IsFalse(engine.ExecuteActivity(new ActivityRequest(ActivityType.FinalPrep)).Executed);
+
+            // On Day 4 with an offer, FinalPrep opens FinalDecision immediately without waiting for Day 7!
+            engine.State.day = 4;
+            engine.State.currentHour = 10;
+            engine.State.applicationA.status = ApplicationStatus.Offered;
+            engine.State.ClampStats();
+
+            Assert.IsTrue(engine.SetOfferChoice(OfferChoice.StudioLajur));
+            var prepRes = engine.ExecuteActivity(new ActivityRequest(ActivityType.FinalPrep));
+            Assert.IsTrue(prepRes.Executed);
+            Assert.IsTrue(prepRes.OpenedFinalDecision);
+            Assert.AreEqual(GamePhase.FinalDecision, engine.State.phase);
+            Assert.AreEqual(12, engine.State.currentHour);
+
+            Assert.IsTrue(engine.SetDecisionNote(DecisionNoteType.WorkMentoringAndScope));
+            Assert.IsTrue(engine.ConfirmFinalDecision());
+            Assert.AreEqual(EndingType.MulaiDenganBatas, engine.State.ending);
+        }
+
+        [Test]
+        public void ClockInterviewAt1300_AllowsEarlyStartAndWarnsIfOvershooting()
+        {
+            // Day 1: get E1 (08->11), attach E1 with exaggerated claim, submit A (11->13) -> Day 2 13:00 interview.
+            Assert.IsTrue(engine.ExecuteActivity(new ActivityRequest(ActivityType.ImproveUiExample)).Executed);
             engine.UpdateCvDraft(ClaimChoice.Exaggerated, ClaimChoice.Honest, attachE1: true, attachE2: false);
             Assert.IsTrue(engine.ExecuteActivity(new ActivityRequest(ActivityType.SubmitApplication, CompanyId.StudioLajur)).Executed);
 
             // Edit CV draft afterward -> must NOT mutate submitted snapshot
             engine.UpdateCvDraft(ClaimChoice.Honest, ClaimChoice.Honest, attachE1: false, attachE2: false);
-            var appA = engine.State.GetApplication(CompanyId.StudioLajur);
-            Assert.AreEqual(ApplicationStatus.Scheduled, appA.status);
-            Assert.AreEqual(2, appA.interviewDay);
-            Assert.AreEqual(ClaimChoice.Exaggerated, appA.snapshotClaim1);
-            Assert.IsTrue(appA.snapshotHasE1);
+            Assert.AreEqual(ClaimChoice.Exaggerated, engine.State.applicationA.snapshotClaim1);
+            Assert.IsTrue(engine.State.applicationA.snapshotHasE1);
 
-            // Advance to Day 2 Siang
-            Assert.IsTrue(engine.ExecuteActivity(new ActivityRequest(ActivityType.Rest)).Executed);
+            // Jump to Day 2 08:00
+            engine.State.currentHour = 18;
+            engine.State.ClampStats();
             Assert.IsTrue(engine.SleepOrOpenFinalDecision());
-            Assert.IsTrue(engine.ExecuteActivity(new ActivityRequest(ActivityType.Rest)).Executed);
             Assert.AreEqual(2, engine.State.day);
-            Assert.AreEqual(SessionType.Siang, engine.State.session);
+            Assert.AreEqual(8, engine.State.currentHour);
 
-            // Attend Interview A: correct exaggerated claim + good answers -> Offered!
+            // At 12:00, a 2h activity (12->14) crosses 13:00 and warns of missed interview!
+            engine.State.currentHour = 12;
+            engine.State.ClampStats();
+            var missPreview = engine.GetPreview(new ActivityRequest(ActivityType.VerifyCompany, CompanyId.StudioLajur));
+            Assert.IsTrue(missPreview.Availability.WillMissScheduledInterview);
+
+            // Attending interview at 12:00 jumps cleanly to 13:00 -> finishes 15:00 (Siang)
             var intRes = engine.ExecuteActivity(
                 new ActivityRequest(ActivityType.AttendInterview, CompanyId.StudioLajur),
                 new InterviewInput { CorrectExaggeratedClaims = true, Question1ChoiceIndex = 0, Question2ChoiceIndex = 0 });
 
             Assert.IsTrue(intRes.Executed);
             Assert.IsTrue(intRes.InterviewOutcome.HasValue && intRes.InterviewOutcome.Value.Offered);
-            Assert.AreEqual(ApplicationStatus.Offered, appA.status);
-            Assert.IsTrue(appA.claimsCorrectedInInterview);
-            Assert.AreEqual(ClaimChoice.Exaggerated, appA.snapshotClaim1); // original snapshot claim preserved
-
-            // Day 2 Siang should now trigger Retakan 1
-            Assert.AreEqual(GamePhase.InRift, engine.State.phase);
-            Assert.AreEqual(1, engine.State.activeRiftIndex);
+            Assert.AreEqual(15, engine.State.currentHour);
+            Assert.AreEqual(SessionType.Siang, engine.State.session);
+            Assert.AreEqual(ApplicationStatus.Offered, engine.State.applicationA.status);
         }
 
         [Test]
-        public void MissingScheduledInterview_MarksRejectedAndAddsOnePressureOnce()
+        public void MandiAction3A_Relieves3PressureAndIsOncePerDay()
         {
-            // Day 1 Pagi: submit A without E1 (schedules Day 2 Siang)
-            Assert.IsTrue(engine.ExecuteActivity(new ActivityRequest(ActivityType.SubmitApplication, CompanyId.StudioLajur)).Executed);
-            Assert.IsTrue(engine.ExecuteActivity(new ActivityRequest(ActivityType.Rest)).Executed);
-            Assert.IsTrue(engine.ExecuteActivity(new ActivityRequest(ActivityType.Rest)).Executed);
-            Assert.IsTrue(engine.SleepOrOpenFinalDecision());
-
-            // Day 2 Pagi: rest -> Day 2 Siang (pressure is 0)
-            Assert.IsTrue(engine.ExecuteActivity(new ActivityRequest(ActivityType.Rest)).Executed);
-            Assert.AreEqual(0, engine.State.pressure);
-
-            // Replace Day 2 Siang interview with VerifyCompany (base pressure +0, missed interview +1)
-            var preview = engine.GetPreview(new ActivityRequest(ActivityType.VerifyCompany, CompanyId.StudioLajur));
-            Assert.IsTrue(preview.Availability.WillMissScheduledInterview);
-            Assert.AreEqual(1, preview.PressureAfter);
-
-            var res = engine.ExecuteActivity(new ActivityRequest(ActivityType.VerifyCompany, CompanyId.StudioLajur));
-            Assert.IsTrue(res.Executed);
-            Assert.IsTrue(res.MissedInterview);
-            Assert.AreEqual(ApplicationStatus.Rejected, engine.State.applicationA.status);
-            Assert.IsTrue(engine.State.applicationA.missedInterview);
-            Assert.AreEqual(1, engine.State.pressure);
-        }
-
-        [Test]
-        public void JedaTriggersOncePerDayAtPressure6_AndDoesNotRepeatSameDay()
-        {
-            // Push pressure to 5 manually via state setup on Day 1 Pagi
-            engine.State.pressure = 5;
+            engine.State.pressure = 4;
             engine.State.energy = 1;
 
-            // Activity adding +1 pressure hits 6 -> triggers Jeda
-            var res = engine.ExecuteActivity(new ActivityRequest(ActivityType.ImproveUiExample));
+            var res = engine.ExecuteActivity(new ActivityRequest(ActivityType.Shower));
             Assert.IsTrue(res.Executed);
-            Assert.IsTrue(res.TriggeredJeda);
-            Assert.AreEqual(GamePhase.AwaitingJeda, engine.State.phase);
+            Assert.AreEqual(9, engine.State.currentHour); // 1 jam
+            Assert.AreEqual(3, engine.State.energy);      // +2
+            Assert.AreEqual(1, engine.State.pressure);    // -3
+            Assert.IsTrue(engine.State.showeredToday);
 
-            // Resolve Jeda -> pressure becomes 4, energy at least 1, session advances to Siang
-            Assert.IsTrue(engine.ResolveJeda(JedaChoice.SitBriefly));
-            Assert.AreEqual(4, engine.State.pressure);
-            Assert.GreaterOrEqual(engine.State.energy, 1);
-            Assert.IsTrue(engine.State.jedaTriggeredToday);
-            Assert.AreEqual(SessionType.Siang, engine.State.session);
-
-            // Hit pressure 6 again on the same day -> stays 6 without re-triggering Jeda
-            engine.State.pressure = 5;
-            var res2 = engine.ExecuteActivity(new ActivityRequest(ActivityType.SubmitApplication, CompanyId.StudioLajur));
-            Assert.IsTrue(res2.Executed);
-            Assert.IsFalse(res2.TriggeredJeda);
-            Assert.AreEqual(6, engine.State.pressure);
-            Assert.AreEqual(GamePhase.FreeRoam, engine.State.phase);
+            // Cannot shower twice on same day
+            Assert.IsFalse(engine.ExecuteActivity(new ActivityRequest(ActivityType.Shower)).Executed);
         }
 
         [Test]
         public void SaveSystem_FallsBackToDayStart_WhenAutosaveCorrupted()
         {
-            // Corrupt autosave file while keeping valid day_start checkpoint
             File.WriteAllText(saveSystem.AutosavePath, "{ broken json");
             var loaded = engine.LoadAutosave(allowFallback: true);
 
             Assert.IsTrue(loaded.Success);
             Assert.IsTrue(loaded.LoadedFromDayStartFallback);
             Assert.AreEqual(1, engine.State.day);
+            Assert.AreEqual(GameState.StartHour, engine.State.currentHour);
             Assert.AreEqual(SessionType.Pagi, engine.State.session);
         }
 
         [Test]
         public void RiskyOfferC_RequiresAcknowledgementAndResolvesToKontrakYangMengunci()
         {
-            // Fast-forward state to Day 7 Night finished
-            engine.State.day = 7;
-            engine.State.session = SessionType.Malam;
-            engine.State.sessionResolved = true;
+            engine.State.day = 4;
+            engine.State.currentHour = 18;
+            engine.State.ClampStats();
 
-            Assert.IsTrue(engine.SleepOrOpenFinalDecision());
+            Assert.IsTrue(engine.ExecuteActivity(new ActivityRequest(ActivityType.FinalPrep)).Executed);
+            Assert.AreEqual(GamePhase.FinalDecision, engine.State.phase);
             Assert.IsTrue(engine.SetOfferChoice(OfferChoice.AksesPrima));
 
             // Cannot confirm without acknowledging risky terms

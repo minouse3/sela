@@ -32,11 +32,11 @@ public class PlayerInteractor : MonoBehaviour
     {
         if (Blocked || !cam) { SetTarget(null); SetMessage(null); return; }
 
-        // Duduk memakai tombol Q; jangan tampilkan prompt E saat duduk.
+        // Saat duduk, tampilkan prompt E · Berdiri (sesuai standar tombol E di GDD §3.9).
         if (SeatInteraction.Current != null)
         {
             SetTarget(null);
-            SetMessage("Press Q to Stand");
+            SetMessage($"{key} · Berdiri");
             return;
         }
 

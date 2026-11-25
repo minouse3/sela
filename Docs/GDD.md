@@ -12,7 +12,7 @@
 | Perspective | First-person, single-player |
 | Genre | Psychological narrative, eksplorasi ruang, pengelolaan aktivitas ringan |
 | Playtime | Target 45-60 menit untuk satu permainan pertama |
-| Structure | Tujuh hari cerita, tiga sesi aktivitas per hari, tiga ending |
+| Structure | Maksimal tujuh hari cerita, waktu jam harian (`08:00–22:00`) dengan suasana Pagi/Siang/Malam, tiga ending |
 | Setting | Kamar kos dan lorong pendek di kota fiktif Indonesia |
 | SDG Focus | SDG 3: Good Health and Well-Being; SDG 8: Decent Work and Economic Growth |
 | Production Target | Tiga anggota, empat hingga enam minggu |
@@ -87,67 +87,70 @@ Desain berpegang pada keputusan yang terbaca: konsekuensi aktivitas terlihat seb
 
 ### 2.1 Objectives
 
-Tujuan utama adalah menentukan langkah Raka pada malam hari ketujuh. Pemain dapat menerima salah satu tawaran kerja yang memenuhi kebutuhannya atau pulang dengan rencana lanjutan. Pemain juga dapat menyetujui kontrak yang membatasi kebebasannya setelah melewati peringatan yang jelas.
+Tujuan utama adalah menentukan langkah Raka sebelum masa sewa kosnya berakhir pada pagi hari kedelapan. Pemain dapat menerima salah satu tawaran kerja yang memenuhi kebutuhannya atau pulang dengan rencana lanjutan. Pemain juga dapat menyetujui kontrak yang membatasi kebebasannya setelah melewati peringatan yang jelas. Mulai hari ke-4 (setelah tawaran Akses Prima masuk) atau pada hari ke-7, pemain dapat menjalankan satu sesi persiapan akhir (*Kemas barang & siapkan jawaban*) kapan saja ketika sudah siap mengunci keputusan, tanpa dipaksa menunggu hingga larut malam hari ketujuh.
 
-Tujuan selama permainan adalah menyiapkan bukti kemampuan, menjaga ruang untuk pemulihan, mengikuti interview, dan mencari informasi sebelum menyetujui tawaran. Tidak semua aktivitas harus dilakukan untuk mencapai penutup yang utuh. Menghabiskan tujuh hari tanpa melamar tetap menghasilkan ending dengan konsekuensi naratif yang sesuai.
+Tujuan selama permainan adalah menyiapkan bukti kemampuan, menjaga ruang untuk pemulihan agar Tekanan tetap terkendali, mengikuti interview tepat waktu, dan memeriksa informasi sebelum menyetujui tawaran. Tidak semua aktivitas harus dilakukan untuk mencapai penutup yang utuh. Melewati minggu tanpa melamar tetap menghasilkan ending dengan konsekuensi naratif yang sesuai.
 
 ### 2.2 Core Loop
 
-Pemain bangun di kamar kos, membaca pesan atau perubahan pada papan hari, lalu memilih satu aktivitas untuk sesi berjalan. Eksplorasi, membaca, dan memeriksa benda tidak memajukan sesi. Aktivitas yang menggunakan waktu selalu memiliki panel konfirmasi.
+Pemain bangun di kamar kos pada pukul `08:00` (`Pagi`), membaca pesan baru atau pengingat satu baris pada HUD, lalu memilih aktivitas di kamar atau laptop. Eksplorasi, membaca, membuka pintu/saklar, dan memeriksa benda **tidak memajukan waktu**. Aktivitas yang membutuhkan waktu selalu memperlihatkan durasi jam serta perubahan Tenaga/Tekanan sebelum dikonfirmasi.
 
-Pengenalan dilakukan bertahap: membaca E0 secara gratis, membuka lalu membatalkan panel aktivitas, menyelesaikan satu aktivitas pilihan, melihat pergantian sesi, menyusun CV, lalu meninjau panel pengiriman. Pemain boleh menunda lamaran; urutan pengenalan tidak memaksa pengiriman atau menghabiskan sesi tambahan. Penjelasan snapshot muncul sebelum pengiriman pertama dan dapat dibaca kembali di Catatan.
+Pengenalan dilakukan bertahap tanpa mengunci kebebasan pemain: membaca E0 secara gratis, membuka lalu membatalkan panel aktivitas, menyelesaikan satu aktivitas pilihan, melihat pergeseran jam dan pencahayaan, menyusun CV, lalu meninjau panel pengiriman. Penjelasan snapshot muncul sebelum pengiriman pertama dan dapat dibaca kembali di Catatan.
 
-Setelah aktivitas selesai, pemain melihat perubahan kondisi dan hasilnya. Jadwal berpindah dari pagi ke siang, kemudian malam. Setelah sesi malam, pemain menutup hari melalui kasur. Tidur tidak menghabiskan sesi tambahan. Pada hari tertentu, perubahan ruang terjadi sebelum sesi berikutnya terbuka.
+Waktu bergerak secara diskret sesuai durasi tiap aktivitas (`1`, `2`, atau `3 jam`), tanpa hitung mundur real-time yang memburu pemain. Suasana ruang (`Pagi`, `Siang`, `Malam`) otomatis mengikuti jam berjalan: `Pagi` (`08:00–11:59`), `Siang` (`12:00–17:59`), dan `Malam` (`18:00–22:00`). Mulai pukul `18:00` (`Malam`), pemain boleh menutup hari kapan saja melalui kasur (*Tidur / Tutup hari*), dan pada pukul `22:00` aktivitas berdurasi ditutup hingga pemain tidur. Jika Tekanan mencapai ambang `5–6` sesudah suatu aktivitas, Retakan Ruang yang tersedia untuk babak tersebut langsung aktif; jika pemain menjaga Tekanan tetap `≤ 4`, Retakan tidak terjadi.
 
 ```mermaid
 flowchart TD
-    A[Awal hari dan pesan baru] --> B[Eksplorasi kamar atau laptop]
-    B --> C[Pilih aktivitas dan baca biayanya]
-    C --> D[Konfirmasi satu sesi]
-    D --> E[Hasil aktivitas dan pemeriksaan tekanan]
-    E --> F{Peristiwa ruang terjadwal?}
-    F -->|Ya| G[Selesaikan Retakan Ruang]
-    F -->|Tidak| H{Sesi malam selesai?}
-    G --> H
-    H -->|Belum| B
-    H -->|Sudah, hari 1 sampai 6| I[Tidur dan mulai hari berikutnya]
+    A[Bangun 08:00 Pagi dan cek pengingat HUD] --> B[Eksplorasi kamar, kamar mandi, atau laptop gratis]
+    B --> C[Pilih aktivitas dan lihat durasi jam serta biaya stat]
+    C --> D[Konfirmasi aktivitas dan jalankan]
+    D --> E[Jam maju, suasana Pagi/Siang/Malam & stat diperbarui, simpan checkpoint]
+    E --> F{Tekanan >= 5 & Retakan tersedia?}
+    F -->|Ya| G[Selesaikan Retakan Ruang -> Tekanan turun ke 3]
+    F -->|Tidak| H{Tekanan == 6 & belum Jeda hari ini?}
+    H -->|Ya| J1[Jeda singkat -> Tekanan turun ke 4]
+    H -->|Tidak| K{Final Prep / Hari 7 selesai?}
+    G --> K
+    J1 --> K
+    K -->|Belum & belum tidur| B
+    K -->|Tidur mulai 18:00 atau jam 22:00, Hari 1-6| I[Tidur -> Hari berikut 08:00]
     I --> A
-    H -->|Sudah, hari 7| J[Keputusan akhir dan epilog]
+    K -->|Kemas barang & siapkan jawaban selesai| J[Keputusan akhir dan epilog]
 ```
 
-Target pembagian durasi adalah sekitar lima menit pengenalan, 25-35 menit rutinitas serta keputusan, 6-9 menit untuk tiga Retakan Ruang, dan 5-8 menit penutup. Sebagian pemain dapat selesai lebih cepat karena tidak ada waktu tunggu wajib pada teks.
+Target pembagian durasi adalah sekitar lima menit pengenalan, 25-35 menit rutinitas serta keputusan, 0-9 menit untuk Retakan Ruang sesuai manajemen Tekanan pemain, dan 5-8 menit penutup. Sebagian pemain dapat selesai lebih cepat karena tidak ada waktu tunggu wajib pada teks maupun kewajiban menunggu malam hari ketujuh.
 
 ### 2.3 Game Progression and Play Flow
 
 | Day | Perkembangan utama | Pilihan yang ditekankan |
 | --- | --- | --- |
-| 1 | Raka membaca pesan ibu, mengenali bekal, dan membuka lowongan Studio Lajur | Menyiapkan bukti atau langsung mengirim klaim yang belum siap |
-| 2 | Penolakan lama muncul kembali; Retakan Ruang pertama berlangsung | Memisahkan riwayat penolakan dari fakta tentang proyek yang pernah selesai |
-| 3 | Revisi kedua portofolio tersedia; Koperasi Pijar membuka lowongan | Memilih waktu belajar, pemulihan, dan lamaran berikutnya |
-| 4 | Pesan Akses Prima datang; Retakan Ruang kedua berlangsung | Memeriksa tawaran yang terdengar paling mudah |
-| 5 | Batas lamaran Koperasi Pijar berakhir; Catatan mengajak meninjau hal yang belum jelas pada tawaran | Memeriksa pendampingan, lembur, atau kelanjutan kontrak; jika belum ada tawaran, meninjau bukti dan kesempatan yang tersisa |
-| 6 | Interview terakhir jika terjadwal; pesan ibu tentang tiket hadir sejak pagi; Retakan ketiga; perbandingan pilihan di Catatan | Menghubungkan syarat kerja dengan kebutuhan Raka dan membedakan pesan nyata dari tuntutan yang dibayangkan |
-| 7 | Ibu menanyakan jadwal keberangkatan atau rencana tinggal; Raka menyiapkan jawaban terakhir | Memilih satu batas kerja untuk A/B atau satu langkah setelah pulang, lalu mengunci keputusan pada malam hari |
+| 1 | Raka membaca pesan ibu, mengenali bekal, dan membuka lowongan Studio Lajur; Retakan 1 terbuka bila Tekanan ≥ 5 | Menyiapkan bukti E1 atau langsung mengirim klaim yang belum siap |
+| 2 | Penolakan lama kembali dibahas di inbox; interview pertama bila sudah melamar Hari 1 | Mengelola jadwal pukul `13:00` serta menjaga Tenaga dan Tekanan |
+| 3 | Revisi kedua portofolio (E2) tersedia; Koperasi Pijar membuka lowongan; Retakan 2 terbuka bila Tekanan ≥ 5 | Membagi jam harian antara belajar, pemulihan (termasuk Mandi), dan lamaran B |
+| 4 | Pesan Akses Prima datang pagi hari; sesi persiapan akhir (*Kemas barang & siapkan jawaban*) mulai tersedia bila pemain siap menutup cerita lebih awal | Memeriksa tawaran yang terdengar paling mudah vs melanjutkan persiapan |
+| 5 | Batas lamaran Koperasi Pijar berakhir (`22:00`); Ibu mengirim pesan bahwa tiket tetap boleh dipakai (membuka jangkar Retakan 3 bila Tekanan ≥ 5) | Meninjau pendampingan, lembur, atau kelanjutan kontrak |
+| 6 | Interview terakhir jika terjadwal (`13:00`); perbandingan pilihan di Map Tawaran & Catatan | Menghubungkan syarat kerja dengan kebutuhan Raka |
+| 7 | Batas akhir masa sewa sebelum keberangkatan pagi Hari 8; Ibu menanyakan jawaban terakhir | Menjalankan sesi persiapan akhir (*Kemas barang & siapkan jawaban*) kapan saja hari ini untuk mengunci keputusan |
 
 Urutan informasi utama tetap. Dialog, isi map lamaran, dan tampilan kamar menyesuaikan riwayat aktivitas. Tidak ada rotasi lowongan acak atau cabang yang memerlukan level baru.
 
-Pesan hari 5-7 memakai tiga konteks: dua tawaran resmi, satu tawaran resmi, atau belum ada tawaran resmi. Semua tampil melalui Pesan dan Catatan yang sudah ada. Ajakan meninjau syarat tidak menahan informasi penting sampai hari tersebut; hasil verifikasi tetap dapat diperoleh lebih awal. Pembacaan dan perbandingan gratis sesi. Sesi yang tersisa tetap dapat dipakai untuk pemulihan, dengan teks singkat pada pengulangan agar pemain tidak mengulang percakapan panjang.
+Pesan hari 5-7 memakai tiga konteks: dua tawaran resmi, satu tawaran resmi, atau belum ada tawaran resmi. Semua tampil melalui Pesan dan Catatan yang sudah ada. Ajakan meninjau syarat tidak menahan informasi penting sampai hari tersebut; hasil verifikasi tetap dapat diperoleh lebih awal. Pembacaan dan perbandingan gratis waktu.
 
 ### 2.4 Mission, Challenge, and Puzzle Structure
 
-Tantangan pengelolaan waktu menggunakan 21 sesi. Menyelesaikan dua bukti, dua verifikasi, dua lamaran, dan dua interview memerlukan delapan sesi; memeriksa Akses Prima menambah satu sesi. Pemain dapat memperoleh kedua tawaran resmi sejak hari 4. Hari 5-7 berfokus pada memahami syarat, kebutuhan pribadi, dan jawaban akhir. Playtest mencatat apakah sesi setelah persiapan selesai masih terasa berguna. Persiapan tidak menuntut penguasaan bahasa pemrograman secara nyata.
+Tantangan pengelolaan waktu menggunakan jendela jam harian `08:00–22:00` (14 jam per hari) selama maksimal 7 hari. Setiap aktivitas memiliki durasi wajar (`1–3 jam`) sehingga pemain merasakan bobot waktu yang alami: pekerjaan portofolio butuh `3 jam`, verifikasi/lamaran/interview butuh `2 jam`, sedangkan pemulihan singkat seperti Mandi, Duduk tanpa layar, atau Rapikan meja hanya `1 jam`. Pemain dapat menyelesaikan seluruh persiapan inti sejak hari 4 dan langsung memilih sesi persiapan akhir (*Kemas barang & siapkan jawaban*) bila sudah mantap, atau memanfaatkan hari 5–7 untuk verifikasi, pemulihan, dan menimbang pilihan. Persiapan tidak menuntut penguasaan bahasa pemrograman secara nyata.
 
 Tantangan lamaran menghubungkan satu klaim CV dengan hasil kerja yang dapat ditunjukkan. Pemain boleh memilih kalimat berlebihan, tetapi game memperlihatkan ketidaksesuaian tersebut dan menyediakan kesempatan untuk meluruskannya saat interview. Tidak ada hukuman blacklist lintas perusahaan.
 
 Tantangan kontrak meminta pemain menelusuri empat aspek: tugas, kompensasi, jam kerja, dan dokumen pribadi. Tawaran resmi juga harus dibaca; label perusahaan bukan jaminan otomatis.
 
-Tiga puzzle Retakan Ruang menggunakan benda yang telah diperkenalkan. Pemain membawa satu benda ke titik jangkar yang sesuai. Tidak ada kode acak, musuh, batas waktu, atau kematian. Kegagalan menempatkan benda hanya menghasilkan petunjuk. Ketegangan berasal dari ruang yang tidak masuk akal, bukan ancaman kehilangan progres.
+Tiga puzzle Retakan Ruang bersifat **berbasis Tekanan (`Tekanan ≥ 5`)** dan menggunakan benda nyata yang telah diperkenalkan. Pemain membawa satu benda ke titik jangkar yang sesuai memakai tombol `E`. Tidak ada kode acak, musuh, batas waktu, atau kematian. Kegagalan menempatkan benda hanya menghasilkan petunjuk. Menjaga Tekanan tetap `≤ 4` melalui istirahat, mandi, dan dukungan sosial memungkinkan pemain mencegah Retakan terjadi; sebaliknya, memaksakan ritme kerja hingga Tekanan tinggi memunculkan Retakan sebagai momen refleksi interaktif yang menurunkan Tekanan kembali ke 3.
 
 ### 2.5 Example Play Session
 
-Pada pagi hari ketiga, Raka memiliki Tenaga 3 dan Tekanan 2. Pemain menyelesaikan bukti kedua: Tenaga menjadi 2, Tekanan menjadi 3, dan sesi berganti ke siang. Pemain kemudian memeriksa Koperasi Pijar: Tenaga menjadi 1, Tekanan tetap 3. Pada malam hari, pemain mengirim lamaran dengan dua bukti: Tenaga menjadi 0 dan Tekanan menjadi 4. Interview dicatat untuk siang hari keempat.
+Pada Hari 3 pukul `08:00` (`Pagi`), Raka memiliki Tenaga 3 dan Tekanan 2. Pemain menyelesaikan bukti kedua E2 (`3 jam`, `08:00 → 11:00`): Tenaga menjadi 2, Tekanan menjadi 3 (suasana mulai menegang). Pemain lalu memeriksa Koperasi Pijar (`2 jam`, `11:00 → 13:00`, suasana berganti ke `Siang`): Tenaga menjadi 1, Tekanan tetap 3. Pemain kemudian mengirim lamaran Koperasi Pijar (`2 jam`, `13:00 → 15:00`): Tenaga menjadi 0, Tekanan menjadi 4, dan interview dicatat untuk Hari 4 pukul `13:00`.
 
-Setelah tidur, Raka memulai hari keempat dengan Tenaga 2 dan Tekanan 3. Pemain masih mempunyai sesi pagi untuk beristirahat sebelum interview. Tidak ada peluang acak yang menentukan diterima atau ditolaknya lamaran.
+Karena Tekanan sudah 4 dan Tenaga 0, pemain memilih **Mandi** di kamar mandi dalam (`1 jam`, `15:00 → 16:00`): Tenaga pulih menjadi 2 dan Tekanan turun drastis ke 1—menjaga Raka tetap jauh dari ambang Retakan `5`. Pada pukul `18:00` (`Malam`), pemain bisa langsung memilih **Tidur / Tutup hari** di kasur (`Tenaga +2, Tekanan −1`) untuk memulai Hari 4 pukul `08:00` dengan Tenaga 4 dan Tekanan 0, siap menghadapi interview pukul `13:00`. Tidak ada peluang acak yang menentukan diterima atau ditolaknya lamaran.
 
 ## 3. Mechanics
 
@@ -155,19 +158,19 @@ Setelah tidur, Raka memulai hari keempat dengan Tenaga 2 dan Tekanan 3. Pemain m
 
 | State | Rentang atau bentuk | Nilai awal | Fungsi |
 | --- | --- | --- | --- |
-| `day` | 1-7 | 1 | Mengatur peristiwa dan batas lamaran |
-| `session` | Pagi, Siang, Malam | Pagi | Menentukan aktivitas yang sedang tersedia |
-| `sessionResolved` | Benar atau salah | Salah | Menandai bahwa aktivitas sesi berjalan sudah selesai; malam yang selesai hanya dapat ditutup melalui kasur |
+| `day` | 1-7 | 1 | Mengatur batas lamaran, pesan harian, dan batas maksimal sewa |
+| `currentHour` | Bilangan bulat `8`–`22` (`08:00`–`22:00`) | `8` (`08:00`) | Waktu harian diskret; hanya maju saat aktivitas selesai |
+| `timeOfDay` / `session` | `Pagi` (`08–11`), `Siang` (`12–17`), `Malam` (`18–22`) | `Pagi` | Status suasana & pencahayaan lingkungan yang diturunkan otomatis dari `currentHour` |
 | `energy` / Tenaga | Bilangan bulat 0-4 | 3 | Biaya aktivitas yang memerlukan konsentrasi |
-| `pressure` / Tekanan | Bilangan bulat 0-6 | 1 | Mengatur intensitas atmosfer dan kebutuhan jeda |
+| `pressure` / Tekanan | Bilangan bulat 0-6 | 1 | Mengatur intensitas atmosfer, pemicu Retakan Ruang (`≥ 5`), dan Jeda cadangan (`6`) |
 | `evidence` | Himpunan kartu E0, E1, E2 | E0 | Menyimpan seluruh bukti yang dimiliki; E1/E2 ditambahkan tanpa menghapus E0 |
 | `cvDraft` | Dua klaim dan daftar bukti terpasang | Klaim sesuai peran awal; bukti lamaran kosong | Draf yang dapat diedit tanpa mengubah snapshot terkirim |
-| `application[A,B]` | Belum dikirim, terjadwal, ditolak, ditawari | Belum dikirim | Status dua lamaran resmi; menarik pilihan tidak menghapus tawaran |
+| `application[A,B]` | Belum dikirim, terjadwal (`13:00`), ditolak, ditawari | Belum dikirim | Status dua lamaran resmi; menarik pilihan tidak menghapus tawaran |
 | `verification[A,B,C]` | Belum diperiksa atau diperiksa | Belum diperiksa | Kelengkapan catatan tawaran |
 | `offerChoice` | Tidak ada, A, B, C | Tidak ada | Pilihan sementara sebelum keputusan final |
-| `decisionNote` | Belum dipilih atau satu catatan sesuai pilihan final | Belum dipilih | Batas kerja A/B atau langkah setelah pulang; tidak menentukan kelayakan tawaran |
-| `riftSolved[1..3]` | Benar atau salah | Semua salah | Progres tiga perubahan ruang |
-| Daily flags | Sudah merapikan, sudah jeda otomatis | Salah | Membatasi aksi sekali per hari |
+| `decisionNote` | Belum dipilih atau satu catatan sesuai pilihan final | Belum dipilih | Batas kerja A/B atau langkah setelah pulang; dapat diatur sebelum atau saat panel final |
+| `riftSolved[1..3]` | Benar atau salah | Semua salah | Progres tiga Retakan Ruang berbasis Tekanan |
+| Daily flags | `deskTidiedToday`, `showeredToday`, `jedaTriggeredToday`, `ditaCalledToday`, `riftTriggeredToday` | Salah | Membatasi aksi sekali per hari dan maksimal satu Retakan per hari |
 
 Nilai Tenaga dan Tekanan selalu dibatasi pada rentangnya setelah perubahan. Tidak ada penurunan stat karena pemain berdiam diri, membaca lambat, membuka menu, atau menjelajahi kamar. Keahlian yang sudah dibuktikan tidak hilang akibat beristirahat.
 
@@ -179,39 +182,46 @@ Raka memiliki persediaan kebutuhan dasar untuk tujuh hari dan tiket pulang yang 
 
 ### 3.2 Time, Scheduling, and Resolution Order
 
-Setiap aktivitas pada tabel 3.3 menghabiskan tepat satu sesi. Sebelum konfirmasi, panel menyebutkan nama aktivitas, perubahan kondisi, serta sesi setelahnya. Membatalkan panel tidak mengubah apa pun.
+Setiap aktivitas pada tabel 3.3 memajukan jam harian (`currentHour`) sesuai durasinya (`1`, `2`, atau `3 jam`). Jam tidak berjalan otomatis saat pemain berjalan, membaca, atau membuka menu. Sebelum konfirmasi, panel menyebutkan nama aktivitas, durasi serta jam selesai, perubahan kondisi, dan peringatan jika berpotensi memicu Retakan Ruang atau melewati jadwal interview. Membatalkan panel tidak mengubah apa pun.
 
-Urutan penyelesaian adalah: validasi syarat, jalankan interaksi aktivitas, terapkan biaya dan hasil satu kali, periksa kebutuhan Jeda, jalankan Retakan Ruang terjadwal, pindahkan sesi, lalu simpan checkpoint. Biaya dipastikan melalui konfirmasi sebelum interaksi dimulai. Setelah konfirmasi, aktivitas harus diselesaikan atau diulang dari checkpoint jika pemain keluar; percobaan jawaban di dalam aktivitas tidak membeli sesi lagi.
+Suasana ruang (`Pagi`, `Siang`, `Malam`) selalu mengikuti `currentHour`:
+- **Pagi (`08:00–11:59`)**: Cahaya hangat dari jendela.
+- **Siang (`12:00–17:59`)**: Cahaya netral merata.
+- **Malam (`18:00–22:00`)**: Intensitas redup; pemain mulai bisa memilih **Tidur / Tutup hari** di kasur kapan saja.
 
-Saat hasil diterapkan, `sessionResolved` menjadi Benar. Setelah aktivitas pagi atau siang beserta peristiwanya selesai, sesi berpindah dan flag kembali Salah. Setelah aktivitas malam, sesi tetap Malam dan flag tetap Benar; semua tombol aktivitas satu sesi tidak aktif dengan keterangan Malam sudah selesai. Pemain masih dapat membaca, mengedit CV, dan meninjau tawaran. Tidur memulai hari berikutnya dengan sesi Pagi, flag sesi Salah, serta flag harian yang direset. Pada malam ketujuh, kasur membuka keputusan final, bukan hari kedelapan.
+Urutan penyelesaian adalah: validasi syarat & kecukupan waktu sebelum `22:00`, jalankan interaksi aktivitas, terapkan biaya stat (delta dijumlahkan sebelum pembatasan rentang) & majukan jam, simpan checkpoint stabil, lalu periksa pemicu **Retakan Ruang** (`Tekanan ≥ 5` & ada Retakan belum selesai yang sudah terbuka dan belum terjadi hari ini); jika tidak memicu Retakan, periksa **Jeda cadangan** (`Tekanan == 6` & belum Jeda hari ini). Menyimpan checkpoint sebelum Retakan memastikan keluar saat Retakan hanya mengulang Retakan, bukan menghapus interview yang baru selesai.
 
-Tidur pada akhir hari 1-6 menambah Tenaga 2 dan mengurangi Tekanan 1. Tidak ada aktivitas lembur. Pemain yang ingin mengakhiri hari lebih cepat harus memilih aktivitas pemulihan untuk sesi yang tersisa; tidak ada tombol yang diam-diam melewati jadwal interview.
+Pada pukul `22:00`, hari mencapai batas larut malam: tombol aktivitas berdurasi biasa dinonaktifkan dengan keterangan `Sudah larut malam (22:00). Gunakan kasur untuk tidur.`, sementara aktivitas gratis (membaca, menyusun CV, meninjau Map Tawaran) serta sesi persiapan akhir (`Kemas barang & siapkan jawaban`) tetap tersedia. Tidur pada Hari 1–6 (tersedia sejak `18:00`) memulai hari berikutnya pada `08:00` (`Pagi`), menambah Tenaga `+2`, mengurangi Tekanan `−1`, dan mereset flag harian. Pada Hari 7 mulai `18:00` (atau kapan saja lewat Tas/Map Tawaran), kasur mengarahkan pemain ke sesi persiapan akhir (*Kemas barang & siapkan jawaban*) lalu panel Keputusan Akhir, bukan hari kedelapan.
 
-Interview selalu memakai sesi siang hari setelah lamaran dikirim. Pemain boleh melakukan aktivitas lain pada sesi tersebut setelah menyetujui peringatan bahwa undangannya akan terlewat. Interview yang terlewat berstatus ditolak dan menaikkan Tekanan 1 di samping efek aktivitas penggantinya, sebelum pemeriksaan Jeda. Tidak ada penolakan ganda untuk undangan yang sama.
+Interview selalu dijadwalkan pada hari setelah lamaran dikirim pukul **`13:00` (`Siang`)** dengan durasi `2 jam` (selesai `15:00`). Pada hari interview, selama `currentHour ≤ 13:00`, tombol `Ikuti interview` langsung tersedia—jika diklik sebelum `13:00`, Raka menunggu hingga `13:00` lalu menjalani interview hingga `15:00`. Pemain tetap bebas menjalankan aktivitas pagi lain selama selesai `≤ 13:00`. Jika pemain memilih aktivitas yang melampaui `13:00`, panel menampilkan peringatan bahwa undangan akan terlewat; jika dilanjutkan, interview berstatus ditolak dan menambah Tekanan `+1` (dijumlahkan bersama efek aktivitas pengganti sebelum pemeriksaan Retakan/Jeda). Tidak ada penolakan ganda untuk undangan yang sama.
 
-Panel pengiriman mencantumkan Interview besok siang: perlu Tenaga 1. Pada awal pagi hari interview, kartu jadwal mengulang syarat itu bersama Tenaga saat ini agar pemain sempat memulihkan kondisi. Pada Tenaga 0 di sesi interview, pilihan pemulihan tetap tersedia dengan peringatan bahwa undangan akan terlewat. Tidak ada pemindahan jadwal otomatis.
+Panel pengiriman mencantumkan `Interview besok pukul 13:00: perlu Tenaga 1`. Pada awal pagi hari interview (`08:00`), pengingat HUD dan kartu jadwal mengulang syarat itu bersama Tenaga saat ini agar pemain sempat memulihkan kondisi (misalnya `Mandi` 1 jam atau `Beristirahat` 2 jam) sebelum `13:00`. Tidak ada pemindahan jadwal otomatis.
 
 ![Kalender, Pergantian Sesi, dan Tidur](visuals/14-calendar-sleep.jpg)
 
 ### 3.3 Actions
 
-| Action | Lokasi | Tenaga | Tekanan | Syarat dan hasil |
-| --- | --- | --- | --- | --- |
-| Rapikan contoh antarmuka | Meja/laptop | −1 | +1 | Sekali; menghasilkan E1 |
-| Lengkapi catatan pengujian | Meja/laptop | −1 | +1 | Mulai hari 3, sudah memiliki E1; sekali; menghasilkan E2 |
-| Periksa perusahaan | Laptop | −1 | 0 | Sekali per perusahaan; membuka ringkasan verifikasi |
-| Kirim lamaran | Laptop | −1 | +1 | Sekali untuk A dan sekali untuk B selama jendela lamaran; menyimpan snapshot CV dan jadwal |
-| Ikuti interview | Laptop | −1 | +2 | Hanya pada undangan yang sesuai; dua pertanyaan dan hasil langsung |
-| Beristirahat | Kasur | +3 | −2 | Selalu tersedia, dapat diulang |
-| Hubungi Dita | Ponsel di meja | +2 | −2 | Selalu tersedia; percakapan pertama tiap hari berbeda, pengulangan memakai teks singkat |
-| Duduk tanpa layar | Kursi dekat jendela | +2 | −2 | Selalu tersedia; animasi singkat yang dapat dilewati |
-| Rapikan meja | Meja fisik | +1 | −1 | Maksimal sekali sehari; mengganti susunan benda, tidak memengaruhi penilaian interview |
+Setiap objek utama di `progress.unity` memiliki satu fungsi jelas agar antarmuka tidak tumpang tindih:
 
-Aktivitas dengan biaya Tenaga 1 memerlukan Tenaga minimal 1. Pemain selalu dapat berjalan dan memilih aktivitas pemulihan pada Tenaga 0. Tidak ada pingsan atau penguncian semua pilihan.
+| Action | Lokasi (`progress.unity`) | Durasi | Tenaga | Tekanan | Syarat dan hasil |
+| --- | --- | --- | --- | --- | --- |
+| Rapikan contoh antarmuka | Papan Bukti (`SM_Papan_Bukti`) | 3 jam | −1 | +1 | Sekali; menghasilkan E1 |
+| Lengkapi catatan pengujian | Papan Bukti (`SM_Papan_Bukti`) | 3 jam | −1 | +1 | Mulai Hari 3, sudah memiliki E1; sekali; menghasilkan E2 |
+| Periksa perusahaan | Laptop (`SM_Laptop`) | 2 jam | −1 | 0 | Sekali per perusahaan (A/B/C) setelah dibuka; membuka ringkasan verifikasi |
+| Kirim lamaran | Laptop (`SM_Laptop`) | 2 jam | −1 | +1 | Sekali untuk A (Hari 1–3) & B (Hari 3–5); menyimpan snapshot CV & jadwal interview besok `13:00` |
+| Ikuti interview | Laptop (`SM_Laptop`) | 2 jam | −1 | +2 | Hari interview saat `jam ≤ 13:00` (berjalan `13:00–15:00`); dua pertanyaan & hasil langsung (ditolak = +1 Tekanan) |
+| Beristirahat | Kasur (`SM_Kasur`) | 2 jam | +3 | −2 | Tersedia `08:00–17:59` (Pagi–Siang), dapat diulang; pemulihan Tenaga terbesar |
+| Mandi | Kamar Mandi (`SM_Shower` / `SM_Bak_Mandi`) | 1 jam | +2 | −3 | Maksimal sekali sehari; pemulihan Tekanan terbesar |
+| Hubungi / Temui Dita | Kamar Dita 06 (`SM_Kamar_Kiri` di seberang lorong) / Ponsel (`SM_Ponsel`) | 2 jam | +2 | −2 | Selalu tersedia; percakapan tatap muka atau pesan harian berbeda, pengulangan memakai teks singkat |
+| Duduk tanpa layar | Kursi jendela (`SM_Kursi_Jendela`) | 1 jam | +2 | −2 | Selalu tersedia; pengamatan singkat yang dapat dilewati |
+| Rapikan meja | Meja fisik (`SM_Meja`) | 1 jam | +1 | −1 | Maksimal sekali sehari; mengganti susunan benda, tidak memengaruhi penilaian interview |
+| Kemas barang & siapkan jawaban | Tas / Map Tawaran (`SM_Tas` / `SM_Map_Tawaran`) | 2 jam | 0 | 0 | Mulai Hari 4 (atau kapan saja di Hari 7, tidak diblokir batas `22:00`); membuka panel Keputusan Akhir |
 
-Beristirahat pada siang hari adalah aktivitas pemulihan satu sesi, berbeda dengan tidur penutup hari. Mengulang aktivitas pemulihan sah; pemain menerima konsekuensi berupa berkurangnya kesempatan menyiapkan lamaran, bukan pengurangan kecerdasan atau penilaian moral.
+Aktivitas dengan biaya Tenaga 1 memerlukan Tenaga minimal 1. Pemain selalu dapat berjalan dan memilih aktivitas pemulihan pada Tenaga 0. Tidak ada pingsan atau penguncian semua pilihan. Mulai pukul `18:00` (`Malam`), `SM_Kasur` menawarkan **Tidur / Tutup hari** (bukan `Beristirahat`) agar penutupan malam berlangsung mulus dalam satu langkah tanpa tidur siang tepat sebelum tidur malam.
 
-Panel pemulihan menyebut pengalaman yang menyertai angka: Beristirahat memulihkan Tenaga paling banyak; Hubungi Dita menawarkan percakapan pertama hari itu; Duduk tanpa layar memberi pengamatan singkat; Rapikan meja memperlihatkan perubahan benda. Percakapan Dita memakai satu teks dasar per hari dengan sisipan pendek sesuai hasil lamaran. Duduk memakai tiga pengamatan untuk awal, tengah, dan akhir minggu; merapikan meja memakai dua catatan benda. Pengulangan memakai respons singkat tanpa membuka syarat kerja atau bantuan eksklusif. Semua aktivitas tetap memakai biaya dan hasil pada tabel.
+Mengulang aktivitas pemulihan sah dan secara aktif membantu mencegah Retakan Ruang; konsekuensinya berupa berkurangnya jam harian untuk menyiapkan lamaran, bukan pengurangan kecerdasan atau penilaian moral.
+
+Panel pemulihan menyebut pengalaman yang menyertai angka: Beristirahat memulihkan Tenaga paling banyak; Mandi memulihkan Tekanan paling besar sekali sehari; Hubungi Dita menawarkan percakapan pertama hari itu; Duduk tanpa layar memberi pengamatan singkat; Rapikan meja memperlihatkan perubahan benda (meja kembali berantakan saat hari berganti atau setelah pekerjaan bukti E1/E2). Percakapan Dita memakai satu teks dasar per hari dengan sisipan pendek sesuai hasil lamaran. Duduk memakai tiga pengamatan untuk awal, tengah, dan akhir minggu; merapikan meja memakai dua catatan benda; mandi memakai catatan kesegaran singkat. Pengulangan memakai respons singkat tanpa membuka syarat kerja atau bantuan eksklusif.
 
 Animasi hasil aktivitas berdurasi sekitar 2-4 detik dan bisa dilewati setelah hasil logis diterapkan. Pilihan singkat dalam pekerjaan E1/E2 dijelaskan pada bagian 3.5 dan tidak memakai batas waktu. Melewati animasi tidak mengubah hasil.
 
@@ -219,19 +229,23 @@ Animasi hasil aktivitas berdurasi sekitar 2-4 detik dan bisa dilewati setelah ha
 
 ![Aktivitas Fisik di Kamar](visuals/24-room-activities.jpg)
 
-### 3.4 Pressure and the Jeda Sequence
+### 3.4 Pressure, Retakan Trigger, and Jeda Fallback
 
-Pada Tekanan 0-3, benda memiliki posisi normal dan suara kamar terdengar utuh. Pada Tekanan 4-5, bayangan kusen bergeser sedikit dan suara notifikasi memiliki ekor gema pendek. Teks, jalur jalan, dan objek penting tetap jelas. Perubahan struktural hanya terjadi pada Retakan Ruang terjadwal.
+Tekanan (`0–6`) menjadi mekanik inti yang menggerakkan atmosfer kamar sekaligus memicu **Retakan Ruang**:
 
-Jika Tekanan mencapai 6, aktivitas selesai lebih dahulu. Permainan kemudian membuka Jeda: Raka dapat duduk sebentar atau mengirim pesan singkat kepada Dita. Keduanya menurunkan Tekanan menjadi 4 dan menetapkan Tenaga menjadi minimal 1. Urutan singkat ini tidak menggunakan sesi dan dapat dilewati melalui tombol Lanjut. Tidak ada latihan pernapasan wajib.
+- **Tekanan 0–2 (Stabil)**: Benda memiliki posisi normal dan suara kamar terdengar utuh.
+- **Tekanan 3–4 (Tegang)**: Bayangan kusen bergeser sedikit, suara lorong meredup, dan notifikasi memiliki ekor gema pendek sebagai peringatan diegetik bahwa Tekanan mendekati ambang Retakan. Teks, jalur jalan, dan objek penting tetap jelas.
+- **Tekanan 5–6 (Ambang Retakan)**: Sesudah aktivitas selesai dan checkpoint tersimpan, jika ada **Retakan Ruang** yang sudah terbuka untuk babak berjalan dan belum terjadi hari ini, permainan langsung memicu Retakan tersebut. Menyelesaikan Retakan menurunkan **Tekanan ke 3** dan menetapkan **Tenaga minimal 1** tanpa menghabiskan jam tambahan.
 
-Jeda otomatis hanya terjadi sekali per hari. Jika Tekanan kembali mencapai 6 pada hari yang sama, nilainya tetap 6 sampai pemain pulih atau tidur; tampilan dan audio mempertahankan perlakuan Tekanan 4-5 tanpa menambah efek baru. Tidak ada pengulangan paksa. Tekanan mengatur suasana serta kesempatan jeda, tanpa menentukan penerimaan kerja, ending, atau ketepatan jawaban. Pratinjau aktivitas menyebut jika Jeda pertama akan aktif; ringkasan akhir menampilkan nilai setelah seluruh akibat aktivitas dan Jeda diselesaikan.
+Jika Tekanan mencapai **6** pada hari yang sama ketika tidak ada Retakan yang memenuhi syarat (sudah pernah mengalami Retakan hari itu, atau seluruh Retakan yang terbuka sudah diselesaikan), permainan membuka **Jeda cadangan**: Raka dapat duduk sebentar atau mengirim pesan singkat kepada Dita. Keduanya menurunkan Tekanan menjadi `4` dan menetapkan Tenaga menjadi minimal `1`, tanpa menggunakan jam dan dapat dilewati lewat tombol `Lanjut`.
+
+Jeda cadangan hanya terjadi sekali per hari. Jika Tekanan kembali mencapai 6 pada hari yang sama setelah Jeda terjadi, nilainya tetap 6 sampai pemain pulih atau tidur; tampilan dan audio mempertahankan perlakuan Tekanan 3–4 tanpa menambah efek baru. Tekanan mengatur suasana, kemunculan Retakan, serta Jeda, **tanpa** menentukan penerimaan kerja, ending, atau ketepatan jawaban. Pratinjau aktivitas menyebut bila aktivitas akan memicu Retakan atau Jeda (dan pada interview menyebut bahwa penolakan `+1 Tekanan` dapat memicu Retakan/Jeda).
 
 ![Tingkat Tekanan dan Jeda](visuals/15-pressure-jeda.jpg)
 
 ### 3.5 Evidence and CV Assembly
 
-Meja Bukti adalah tampilan dekat papan fisik di atas meja. Pemain memilih kartu melalui klik, kemudian memilih penjepit tujuan. Tidak perlu drag-and-drop presisi. Kartu yang dipilih dapat dikembalikan tanpa biaya sesi.
+Meja Bukti adalah tampilan dekat papan fisik di atas meja (`SM_Papan_Bukti`). Pemain memilih kartu melalui klik, kemudian memilih penjepit tujuan. Tidak perlu drag-and-drop presisi. Kartu yang dipilih dapat dikembalikan tanpa biaya waktu.
 
 ![Meja Bukti dan Penyusunan Portofolio](visuals/05-papan-bukti-closeup.webp)
 
@@ -249,7 +263,7 @@ Hasil E1 memperlihatkan perubahan yang dikerjakan Raka. Hasil E2 menyebut tiga k
 
 CV memiliki dua baris klaim. Baris pertama memilih antara membantu pengembangan antarmuka proyek kuliah dan memimpin sistem produksi perusahaan. Baris kedua memilih antara menguji formulir secara manual dan menjamin sistem bebas seluruh kesalahan. Pilihan berlebihan selalu diberi catatan bahwa bukti saat ini tidak mendukungnya. Pemain tetap boleh menggunakannya.
 
-Pemain memasang E1/E2 yang sudah dimiliki dan memilih kalimat klaim. Menyusun, mengganti, atau membaca CV tidak menggunakan sesi. Panel sebelum pengiriman menampilkan perusahaan, kedua klaim, kartu terpasang, bukti wajib yang belum ada, jadwal, serta biaya. Lamaran menyimpan klaim dan bukti pada saat dikirim; perubahan sesudahnya tidak mengubah lamaran yang telah masuk. Riwayat terkirim bersifat baca-saja dan terpisah dari Draf saat ini. Peringatan sebelum konfirmasi menyebut bahwa bukti yang dibuat kemudian tidak ditambahkan ke lamaran lama.
+Pemain memasang E1/E2 yang sudah dimiliki dan memilih kalimat klaim. Menyusun, mengganti, atau membaca CV tidak menghabiskan waktu. Panel sebelum pengiriman menampilkan perusahaan, kedua klaim, kartu terpasang, bukti wajib yang belum ada, jadwal interview (`besok pukul 13:00`), serta biaya waktu dan stat. Lamaran menyimpan klaim dan bukti pada saat dikirim; perubahan sesudahnya tidak mengubah lamaran yang telah masuk. Riwayat terkirim bersifat baca-saja dan terpisah dari Draf saat ini. Peringatan sebelum konfirmasi menyebut bahwa bukti yang dibuat kemudian tidak ditambahkan ke lamaran lama.
 
 Saat interview, pemain boleh mengoreksi seluruh klaim berlebihan melalui satu pilihan pembuka. Koreksi dicatat sebagai penjelasan interview untuk lamaran tersebut; teks asli dalam snapshot tetap tersimpan. Koreksi memenuhi syarat kejujuran tanpa menambahkan bukti yang tidak ikut dikirim. Tidak ada blacklist global, jawaban yang hilang karena stat, atau hukuman terhadap perusahaan lain.
 
@@ -257,21 +271,21 @@ Saat interview, pemain boleh mengoreksi seluruh klaim berlebihan melalui satu pi
 
 ### 3.6 Laptop and Offer Verification
 
-Laptop berisi tiga tab: Lamaran, Pesan, dan Catatan. Lamaran memuat CV, lowongan, serta tabel tawaran. Pesan memuat undangan, hasil, pesan ibu, dan perekrut. Catatan menyimpan bukti serta fakta untuk puzzle. Tidak ada browser bebas atau aplikasi tambahan.
+Laptop berisi tiga tab: Lamaran, Pesan Kerja, dan Catatan. Lamaran memuat CV, lowongan, serta ringkasan tawaran. Pesan Kerja memuat undangan interview, hasil rekrutmen, dan pesan Akses Prima (sedangkan pesan pribadi Ibu dan Dita dapat dibaca lewat Ponsel maupun sinkronisasi ringkas di Catatan). Catatan menyimpan bukti serta fakta untuk puzzle. Tidak ada browser bebas atau aplikasi tambahan.
 
 ![Antarmuka Layar Laptop dan Verifikasi Tawaran](visuals/04-antarmuka-laptop-verifikasi.webp)
 
 ![Pesan, Catatan, dan Kontak Dukungan](visuals/19-messages-notes.jpg)
 
-Membaca iklan dan kontrak tidak menggunakan sesi. Aktivitas Periksa perusahaan tersedia setelah lowongannya dibuka atau pesan tawaran langsung diterima. Satu sesi menampilkan rangkuman profil, kontak pembanding, dan jawaban klarifikasi atas pertanyaan yang tercantum di panel. Seluruhnya berupa konten lokal yang telah ditulis, bukan akses internet sebenarnya. Hasil pemeriksaan dapat dibaca ulang gratis.
+Membaca iklan dan kontrak tidak menghabiskan waktu. Aktivitas Periksa perusahaan tersedia setelah lowongannya dibuka atau pesan tawaran langsung diterima. Aktivitas berdurasi `2 jam` ini menampilkan rangkuman profil, kontak pembanding, dan jawaban klarifikasi atas pertanyaan yang tercantum di panel. Seluruhnya berupa konten lokal yang telah ditulis, bukan akses internet sebenarnya. Hasil pemeriksaan dapat dibaca ulang gratis.
 
 Pemain menandai empat aspek sebagai Jelas, Perlu ditanyakan, atau Berisiko: tugas; kompensasi; jam kerja dan istirahat; perlindungan dokumen pribadi. Penandaan dapat diubah tanpa biaya. Setelah verifikasi, catatan pembanding menunjukkan bagian yang mendukung atau bertentangan dengan penandaan pemain. Game tidak menyembunyikan informasi keselamatan sampai setelah keputusan final.
 
 | Offer | Jendela dan syarat | Isi tawaran fiktif | Hasil verifikasi |
 | --- | --- | --- | --- |
-| A: Studio Lajur, Junior UI Implementer | Lamaran hari 1 pagi sampai hari 3 malam; E1 harus ikut dikirim untuk memenuhi syarat tawaran | Rp4.200.000 per bulan; 40 jam kerja per minggu; dua hari istirahat; uraian tugas antarmuka; dokumen asli tetap dipegang pekerja; jaminan sosial disebutkan tertulis | Profil dan kontak sesuai; pendamping ditetapkan; lembur memerlukan persetujuan dan pencatatan kompensasi |
-| B: Koperasi Pijar, Web Support | Lamaran hari 3 pagi sampai hari 5 malam; E1 dan E2 harus ikut dikirim untuk memenuhi syarat tawaran | Kontrak tiga bulan; Rp3.800.000 per bulan; 35 jam kerja per minggu; dua hari istirahat; tugas pemeliharaan formulir; pendamping; jaminan sosial disebutkan tertulis | Kontak dapat dikonfirmasi; tugas awal dibatasi pada formulir; evaluasi menjelang akhir kontrak tidak menjamin pembaruan; dokumen asli tidak diminta |
-| C: Akses Prima, Operator Digital | Pesan hadir hari 4 pagi; tawaran berlaku sampai hari 7 malam; tanpa lamaran dan interview | Mengiklankan penghasilan sampai Rp12.000.000; jadwal mengikuti kebutuhan; kontrak meminta penyerahan dokumen asli dan membatasi pengunduran diri | Alamat dan kontak tidak konsisten; rincian tugas ditolak; syarat penahanan dokumen tetap dipertahankan |
+| A: Studio Lajur, Junior UI Implementer | Lamaran Hari 1 `08:00` sampai Hari 3 `22:00`; E1 harus ikut dikirim untuk memenuhi syarat tawaran | Rp4.200.000 per bulan; 40 jam kerja per minggu; dua hari istirahat; uraian tugas antarmuka; dokumen asli tetap dipegang pekerja; jaminan sosial disebutkan tertulis | Profil dan kontak sesuai; pendamping ditetapkan; lembur memerlukan persetujuan dan pencatatan kompensasi |
+| B: Koperasi Pijar, Web Support | Lamaran Hari 3 `08:00` sampai Hari 5 `22:00`; E1 dan E2 harus ikut dikirim untuk memenuhi syarat tawaran | Kontrak tiga bulan; Rp3.800.000 per bulan; 35 jam kerja per minggu; dua hari istirahat; tugas pemeliharaan formulir; pendamping; jaminan sosial disebutkan tertulis | Kontak dapat dikonfirmasi; tugas awal dibatasi pada formulir; evaluasi menjelang akhir kontrak tidak menjamin pembaruan; dokumen asli tidak diminta |
+| C: Akses Prima, Operator Digital | Pesan hadir Hari 4 `08:00`; tawaran berlaku sampai keputusan akhir (maksimal Hari 7); tanpa lamaran dan interview | Mengiklankan penghasilan sampai Rp12.000.000; jadwal mengikuti kebutuhan; kontrak meminta penyerahan dokumen asli dan membatasi pengunduran diri | Alamat dan kontak tidak konsisten; rincian tugas ditolak; syarat penahanan dokumen tetap dipertahankan |
 
 Nominal tersebut hanya parameter cerita. Kota tidak mewakili wilayah hukum tertentu. Game tidak menyebut nominal tertentu sebagai upah minimum yang sah dan tidak memeringkat A di atas B berdasarkan gaji atau status kontrak.
 
@@ -279,15 +293,15 @@ Setiap hasil pemeriksaan menampilkan Pernyataan awal dan Jawaban klarifikasi pad
 
 Akses Prima menawarkan penghasilan tinggi, proses cepat, dan janji penempatan sehingga menarik bagi Raka yang ingin segera membawa kabar baik. Drafnya sudah memperlihatkan syarat berisiko sebelum diverifikasi. Pemeriksaan memperlihatkan ketidakjelasan informasi dan kondisi eksploitatif; game tidak menyimpulkan adanya tindak pidana hanya dari satu tanda. Tidak ada negara atau kebangsaan yang dipakai sebagai penanda penipuan.
 
-Lamaran resmi dengan bukti yang belum cukup tetap dapat dikirim dan mendapat undangan karena kedua perusahaan menyediakan sesi penjelasan portofolio dalam cerita. Panel memperingatkan bahwa tawaran tidak dapat diberikan jika bukti wajib tidak ikut dikirim, dan setiap perusahaan hanya menerima satu lamaran. Undangan tidak sama dengan kelulusan. Verifikasi menambah informasi pembanding tanpa menjadi syarat tersembunyi untuk menerima tawaran.
+Lamaran resmi dengan bukti yang belum cukup tetap dapat dikirim dan mendapat undangan karena kedua perusahaan menyediakan kesempatan penjelasan portofolio dalam cerita. Panel memperingatkan bahwa tawaran tidak dapat diberikan jika bukti wajib tidak ikut dikirim, dan setiap perusahaan hanya menerima satu lamaran. Undangan tidak sama dengan kelulusan. Verifikasi menambah informasi pembanding tanpa menjadi syarat tersembunyi untuk menerima tawaran.
 
-Setiap perusahaan resmi hanya menerima satu lamaran dalam rentang cerita. Jika sesi interview besok siang sudah terisi, tombol kirim untuk perusahaan lain tidak aktif dan menjelaskan benturan jadwal. Pemain dapat menunggu hari berikutnya selama jendela lamaran masih terbuka. Tidak ada undangan yang diam-diam menimpa undangan lain.
+Setiap perusahaan resmi hanya menerima satu lamaran dalam rentang cerita. Jika jadwal interview besok pukul `13:00` sudah terisi, tombol kirim untuk perusahaan lain tidak aktif dan menjelaskan benturan jadwal. Pemain dapat menunggu hari berikutnya selama jendela lamaran masih terbuka. Tidak ada undangan yang diam-diam menimpa undangan lain.
 
 ![Rekrutmen, Verifikasi, dan Jadwal Lamaran](visuals/17-recruitment-verification.jpg)
 
 ### 3.7 Interview and Results
 
-Interview memakai potret 2D dengan tiga ekspresi, dialog teks, dan dua pertanyaan. Suara ketikan serta nada sambungan menggantikan kebutuhan voice acting penuh. Tidak ada webcam pemain, kamera sekunder, atau penilaian penampilan kamar.
+Interview menggunakan **NPC 3D beranimasi halus** (Nara untuk Studio Lajur, Bagas untuk Koperasi Pijar) yang ditampilkan pada layar panggilan video laptop melalui *studio booth* tersembunyi di luar ruang kos dan `RenderTexture` `512 × 512`. Kamera panggilan hanya aktif saat interview berlangsung sehingga tidak membebani performa Free Roam. NPC menampilkan gerakan halus (*sit idle*, mengangguk, menyimak, berpikir) bersama dialog teks dan dua pertanyaan; suara ketikan serta nada sambungan menggantikan kebutuhan voice acting penuh. Potret 2D tetap tersedia sebagai cadangan (*fallback*) apabila diperlukan. Tidak ada webcam pemain sungguhan atau penilaian penampilan kamar. Sebaliknya, Admin Akses Prima tetap tampil sebagai avatar geometris tanpa wajah dan tanpa panggilan video untuk mempertegas tanda risiko rekrutmen.
 
 Sebelum pertanyaan pertama, pemain dapat meluruskan klaim CV jika diperlukan. Semua pilihan dialog tetap tampil. Catatan bukti yang dikirim dapat dibuka selama interview tanpa biaya atau batas waktu.
 
@@ -298,25 +312,30 @@ Sebelum pertanyaan pertama, pemain dapat meluruskan klaim CV jika diperlukan. Se
 | B, pertanyaan 1: Apa yang dapat disimpulkan dari catatan pengujianmu? | Menjelaskan tiga kasus E2 dan batas cakupannya / menjelaskan perlunya mengulang pengujian setelah perbaikan tanpa merujuk kasus tercatat / menganggap percobaan data valid cukup untuk menyatakan formulir siap pada semua kondisi | 2 jika E2 dikirim, jika tidak 0 / 1 / 0 |
 | B, pertanyaan 2: Bagaimana kamu memulai pekerjaan pemeliharaan? | Meminta prioritas dan ruang lingkup perbaikan lalu menyebut pemeriksaan dampaknya / meminta satu contoh laporan yang paling mendesak / langsung mengubah setiap laporan sesuai urutan masuk tanpa memastikan prioritas dan dampak | 2 / 1 / 0 |
 
-Perusahaan memberi tawaran jika bukti wajib ada pada snapshot pengiriman, tidak ada klaim berlebihan yang belum dikoreksi, setiap jawaban bernilai minimal 1, dan total dua jawaban minimal 3 dari 4. Semua syarat bersifat deterministik. Tekanan, frekuensi merapikan kamar, dan aktivitas sosial tidak masuk perhitungan.
+Perusahaan memberi tawaran jika bukti wajib ada pada snapshot pengiriman, tidak ada klaim berlebihan yang belum dikoreksi, setiap jawaban bernilai minimal 1, dan total dua jawaban minimal 3 dari 4. Semua syarat bersifat deterministik. Tekanan, frekuensi merapikan kamar, mandi, dan aktivitas sosial tidak masuk perhitungan.
 
-Jika beberapa syarat gagal, alasan utama ditampilkan dengan urutan bukti wajib belum lengkap, klaim belum diluruskan, lalu penjelasan jawaban belum cukup. Catatan hasil menyimpan alasan lain yang juga berlaku tanpa menampilkan nilai angka. Pesan menyebut kebutuhan posisi yang belum ditunjukkan dan langkah yang dapat dicoba pada kesempatan berikutnya. Penolakan menambah Tekanan 1 setelah biaya interview dan sebelum pemeriksaan Jeda. Hasil disimpan satu kali sehingga membuka pesan berulang tidak menambah tekanan.
+Jika beberapa syarat gagal, alasan utama ditampilkan dengan urutan bukti wajib belum lengkap, klaim belum diluruskan, lalu penjelasan jawaban belum cukup. Catatan hasil menyimpan alasan lain yang juga berlaku tanpa menampilkan nilai angka. Pesan menyebut kebutuhan posisi yang belum ditunjukkan dan langkah yang dapat dicoba pada kesempatan berikutnya. Penolakan menambah Tekanan `+1` setelah biaya interview dan sebelum pemeriksaan Retakan/Jeda. Hasil disimpan satu kali sehingga membuka pesan berulang tidak menambah tekanan.
 
 Aturan deterministik hanya berlaku pada dua proses rekrutmen fiktif ini. Pesan Dita mengingatkan bahwa kecocokan posisi, kebutuhan perusahaan, dan jumlah kesempatan juga memengaruhi pencarian kerja. Penolakan lama tidak diberi penjelasan seolah semua terjadi karena kesalahan Raka.
 
-Tawaran A/B yang berhasil diperoleh tetap berlaku sampai malam hari ketujuh. Pemain dapat memilih, mengganti pilihan, atau menarik pilihannya sebelum finalisasi. Menutup panel tanpa memilih bukan penolakan. Penarikan tawaran yang telah dipilih menggunakan konfirmasi, lalu mengembalikan `offerChoice` ke Tidak ada.
+Tawaran A/B yang berhasil diperoleh tetap berlaku sampai keputusan akhir dikunci (mulai Hari 4 hingga batas maksimal Hari 7). Pemain dapat memilih, mengganti pilihan, atau menarik pilihannya sebelum finalisasi. Menutup panel tanpa memilih bukan penolakan. Penarikan tawaran yang telah dipilih menggunakan konfirmasi, lalu mengembalikan `offerChoice` ke Tidak ada.
 
 ![Sesi Interview dan Hasil Rekrutmen](visuals/18-interview-results.jpg)
 
 ### 3.8 Retakan Ruang
 
-Retakan terjadi sesudah aktivitas siang pada hari 2, 4, dan 6, termasuk jika aktivitasnya adalah pemulihan atau interview. Retakan tidak menggunakan sesi, tidak menaikkan Tekanan, dan tidak mengubah hasil rekrutmen. Cerita menyajikannya sebagai pengalaman subjektif Raka, tanpa diagnosis atau penjelasan supernatural yang pasti.
+Retakan Ruang dipicu **murni oleh Tekanan (`Tekanan ≥ 5`)** sesudah suatu aktivitas selesai, dengan batas maksimal satu Retakan per hari. Urutan pembukaan babak menjaga agar ketiga Retakan mengikuti perkembangan cerita:
+- **Retakan 1 (*Meja yang Menjauh*)**: Terbuka mulai **Hari 1** (jangkar: kartu `E0`).
+- **Retakan 2 (*Pintu Bernama*)**: Terbuka mulai **Hari 3** (jangkar: `Kunci 07` pada lorong tiga pintu `SM_Lorong_3Kamar`).
+- **Retakan 3 (*Kursi Kosong*)**: Terbuka mulai **Hari 5** (jangkar: `Kartu pesan ibu` yang masuk pagi Hari 5).
+
+Jika pemain berhasil menjaga Tekanan tetap `≤ 4` melalui pemulihan (`Beristirahat`, `Mandi`, `Hubungi Dita`, `Duduk tanpa layar`, `Rapikan meja`), Retakan Ruang tidak terjadi—memberikan imbalan mekanis nyata atas perawatan diri (SDG 3). Retakan tidak memajukan jam dan tidak mengubah hasil rekrutmen; menyelesaikannya memulihkan **Tekanan ke 3** dan menetapkan **Tenaga minimal 1**. Cerita menyajikannya sebagai pengalaman subjektif Raka, tanpa diagnosis atau penjelasan supernatural yang pasti.
 
 | Rift | Perubahan dan tujuan | Solusi | Umpan balik |
 | --- | --- | --- | --- |
-| 1: Meja yang Menjauh | Versi kamar memanjang; lembar penolakan tergantung di antara pemain dan meja | Ambil kartu E0 dari rak awal dan pasang pada penjepit berbentuk sudut foto di ujung meja | Panjang kamar kembali normal; tulisan Aku belum pernah menyelesaikan apa pun diganti keterangan proyek yang faktual |
-| 2: Pintu Bernama | Lorong menampilkan tiga pintu: DITERIMA, TERLAMBAT, dan 07 | Ambil gantungan kunci 07 dari bangku lalu gunakan pada pintu 07, sesuai nomor kamar dan catatan yang tersedia | Dua pintu palsu menjadi bidang dinding; pintu 07 membuka kamar |
-| 3: Kursi Kosong | Di sekeliling meja terdapat kursi tambahan dengan label tuntutan yang tidak pernah diucapkan | Ambil kartu pesan ibu, Tiketnya tetap boleh dipakai, dan letakkan pada dudukan di kursi dekat jendela | Kursi tambahan hilang; pemain mendengar sisa suara kamar tanpa penilaian menang atau kalah |
+| 1: Meja yang Menjauh (Hari 1+) | Versi kamar memanjang; lembar penolakan tergantung di antara pemain dan meja | Ambil kartu E0 dari rak awal (`E`) dan pasang pada penjepit berbentuk sudut foto di ujung meja (`E`) | Panjang kamar kembali normal; tulisan Aku belum pernah menyelesaikan apa pun diganti keterangan proyek faktual; Tekanan → 3 |
+| 2: Pintu Bernama (Hari 3+) | Lorong `SM_Lorong_3Kamar` menampilkan tiga pintu: DITERIMA, TERLAMBAT, dan 07 | Ambil gantungan kunci 07 dari bangku lorong (`E`) lalu gunakan pada pintu 07 (`E`), sesuai nomor kamar | Dua pintu palsu menjadi bidang dinding; pintu 07 membuka kamar; Tekanan → 3 |
+| 3: Kursi Kosong (Hari 5+) | Di sekeliling area kerja terdapat kursi tambahan dengan label tuntutan yang tidak pernah diucapkan | Ambil kartu pesan ibu (*Tiketnya tetap boleh dipakai*) dari meja/rak (`E`) dan letakkan pada dudukan di `SM_Kursi_Jendela` (`E`) | Kursi tambahan hilang; pemain mendengar sisa suara kamar tanpa penilaian menang/kalah; Tekanan → 3 |
 
 ![Retakan Ruang 1: Meja yang Menjauh](visuals/07-retakan-ruang-1-meja-menjauh.webp)
 
@@ -324,13 +343,13 @@ Retakan terjadi sesudah aktivitas siang pada hari 2, 4, dan 6, termasuk jika akt
 
 ![Retakan Ruang 3: Kursi Kosong](visuals/09-retakan-ruang-3-kursi-kosong.webp)
 
-E0, nomor 07, dan pesan ibu selalu tersedia untuk puzzle masing-masing, terlepas dari pilihan lamaran atau apakah pemain sudah membaca pesan secara sukarela. Saat memasuki Retakan, benda tersebut muncul sebagai salinan khusus puzzle; inventaris cerita tidak terhapus.
+E0, nomor 07, dan pesan ibu selalu tersedia untuk puzzle masing-masing saat Retakannya terbuka, terlepas dari pilihan lamaran atau apakah pemain sudah membaca pesan secara sukarela. Saat memasuki Retakan, benda tersebut muncul sebagai salinan khusus puzzle; inventaris cerita tidak terhapus.
 
-E0 diperkenalkan pada awal permainan dengan keterangan bagian antarmuka yang dikerjakan Raka bersama tim. Nomor 07 terlihat pada pintu dan kunci sejak hari 1. Pesan ibu tentang tiket masuk pada pagi hari 6 sebelum Retakan ketiga; percakapan hari 7 membahas tindak lanjutnya. Petunjuk menghubungkan fakta dengan masalah ruang: hasil kerja melawan pernyataan belum pernah selesai, nomor kamar membedakan alamat dari label hasil, dan pesan ibu membedakan ucapan nyata dari dugaan Raka.
+E0 diperkenalkan pada awal permainan dengan keterangan bagian antarmuka yang dikerjakan Raka bersama tim. Nomor 07 terlihat pada pintu dan kunci sejak Hari 1. Pesan ibu tentang tiket (*Tiketnya tetap boleh dipakai*) masuk pada pagi Hari 5 sehingga siap untuk Retakan ketiga; percakapan Hari 7 membahas tindak lanjutnya. Petunjuk menghubungkan fakta dengan masalah ruang: hasil kerja melawan pernyataan belum pernah selesai, nomor kamar membedakan alamat dari label hasil, dan pesan ibu membedakan ucapan nyata dari dugaan Raka.
 
 Setiap Retakan memakai paling banyak dua kalimat pembuka alternatif berdasarkan riwayat yang sudah ada. Pada Retakan pertama, kalimat menyesuaikan apakah E1 sudah selesai. Pada Retakan kedua, tawaran resmi yang sudah diperoleh memunculkan kekhawatiran salah memilih; jika belum ada, kekhawatirannya tertinggal. Pada Retakan ketiga, pilihan kerja sementara memunculkan kebutuhan menjelaskan batas, sedangkan belum memilih memunculkan kebutuhan menjelaskan rencana pulang. Variasi teks tidak mengubah layout, solusi, atau akses bantuan. Ruang kembali normal setelah solusi, sementara ketidakpastian kerja tetap ada.
 
-Pemain hanya membawa satu benda puzzle pada satu waktu. Klik tujuan yang salah mempertahankan benda dan menampilkan penjelasan singkat. Menekan E pada dudukan asal mengembalikannya. Pilihan Tampilkan petunjuk tersedia sejak awal; setelah tiga percobaan salah, label tujuan muncul otomatis. Pemain juga dapat memilih Selesaikan adegan dari menu jeda untuk melihat pemulihan ruang dengan hasil cerita yang sama. Tidak ada penalti atau ending yang terkunci.
+Pemain hanya membawa satu benda puzzle pada satu waktu. Menekan `E` pada tujuan yang salah mempertahankan benda dan menampilkan penjelasan singkat. Menekan `E` pada dudukan asal mengembalikannya. Pilihan `Tampilkan petunjuk` tersedia sejak awal; setelah tiga percobaan salah, label tujuan muncul otomatis. Pemain juga dapat memilih `Selesaikan adegan` dari menu jeda untuk melihat pemulihan ruang dengan hasil cerita dan penurunan Tekanan yang sama. Tidak ada penalti atau ending yang terkunci.
 
 ![Interaksi Puzzle, Petunjuk, dan Bantuan](visuals/20-puzzle-help.jpg)
 
@@ -348,12 +367,14 @@ Perubahan skala dan posisi terjadi saat layar memudar singkat, bukan dengan mere
 | Tab | Membuka Catatan | Menutup Catatan dan kembali ke keadaan sebelumnya |
 | Esc | Membuka Pause | Menutup panel teratas dahulu; dari puzzle membuka Pause |
 | Tombol panah | Tidak ada fungsi wajib | Memindahkan fokus antarkontrol dan pilihan dialog |
-| Enter / Spasi | Tidak menjalankan aktivitas dunia | Mengaktifkan kontrol yang mendapat fokus; konfirmasi sesi tetap melalui panel |
+| Enter / Spasi | Tidak menjalankan aktivitas dunia | Mengaktifkan kontrol yang mendapat fokus; konfirmasi aktivitas berdurasi tetap melalui panel |
 | Page Up / Page Down | Tidak ada fungsi wajib | Menggulir panel baca yang sedang mendapat fokus |
 
-Tidak ada sprint, lompat, jongkok, atau combat. Kecepatan jalan target 2,2 meter per detik; tinggi kamera 1,6 meter. FOV awal 70 derajat dan dapat diatur 60-90 derajat. Sensitivitas serta invert Y tersedia. Head bob dan camera shake tidak digunakan.
+Tidak ada sprint, lompat, jongkok, atau combat. Karakter pemain menggunakan prefab tubuh first-person beranimasi (`Ren_Animated` dengan `PergerakanPemain.controller`: idle, berjalan, duduk, berbaring, mengambil benda) dengan kecepatan jalan target `2,2 meter per detik` dan kamera sejajar mata (`eye-aligned`, clearance depan agar tidak memotong mesh kepala saat menunduk). FOV awal 70 derajat dan dapat diatur 60-90 derajat. Sensitivitas serta invert Y tersedia. Head bob dan camera shake tidak digunakan.
 
-Raycast interaksi memiliki jarak maksimal 2 meter dan mengikuti collider terdekat yang menghalangi pandangan. Objek di balik dinding tidak bisa dipilih. Prompt hanya muncul pada target sah dan menjelaskan aksi, misalnya E · Baca catatan. Tombol aktivitas satu sesi berada di panel terpisah agar interaksi awal tidak menghabiskan waktu tanpa sengaja.
+Seluruh interaksi dunia 3D—termasuk mengambil/memasang benda puzzle dan berdiri dari kursi—memakai tombol `E` (atau `Esc` untuk keluar fokus/berdiri), sedangkan klik kiri hanya untuk kontrol UI 2D. Tidak ada tombol tersembunyi tambahan seperti `Q`.
+
+Raycast interaksi memiliki jarak maksimal 2 meter dan mengikuti collider terdekat yang menghalangi pandangan. Objek di balik dinding tidak bisa dipilih. Prompt hanya muncul pada target sah dan menjelaskan aksi beserta durasinya bila memakai waktu, misalnya `E · Baca catatan` atau `E · Mandi · 1 jam`. Tombol aktivitas berdurasi berada di panel konfirmasi agar interaksi awal tidak memajukan waktu tanpa sengaja.
 
 Focus memakai posisi kamera tetap menghadap meja atau laptop. Transisi singkat dapat diganti perpindahan langsung melalui pengaturan Reduce Motion. Saat keluar, kamera kembali ke posisi aman sebelumnya. Cursor terkunci hanya dalam Free Roam; Pause dan seluruh panel fokus melepasnya.
 
@@ -377,9 +398,9 @@ Ringkasan tidak memberi medali untuk selalu produktif atau menjadikan pulang seb
 
 ### 3.12 Win-Lose Conditions and Ending Priority
 
-Keputusan dikunci hanya setelah sesi malam hari ketujuh selesai dan pemain memilih Selesaikan keputusan pada panel final. Panel menampilkan pilihan sementara dan meminta satu konfirmasi. Pemain dapat kembali membaca tawaran tanpa menghabiskan sesi.
+Keputusan dikunci setelah pemain menjalankan satu sesi persiapan akhir (**Kemas barang & siapkan jawaban**, tersedia mulai **Hari 4** bagi pemain yang sudah siap atau kapan saja pada **Hari 7**) dan menekan `Selesaikan keputusan` pada panel final. Panel menampilkan pilihan sementara (`offerChoice`) serta catatan keputusan (`decisionNote`) dan meminta satu konfirmasi. Pemain dapat kembali meninjau tawaran tanpa menghabiskan waktu tambahan.
 
-Pada panel yang sama, pilihan A/B meminta satu catatan batas yang ingin dikonfirmasi: pendampingan serta ruang lingkup tugas, atau persetujuan serta pencatatan lembur. Keduanya sah dan dicatat sebagai `decisionNote` untuk pesan konfirmasi kerja. Catatan tidak mengubah kontrak, peluang diterima, atau jumlah ending. Pilihan Pulang meminta satu langkah berikutnya: menata bukti proyek atau menyusun jadwal lamaran yang terbatas. Jika pilihan tawaran diganti, catatan yang tidak sesuai direset dan dipilih kembali sebelum finalisasi. Pada C, catatan mengikuti pengakuan atas syarat berisiko pada konfirmasi tambahan.
+Pada panel keputusan (atau lebih awal melalui Map Tawaran), pilihan A/B meminta satu catatan batas yang ingin dikonfirmasi: pendampingan serta ruang lingkup tugas, atau persetujuan serta pencatatan lembur. Keduanya sah dan dicatat sebagai `decisionNote` untuk pesan konfirmasi kerja. Catatan tidak mengubah kontrak, peluang diterima, atau jumlah ending. Pilihan Pulang meminta satu langkah berikutnya: menata bukti proyek atau menyusun jadwal lamaran yang terbatas. Jika pilihan tawaran diganti, catatan yang tidak sesuai direset dan dipilih kembali sebelum finalisasi. Pada C, catatan mengikuti pengakuan atas syarat berisiko pada konfirmasi tambahan.
 
 ![Papan Kontrak dan Form Verifikasi Keputusan Final](visuals/10-map-kontrak-keputusan-final.webp)
 
@@ -395,7 +416,7 @@ Memilih C menampilkan peringatan khusus tentang dokumen dan pembatasan pengundur
 
 Satu variabel `offerChoice` mencegah dua kontrak diterima bersamaan. Jika tidak ada pilihan sah, hasil selalu Pulang, Bukan Selesai. Tidak ada ending yang dipicu Tekanan, kekurangan Tenaga, puzzle yang dilewati, atau jumlah penolakan. Ending Kontrak yang Mengunci adalah hasil berisiko, bukan rahasia yang diberi hadiah.
 
-Masa sewa selesai pada pagi hari 8, bersamaan dengan jadwal bus pulang. A dan B memerlukan kehadiran di kota kos mulai hari 9. Sejak hari 1, pesan Dita menawarkan tempat menginap sementara selama satu bulan jika Raka memilih bekerja di kota; keluarga menyepakati bantuan kebutuhan dasar selama masa transisi. Kedua surat resmi mencantumkan pembayaran pertama sebelum masa tinggal itu berakhir. Pada ending kerja, Raka mengonfirmasi tempat tinggal sementara, tanggal mulai, dan batas yang dipilih. Tiket tidak dipakai. Kesepakatan ini disampaikan melalui teks tanpa area rumah Dita, biaya harian, atau sistem uang baru.
+Masa sewa selesai pada pagi hari 8, bersamaan dengan jadwal bus pulang. A dan B memerlukan kehadiran di kota kos mulai hari 9. Sejak hari 1, Dita (tetangga Kamar 06) menawarkan bantuan tempat tinggal transisi selama satu bulan jika Raka memilih bekerja di kota; keluarga menyepakati bantuan kebutuhan dasar selama masa transisi. Kedua surat resmi mencantumkan pembayaran pertama sebelum masa tinggal itu berakhir. Pada ending kerja, Raka mengonfirmasi tempat tinggal sementara, tanggal mulai, dan batas yang dipilih. Tiket tidak dipakai. Kesepakatan ini disampaikan melalui teks tanpa area kota tambahan di luar kos, biaya harian, atau sistem uang baru.
 
 Pada ending pulang, Raka menggunakan bus pagi hari 8 dan membawa bukti yang benar-benar sudah selesai. Jika baru E0 yang ada, langkah berikutnya menyebut menyiapkan E1; jika E1/E2 sudah ada, langkahnya menyebut menata bukti atau menjadwalkan lamaran berikutnya. Pada C, epilog mengikuti instruksi penempatan admin dan akibat penyerahan kendali dokumen. Penutup menyebut informasi atau bantuan yang masih dapat dicari tanpa menggambarkan konsekuensi sebagai hukuman atas nilai diri Raka.
 
@@ -427,13 +448,13 @@ flowchart LR
 
 Main Menu menyediakan Mulai baru, Lanjutkan, Pengaturan, Credits dan Sumber, serta Keluar. Pause menyediakan Lanjutkan, Pengaturan, Ulangi dari checkpoint, Kembali ke menu, dan Keluar. Saat Retakan berlangsung, Pause juga menyediakan Petunjuk dan Selesaikan adegan.
 
-Penyimpanan terdiri atas satu autosave berjalan dan satu checkpoint awal hari. Autosave dibuat pada awal permainan, setiap hasil aktivitas beserta peristiwanya selesai, setelah panel draf CV atau penandaan verifikasi ditutup pada keadaan stabil, setiap perubahan pilihan tawaran atau catatan keputusan, serta sebelum finalisasi ending. Tanda pesan dibaca ikut disimpan ketika panel Pesan ditutup pada keadaan stabil. Checkpoint awal hari dibuat setelah pemulihan tidur dan reset flag, sebelum aktivitas pagi. Saat pekerjaan E1/E2, interview, hasil aktivitas, Jeda, atau Retakan masih berlangsung, file stabil sebelumnya dipertahankan. Keluar dari game mengulang seluruh aktivitas dan peristiwa yang belum mencapai checkpoint tersebut. UI menyebut hari serta sesi yang akan diulang.
+Penyimpanan terdiri atas satu autosave berjalan dan satu checkpoint awal hari. Autosave dibuat pada awal permainan, setiap aktivitas selesai **sebelum** memasuki Retakan Ruang (sehingga keluar saat Retakan hanya mengulang Retakan, tidak menghapus interview yang baru selesai), setelah panel draf CV atau penandaan verifikasi ditutup pada keadaan stabil, setiap perubahan pilihan tawaran atau catatan keputusan (baik di Free Roam maupun saat panel Keputusan Akhir), serta sebelum finalisasi ending. Tanda pesan dibaca ikut disimpan ketika panel Pesan ditutup pada keadaan stabil. Checkpoint awal hari dibuat setelah pemulihan tidur dan reset flag pada `08:00` (`Pagi`). Saat pekerjaan E1/E2, interview, atau Retakan masih berlangsung, file stabil sebelumnya dipertahankan. UI menyebut hari serta jam yang akan diulang.
 
 Checkpoint awal hari memungkinkan mencoba ulang satu hari, dengan konfirmasi bahwa progres sesudahnya diganti. Mulai baru meminta konfirmasi sebelum menimpa progres. Tidak ada grid save, thumbnail, akun, atau cloud save.
 
-Data menyimpan hari, sesi, `sessionResolved`, kondisi, himpunan bukti, draf CV beserta kartu terpasang, snapshot tiap lamaran, jadwal, koreksi klaim, jawaban dan hasil interview, penandaan serta hasil verifikasi, pesan yang dibaca, pilihan tawaran, `decisionNote`, flag Retakan, flag harian, flag variasi aktivitas yang sudah dibaca, serta versi format. Posisi scroll, sorotan tombol, panel sementara, dan benda puzzle yang sedang dibawa tidak disimpan; Lanjutkan membuka keadaan stabil dengan kursor serta kamera yang sesuai. Memuat malam dengan `sessionResolved` Benar tetap menonaktifkan aktivitas satu sesi.
+Data menyimpan hari, `currentHour` (jam harian `8–22`), `timeOfDay` (`Pagi`/`Siang`/`Malam`), kondisi Tenaga/Tekanan, himpunan bukti, draf CV beserta kartu terpasang, snapshot tiap lamaran, jadwal interview, koreksi klaim, jawaban dan hasil interview, penandaan serta hasil verifikasi, pesan yang dibaca, pilihan tawaran, `decisionNote`, flag Retakan (`riftSolved`, `activeRiftIndex`), flag harian (`deskTidiedToday`, `showeredToday`, `jedaTriggeredToday`, `ditaCalledToday`, `riftTriggeredToday`), flag variasi aktivitas yang sudah dibaca, serta versi format. Posisi scroll, sorotan tombol, panel sementara, dan benda puzzle yang sedang dibawa tidak disimpan; Lanjutkan membuka keadaan stabil dengan kursor serta kamera yang sesuai.
 
-File ditulis ke file sementara lalu menggantikan file utama setelah penulisan berhasil. Jika autosave gagal dibaca, game menawarkan checkpoint awal hari; jika keduanya tidak terbaca, game menjelaskan kegagalan dan tidak berpura-pura berhasil melanjutkan. Pengaturan disimpan terpisah. Setelah epilog, autosave sebelum finalisasi dipertahankan. Main Menu menjelaskan bahwa Lanjutkan kembali ke keputusan malam hari 7 sehingga pemain dapat meninjau pilihan atau melihat penutup lain. Checkpoint awal hari tetap hari 7; tidak ada hari 8 yang dapat dimainkan atau slot tamat tambahan.
+File ditulis ke file sementara lalu menggantikan file utama setelah penulisan berhasil. Jika autosave gagal dibaca, game menawarkan checkpoint awal hari; jika keduanya tidak terbaca, game menjelaskan kegagalan dan tidak berpura-pura berhasil melanjutkan. Pengaturan disimpan terpisah. Setelah epilog, autosave sebelum finalisasi dipertahankan. Main Menu menjelaskan bahwa Lanjutkan kembali ke keputusan akhir pada hari terakhir yang dicapai pemain sehingga pemain dapat meninjau pilihan atau melihat penutup lain. Tidak ada hari 8 yang dapat dimainkan atau slot tamat tambahan.
 
 ![Menu, Checkpoint, dan Status Simpanan](visuals/22-menu-save-states.jpg)
 
@@ -451,57 +472,71 @@ Menu, pilihan dialog, kartu, dan konfirmasi dapat dioperasikan dengan tombol pan
 
 ### 3.15 Production Plan and Acceptance Criteria
 
-Cakupan tetap mencakup satu ruang utama, satu lorong pendek, tiga variasi Retakan, dua persiapan bukti, dua interview, tiga tawaran, dan tiga ending. Tidak ada multiplayer, open world, NPC berjalan, inventory umum, simulasi ekonomi, minigame coding, generasi prosedural, atau shader khusus.
+Cakupan tetap mencakup kamar kos Raka dengan kamar mandi dalam (`SM_Kamar_Kanan`), kamar tetangga Dita (`SM_Kamar_Kiri` yang memakai ulang aset kamar), lorong tiga kamar (`SM_Lorong_3Kamar`), tiga variasi Retakan berbasis Tekanan, NPC 3D statis/beranimasi halus (Dita di kamarnya + Nara & Bagas di studio panggilan video interview), dua persiapan bukti, dua interview, tiga tawaran, dan tiga ending. Tidak ada multiplayer, open world, NPC AI berjalan bebas, inventory umum, simulasi ekonomi, minigame coding, atau generasi prosedural.
 
-| Role | Tanggung jawab utama | Titik integrasi |
-| --- | --- | --- |
-| Anggota 1: Gameplay | Gerak first-person, interaksi, sesi, kondisi, save/load | Menyediakan state aktivitas dan event yang dipakai UI serta cerita |
-| Anggota 2: Narrative and UI | Naskah, laptop, CV, interview, tawaran, ending | Memasukkan konten ke data terstruktur; tidak menggandakan logika sesi |
-| Anggota 3: 3D and Audio | Model modular, tekstur, pencahayaan, tiga Retakan, audio | Menghubungkan objek ke identitas interaksi dan pemicu peristiwa |
+| Role | Anggota (Kelompok VI) | Tanggung jawab utama | Titik integrasi |
+| --- | --- | --- | --- |
+| Gameplay & Sistem | Steven Bong (2404130097) | Gerak first-person (`Ren_Animated`), interaksi `E`, jam harian `08:00–22:00`, stat Tenaga/Tekanan, pemicu Retakan/Jeda, save/load | Menyediakan state aktivitas dan event (`SELA.Core`) yang dipakai UI, lighting, serta cerita |
+| Narrative & UI | Luhur Pangaribowo Handaruaji (2404130093) | Naskah, data konten, HUD (jam + 1 baris tujuan), laptop, CV, interview, Map Tawaran, Ponsel, Catatan, menu, aksesibilitas | Memasukkan konten ke data terstruktur; tidak menggandakan logika jam/stat |
+| 3D & Audio | Naila Rifda Rahmah (2404130052) | Model modular (`progress.unity`), kamar Dita (`SM_Kamar_Kiri`), NPC 3D (Dita, Nara, Bagas) & studio booth interview, lighting Pagi/Siang/Malam, 3 Retakan, audio & caption | Menghubungkan objek ke `WorldObjectHook` / `Interactable` dan pemicu peristiwa |
 
 | Week | Hasil kerja yang harus dapat dimainkan |
 | --- | --- |
-| 1 | Blockout kamar, gerak, focus, satu aktivitas, pergantian sesi, tidur, dan checkpoint dasar; inventaris naskah serta perangkat uji ditetapkan |
-| 2 | Satu rangkaian utuh: persiapan E1, snapshot lamaran A, interview A, Retakan pertama, dan save/load; dimainkan orang di luar pembuat rangkaian |
-| 3 | Seluruh aktivitas, E2, interview B, pemeriksaan tiga perusahaan, Retakan kedua/ketiga, pesan akhir minggu, dan tiga ending; seluruh tujuh hari dapat diselesaikan dengan aset sederhana |
-| 4 | Playtest jalur lengkap, perbaikan aturan serta bug, keterbacaan 720p, pemeriksaan performa build Windows, dan audit lisensi |
-| 5-6 jika tersedia | Penyelesaian aset, audio, dan perbaikan hasil playtest tanpa menambah sistem atau cabang cerita |
+| 1 | Layout `progress.unity` (Kamar Raka + kamar mandi + lorong + Kamar Dita), gerak `Ren_Animated`, focus, jam `08:00–22:00`, lighting Pagi/Siang/Malam, tidur `18:00+`, dan checkpoint dasar |
+| 2 | Satu rangkaian utuh: persiapan E1, snapshot lamaran A, interview A (`13:00`) dengan studio booth NPC 3D, Retakan 1 via `Tekanan ≥ 5`, `Mandi`, dan save/load; dimainkan orang di luar pembuat rangkaian |
+| 3 | Seluruh 11 aktivitas, E2, interview B, pemeriksaan tiga perusahaan, kunjungan Kamar Dita (`SM_Kamar_Kiri`), Retakan 2/3, persiapan akhir Hari 4+/7 (`FinalPrep`), dan tiga ending |
+| 4 | Playtest jalur lengkap, perbaikan aturan serta bug, keterbacaan 720p, pemeriksaan performa build Windows (termasuk RenderTexture interview), dan audit lisensi |
+| 5-6 jika tersedia | Penyelesaian detail aset, animasi halus NPC, audio, dan perbaikan hasil playtest tanpa menambah sistem atau cabang cerita |
 
-Jika waktu hanya empat minggu, seluruh jalur tetap selesai menggunakan aset sederhana. Pengayaan visual tidak menjadi syarat agar mekanisme bekerja.
+Jika waktu hanya empat minggu, seluruh jalur tetap selesai menggunakan aset sederhana (termasuk fallback potret 2D untuk interview bila model NPC belum selesai). Pengayaan visual tidak menjadi syarat agar mekanisme bekerja.
 
-Pada minggu pertama, setiap anggota mencatat jam kerja yang tersedia. Pembagian tugas diperiksa terhadap kapasitas tersebut. Pengurangan dimulai dari detail tekstur, variasi dekorasi, gerak transisi, dan ekspresi potret tambahan; berikutnya panjang teks pengulangan. Informasi syarat, bantuan puzzle, aksesibilitas dasar, serta semua jalur ending tetap tersedia.
+Pada minggu pertama, setiap anggota mencatat jam kerja yang tersedia. Pembagian tugas diperiksa terhadap kapasitas tersebut. Pengurangan dimulai dari detail tekstur, variasi dekorasi, animasi NPC tambahan (kembali ke potret 2D), dan panjang teks pengulangan. Informasi syarat, bantuan puzzle, aksesibilitas dasar, serta semua jalur ending tetap tersedia.
 
-Inventaris naskah memakai batas awal berikut. Anggota Narrative and UI menyimpan satu versi teks yang dipakai laptop, Catatan, dan panel akhir. Anggota Gameplay menangani pemicu serta flag; anggota 3D and Audio menghubungkan penyajian benda dan suara. Hitungan ini merupakan anggaran produksi yang diperiksa sebelum penulisan lengkap.
+Inventaris naskah memakai batas awal berikut. Anggota Narrative & UI menyimpan satu versi teks yang dipakai laptop, Ponsel, Catatan, dan panel akhir.
 
 | Kelompok konten | Jumlah dan batas awal | Isi wajib |
 | --- | --- | --- |
-| Pesan harian | 7 pesan dasar, maksimal 60 kata per pesan; hari 5-7 masing-masing memiliki 3 sisipan konteks maksimal 25 kata | Perkembangan hari, pengingat kesempatan, dan persiapan jawaban terakhir |
-| Percakapan Dita | 7 percakapan pertama, 60-100 kata; 3 sisipan hasil lamaran maksimal 25 kata; 1 respons pengulangan maksimal 20 kata | Perspektif pribadi Dita, tanggapan riwayat, dan batas bantuan yang bisa diberikan |
-| Pengamatan pemulihan | 3 teks duduk maksimal 35 kata; 2 teks benda saat merapikan maksimal 25 kata; 1 teks singkat istirahat | Detail Raka dan kamar; pengulangan tidak menambah informasi wajib |
+| Pesan harian | 7 pesan dasar, maksimal 60 kata per pesan; Hari 5–7 masing-masing memiliki 3 sisipan konteks maksimal 25 kata | Perkembangan hari, pengingat kesempatan, dan persiapan jawaban terakhir |
+| Percakapan Dita | 7 percakapan pertama (di Kamar 06 atau Ponsel), 60–100 kata; 3 sisipan hasil lamaran maksimal 25 kata; 1 respons pengulangan maksimal 20 kata | Perspektif pribadi Dita sebagai tetangga kos, tanggapan riwayat, dan batas bantuan transisi |
+| Pengamatan pemulihan | 3 teks duduk maksimal 35 kata; 2 teks benda saat merapikan maksimal 25 kata; 1 teks singkat istirahat; 2 teks singkat `Mandi` maksimal 25 kata | Detail Raka, kamar, dan kamar mandi; pengulangan tidak menambah informasi wajib |
 | Bukti dan CV | 3 keterangan kartu maksimal 80 kata; 2 pilihan persiapan beserta umpan balik maksimal 100 kata per aktivitas; 2 pasang klaim | Peran dalam proyek, hasil kerja, dan batas pembuktian |
 | Lowongan dan verifikasi | 3 dokumen tawaran maksimal 180 kata; 3 ringkasan klarifikasi maksimal 120 kata | Empat aspek syarat, pertanyaan yang dijawab, dan ketidakpastian yang tersisa |
-| Interview dan hasil | 2 interview, masing-masing pembuka serta 2 pertanyaan dengan 3 respons; 160-220 kata per interview; 2 template tawaran, 3 alasan penolakan, dan 1 template terlewat maksimal 60 kata masing-masing | Snapshot, koreksi klaim, penjelasan hasil, dan jadwal |
-| Retakan | 3 adegan; masing-masing 2 pembuka maksimal 30 kata, 1 umpan balik solusi, 1 petunjuk bertahap, dan 1 respons tujuan salah maksimal 35 kata | Fakta pengantar, alasan solusi, dan bantuan |
-| Penutup dan halaman baca | 4 teks epilog A/B/pulang/C, 120-180 kata; 3 sisipan progres bukti maksimal 30 kata; 1 halaman refleksi, 1 informasi konten, 1 bantuan, dan 1 Credits/Sumber | Pilihan final, langkah berikutnya, informasi dukungan, dan sumber yang benar-benar dipakai |
-| UI dan tutorial | 1 rangkaian pengenalan bertahap, 9 panel aktivitas yang berbagi komponen, serta template pengingat, simpanan, dan konfirmasi | Biaya, keadaan tidak tersedia, kontrol, dan akibat tindakan |
+| Interview dan hasil | 2 interview (Nara & Bagas), masing-masing pembuka serta 2 pertanyaan dengan 3 respons; 160–220 kata per interview; 2 template tawaran, 3 alasan penolakan, dan 1 template terlewat maksimal 60 kata masing-masing | Snapshot, koreksi klaim, penjelasan hasil, dan jadwal `13:00` |
+| Retakan | 3 adegan; masing-masing 2 pembuka maksimal 30 kata, 1 umpan balik solusi, 1 petunjuk bertahap, dan 1 respons tujuan salah maksimal 35 kata | Fakta pengantar, alasan solusi, penurunan Tekanan → 3, dan bantuan |
+| Penutup dan halaman baca | 4 teks epilog A/B/pulang/C, 120–180 kata; 3 sisipan progres bukti (`E0` / `E0+E1` / `E0+E1+E2`) maksimal 30 kata; 1 halaman refleksi, 1 informasi konten, 1 bantuan, dan 1 Credits/Sumber | Pilihan final, langkah berikutnya, informasi dukungan, dan sumber yang benar-benar dipakai |
+| UI dan tutorial | 1 rangkaian pengenalan bertahap, 11 panel aktivitas yang berbagi komponen, 1 baris pengingat HUD dinamis, serta template pengingat, simpanan, dan konfirmasi | Durasi jam, biaya stat, keadaan tidak tersedia, kontrol `E`, dan akibat tindakan |
 
-Playtest awal memakai rangkaian minggu 2 untuk memeriksa biaya sesi, pengiriman, dan pembacaan bukti. Playtest minggu 4 mencatat durasi per hari, waktu persiapan dianggap selesai, aktivitas pemulihan yang dipilih beserta alasan, pemahaman snapshot, kegunaan klarifikasi, dan tanggapan terhadap Retakan. Jalur uji mencakup tawaran diperoleh sejak hari 4, tidak ada tawaran resmi, hanya pemulihan, interview terlewat, dan pemakaian seluruh bantuan puzzle. Jika hari 5-7 terasa seperti menunggu, perbaikan diarahkan ke urutan serta panjang pesan dan perbandingan pilihan, tanpa menambah pekerjaan wajib. Durasi 45-60 menit tidak dipenuhi dengan menahan teks atau memperlambat jalan.
+#### Matriks Pemicu Pesan (Hari 1–7)
+
+| Hari & Pemicu | Pengirim | Perangkat | Ringkasan Isi & Fungsi |
+| --- | --- | --- | --- |
+| Hari 1 · `08:00` | Ibu | Ponsel | Mengabarkan tiket bus pagi Hari 8 sudah dibeli dan menyepakati bantuan transisi kebutuhan dasar |
+| Hari 1 · `08:00` | Dita (Kamar 06) | Ponsel / Tatap muka | Menyapa dari seberang lorong, menawarkan bantuan tempat tinggal transisi 1 bulan bila Raka kerja di kota |
+| Hari 1 · `08:00` | Rekrutmen Lama & Studio Lajur | Laptop (`Pesan Kerja` / `Lamaran`) | Konteks penolakan lama (tanpa penalti stat) + pembukaan lowongan Studio Lajur (tutup Hari 3 `22:00`) |
+| Hari 2 · `08:00` | Rekrutmen Lama / Undangan A | Laptop | Pengingat penolakan lama atau pengingat interview Studio Lajur pukul `13:00` (jika melamar Hari 1) |
+| Hari 3 · `08:00` | Koperasi Pijar | Laptop | Pembukaan lowongan Web Support (tutup Hari 5 `22:00`, butuh E1 & E2) + revisi E2 terbuka di Papan Bukti |
+| Hari 4 · `08:00` | Admin Akses Prima | Laptop (`Pesan Kerja`) | Tawaran langsung berpenghasilan tinggi tanpa interview (syarat penahanan dokumen); sesi Persiapan Akhir mulai terbuka |
+| Hari 5 · `08:00` | Ibu | Ponsel (+ Kartu fisik di meja/rak) | Pesan *"Tiketnya tetap boleh dipakai"* — memunculkan jangkar fisik untuk Retakan 3 (jika `Tekanan ≥ 5`) |
+| Hari 5 · `08:00` | Dita | Ponsel / Kamar 06 | Mengajak meninjau syarat tawaran yang sudah didapat atau merencanakan langkah sisa minggu (3 variasi konteks) |
+| Hari 6 · `08:00` | Undangan B / Catatan | Laptop | Pengingat interview terakhir `13:00` bila terjadwal + ajakan perbandingan pilihan di Map Tawaran |
+| Hari 7 · `08:00` | Ibu | Ponsel | Menanyakan keputusan keberangkatan atau rencana tinggal; mengingatkan bahwa *Kemas barang & siapkan jawaban* bisa dijalankan kapan saja hari ini |
+
+Playtest awal memakai rangkaian minggu 2 untuk memeriksa durasi jam, `Mandi`, pengiriman lamaran, dan pemicu Retakan via `Tekanan ≥ 5`. Playtest minggu 4 mencatat durasi per hari, apakah pemain memilih menyelesaikan lebih awal di Hari 4–6 atau lanjut hingga Hari 7, aktivitas pemulihan yang dipilih, pemahaman snapshot, kegunaan klarifikasi, dan tanggapan terhadap Retakan serta NPC 3D. Durasi 45–60 menit tidak dipenuhi dengan menahan teks atau memperlambat jalan.
 
 Evaluasi pembelajaran memakai contoh tawaran terpisah pada bagian 1.4. Catat alasan peserta sebelum memberi penjelasan jawaban; hasilnya dipakai untuk memperbaiki keterbacaan syarat, tanpa klaim efektivitas klinis. Perangkat uji mencantumkan CPU, GPU, RAM, resolusi, dan hasil frame time dari build Windows.
 
 Kriteria penerimaan build:
 
-- Satu permainan dapat berjalan dari menu sampai keputusan malam ketujuh tanpa state buntu, termasuk jika pemain hanya memilih pemulihan.
-- Bukti, jadwal interview, koreksi klaim, dan hasil mengikuti aturan deterministik yang tercantum.
-- Semua Retakan dapat diselesaikan tanpa audio dan melalui bantuan, dengan hasil cerita yang setara.
-- Tekanan 6 dan Tenaga 0 tidak mematikan gerak atau semua pilihan pemulihan.
-- Memuat checkpoint tidak menggandakan hasil, pesan, biaya, atau jadwal.
-- Memuat draf CV dan malam yang telah selesai mempertahankan kartu, klaim, serta larangan membeli sesi tambahan.
-- Keluar saat persiapan bukti, interview, Jeda, atau Retakan mengulang dari checkpoint yang disebutkan tanpa membawa hasil setengah jadi.
-- Lanjutkan setelah epilog kembali ke keputusan malam hari 7 dengan pilihan sah dan catatan yang sesuai.
-- Semua menu, pilihan dialog, dan kartu dapat dipilih melalui keyboard dengan fokus terlihat pada ukuran teks 150%.
+- Satu permainan dapat berjalan dari menu sampai epilog tanpa state buntu, baik lewat penyelesaian awal (Hari 4–6 via `Kemas barang & siapkan jawaban`) maupun sampai Hari 7, termasuk jika pemain hanya memilih pemulihan.
+- Jam harian (`08:00–22:00`) hanya maju saat aktivitas dijalankan, suasana Pagi/Siang/Malam otomatis sinkron dengan jam, dan tidur tersedia mulai `18:00`.
+- Bukti, jadwal interview pukul `13:00`, koreksi klaim, dan hasil mengikuti aturan deterministik yang tercantum.
+- Retakan Ruang hanya muncul ketika `Tekanan ≥ 5` (sesuai babak Hari 1+/3+/5+, maksimal 1×/hari), menyelesaikannya menurunkan Tekanan ke 3, dan menjaga Tekanan `≤ 4` mencegah Retakan. Semua Retakan dapat diselesaikan tanpa audio dan melalui bantuan dengan hasil setara.
+- `Mandi` memulihkan `+2 Tenaga / −3 Tekanan` (1 jam, maksimal 1×/hari); Tekanan 6 dan Tenaga 0 tidak mematikan gerak atau pilihan pemulihan.
+- Memuat checkpoint tidak menggandakan hasil, pesan, biaya, atau jadwal; keluar saat Retakan hanya mengulang Retakan tanpa menghapus interview yang baru selesai.
+- Lanjutkan setelah epilog kembali ke keadaan pra-finalisasi pada hari terakhir yang dicapai dengan pilihan sah dan `decisionNote` yang sesuai.
+- Semua menu, pilihan dialog, dan kartu dapat dipilih melalui keyboard dengan fokus terlihat pada ukuran teks 150%, dan seluruh interaksi 3D memakai tombol `E`.
 - Tiga ending mengikuti pilihan kontrak, bukan stat kesehatan.
-- Build akhir diuji pada perangkat tim; target awalnya 30 fps stabil pada 720p dengan grafis terintegrasi. Target ini harus dilaporkan bersama spesifikasi dan hasil nyata setelah build tersedia.
+- Build akhir diuji pada perangkat tim; target awalnya 30 fps stabil pada 720p dengan grafis terintegrasi (termasuk saat RenderTexture NPC interview aktif). Target ini harus dilaporkan bersama spesifikasi dan hasil nyata setelah build tersedia.
 
 ## 4. Story and Narrative
 
@@ -523,33 +558,33 @@ Dita kadang terlalu cepat menawarkan langkah praktis sebelum memahami bahwa Raka
 
 #### Act I: Kalimat yang Sudah Dihafal, Days 1-2
 
-Raka bangun, melihat tanggal berakhirnya sewa, lalu membaca pesan ibu tentang tiket. Tutorial tidak berupa daftar instruksi panjang: pemain mengambil kartu proyek, membuka laptop, dan memilih aktivitas pertama. Pesan penolakan lama sudah tersedia di inbox sebagai konteks, bukan hasil lamaran pemain yang dipaksakan gagal.
+Raka bangun pukul `08:00`, melihat tanggal berakhirnya sewa, lalu membaca pesan ibu tentang tiket serta sapaan Dita—teman kuliah sekaligus tetangga kamar di seberang lorong (Kamar 06). Tutorial tidak berupa daftar instruksi panjang: pemain mengambil kartu proyek E0, membuka laptop, dan memilih aktivitas pertama. Pesan penolakan lama sudah tersedia di inbox sebagai konteks, bukan hasil lamaran pemain yang dipaksakan gagal.
 
-Pesan awal menyebut bus berangkat pagi hari 8. Tawaran Dita untuk tinggal sementara dan bantuan kebutuhan dasar dari keluarga sudah disampaikan sejak hari 1, sehingga pilihan bekerja di kota memiliki rencana transisi sebelum hasil interview diketahui. Raka tetap merasa perlu membuktikan bahwa ia dapat membiayai hidup sendiri. E0, nomor 07, dan pembicaraan tentang bagian formulir mengenalkan benda serta fakta yang dipakai Retakan.
+Pesan awal menyebut bus berangkat pagi hari 8. Tawaran Dita membantu tempat tinggal transisi selama satu bulan dan bantuan kebutuhan dasar dari keluarga sudah disampaikan sejak Hari 1, sehingga pilihan bekerja di kota memiliki rencana transisi sebelum hasil interview diketahui. Raka tetap merasa perlu membuktikan bahwa ia dapat membiayai hidup sendiri. E0, nomor 07, dan pembicaraan tentang bagian formulir mengenalkan benda serta fakta yang dipakai Retakan.
 
-Pada hari kedua, meja terasa menjauh. Kartu E0 menjadi bukti sederhana bahwa kalimat belum pernah menyelesaikan apa pun tidak cocok dengan apa yang ada di kamar. Menyelesaikan Retakan mengembalikan ruang, tetapi tidak menghapus kesedihan atau langsung memberi pekerjaan.
+Jika tekanan Raka menumpuk hingga `≥ 5` pada babak ini, **Retakan 1 (*Meja yang Menjauh*)** langsung terjadi: meja terasa menjauh sementara kertas penolakan memenuhi pandangan. Kartu E0 menjadi bukti sederhana bahwa kalimat *"belum pernah menyelesaikan apa pun"* tidak cocok dengan apa yang ada di kamar. Menyelesaikan Retakan mengembalikan ruang dan menurunkan Tekanan ke 3, sementara menjaga ritme istirahat atau mandi sejak awal memungkinkan Raka melewati Act I tanpa Retakan.
 
 #### Act II: Tawaran yang Tidak Banyak Bertanya, Days 3-5
 
-Koperasi Pijar membuka kesempatan yang membutuhkan catatan uji. Akses Prima menghubungi Raka dengan pujian umum dan penghasilan besar, lalu menghindari pertanyaan tentang tugas. Dita tidak mengambil keputusan untuk Raka; ia meminta Raka membaca bagian dokumen yang paling ingin ia lewatkan.
+Koperasi Pijar membuka kesempatan yang membutuhkan catatan uji (E2). Mulai Hari 4, Akses Prima menghubungi Raka lewat teks dengan pujian umum dan penghasilan besar, tanpa panggilan video dan menghindari pertanyaan tentang tugas. Dita tidak mengambil keputusan untuk Raka; saat ditemui di kamar seberang (Kamar 06) atau dihubungi lewat ponsel, ia meminta Raka membaca bagian dokumen yang paling ingin dilewatkan.
 
-Pada Retakan kedua, dua pintu memakai label yang selama ini dipikirkan Raka. Pintu kamarnya sendiri masih bertuliskan 07. Pemain kembali melalui alamat yang bisa diperiksa, bukan melalui label keberhasilan.
+Jika tekanan meningkat hingga `≥ 5` mulai Hari 3, **Retakan 2 (*Pintu Bernama*)** mengubah lorong tiga pintu (`SM_Lorong_3Kamar`) yang biasa Raka lewati menuju kamar Dita: dua pintu memakai label `DITERIMA` dan `TERLAMBAT`, sementara pintu kamarnya sendiri tetap bertuliskan `07`. Pemain kembali melalui alamat nyata yang bisa diperiksa, bukan melalui label keberhasilan.
 
-Pada hari 5, perhatian beralih dari jumlah lamaran ke isi pilihan. Jika tawaran sudah ada, pesan Dita meminta Raka menunjuk syarat yang paling memengaruhi kesehariannya. Jika belum ada, percakapan membahas apa yang masih dapat dikirim sebelum batas waktu dan apa yang perlu disiapkan setelah pulang. Jawaban klarifikasi yang sudah dibaca tetap dipakai; pemain tidak diminta membeli pemeriksaan yang sama untuk kedua kalinya.
+Mulai Hari 4, pemain yang sudah mantap dengan pilihannya boleh langsung menjalankan sesi persiapan akhir (*Kemas barang & siapkan jawaban*). Bagi yang melanjutkan hingga Hari 5, perhatian beralih dari jumlah lamaran ke isi pilihan. Pada pagi Hari 5, Ibu mengirim pesan bahwa *"Tiketnya tetap boleh dipakai"* sekaligus memunculkan kartu fisik pesan ibu di kamar.
 
 #### Act III: Jawaban yang Bisa Diucapkan, Days 6-7
 
-Pada hari 6, interview terakhir berlangsung jika ada undangan, sementara tawaran yang sudah diperoleh tetap berada di map. Sejak pagi, Ibu mengirim pesan bahwa tiketnya tetap boleh dipakai. Pada Retakan ketiga, kursi tambahan mengisi kamar seolah ada banyak orang menunggu hasil, tetapi tidak ada orang yang duduk di sana. Catatan sesudahnya mengajak Raka membandingkan tugas, waktu kerja, pendampingan, serta hal yang belum pasti dengan kebutuhannya sendiri.
+Pada Hari 6, interview terakhir pukul `13:00` berlangsung jika ada undangan, sementara tawaran yang sudah diperoleh tetap berada di Map Tawaran. Jika tekanan meningkat hingga `≥ 5` mulai Hari 5, **Retakan 3 (*Kursi Kosong*)** mengisi kamar dengan kursi tambahan seolah banyak orang menunggu hasil, padahal tidak ada seorang pun yang duduk di sana—dan kartu pesan ibu di kursi jendela memulihkan ruang tersebut.
 
-Pada hari 7, Ibu menanyakan jadwal bus atau rencana tinggal yang dipilih Raka. Pemain menyiapkan satu kalimat batas kerja atau langkah setelah pulang pada panel keputusan. Pada malam terakhir, pemain melihat kembali tawaran dan mengunci pilihan. Raka menyampaikan keputusan kepada ibu dengan kalimat yang berubah sesuai ending dan catatan tersebut. Penutup memperlihatkan langkah berikutnya serta konsekuensi syarat tanpa menyatakan seluruh masalah sudah selesai.
+Pada Hari 7 (batas akhir sebelum keberangkatan pagi Hari 8), Ibu menanyakan jadwal bus atau rencana tinggal yang dipilih Raka. Pemain menjalankan sesi persiapan akhir (*Kemas barang & siapkan jawaban*) kapan saja hari itu untuk menyiapkan satu kalimat batas kerja atau langkah setelah pulang pada panel keputusan, lalu mengunci pilihan. Raka menyampaikan keputusan kepada ibu dengan kalimat yang berubah sesuai ending dan catatan tersebut. Penutup memperlihatkan langkah berikutnya serta konsekuensi syarat tanpa menyatakan seluruh masalah sudah selesai.
 
 ### 4.3 Game Story Progression
 
-Peristiwa hari 2, 4, dan 6 berlangsung pada semua jalur. Variasi naskah menggunakan flag yang terbatas: bukti yang selesai, klaim yang dikoreksi, hasil interview, verifikasi, dan pilihan tawaran. Tidak ada nilai hubungan tersembunyi dengan ibu atau Dita.
+Retakan Ruang bersifat **dinamis mengikuti manajemen Tekanan pemain (`Tekanan ≥ 5`)** sesuai pembukaan babak (Hari 1+, 3+, 5+), bukan paksaan pada hari tetap. Variasi naskah menggunakan flag yang terbatas: bukti yang selesai, klaim yang dikoreksi, hasil interview, verifikasi, dan pilihan tawaran. Tidak ada nilai hubungan tersembunyi dengan ibu atau Dita.
 
-Perubahan sikap Raka mengikuti tiga tahap. Pada awal minggu ia mencari bukti bahwa dirinya masih mampu. Pada pertengahan minggu ia mulai menanyakan pekerjaan yang sebenarnya akan dijalani. Pada akhir minggu ia berlatih menyebut pilihan serta batasnya kepada orang lain. Mendapat tawaran lebih awal mengubah kekhawatirannya menjadi takut salah memilih; penolakan mengubahnya menjadi pertanyaan tentang persiapan berikutnya. Keduanya tetap dapat berujung pada keputusan yang dijelaskan dengan sadar.
+Perubahan sikap Raka mengikuti tiga tahap. Pada awal minggu ia mencari bukti bahwa dirinya masih mampu. Pada pertengahan minggu ia mulai menanyakan pekerjaan yang sebenarnya akan dijalani. Pada akhir minggu (atau saat siap menutup pilihan mulai Hari 4) ia berlatih menyebut pilihan serta batasnya kepada orang lain. Mendapat tawaran lebih awal mengubah kekhawatirannya menjadi takut salah memilih; penolakan mengubahnya menjadi pertanyaan tentang persiapan berikutnya. Keduanya tetap dapat berujung pada keputusan yang dijelaskan dengan sadar.
 
-Jika pemain jarang menghubungi Dita, pesan penting tetap masuk tanpa biaya sesi. Aktivitas Hubungi Dita memberi percakapan tambahan dan pemulihan, bukan akses eksklusif pada bantuan. Jika pemain tidak memiliki E1/E2, epilog pulang menyebut rencana merapikan proyek, bukan mengklaim portofolio sudah lengkap.
+Jika pemain jarang menemui atau menghubungi Dita, pesan penting tetap masuk tanpa biaya waktu. Aktivitas Temui / Hubungi Dita memberi percakapan tambahan dan pemulihan, bukan akses eksklusif pada bantuan. Jika pemain tidak memiliki E1/E2, epilog pulang menyebut rencana merapikan proyek, bukan mengklaim portofolio sudah lengkap.
 
 Jika dua tawaran resmi tersedia, keputusan akhir menampilkan perbedaan tugas dan durasi kontrak. Jika tidak ada tawaran resmi, game tetap menawarkan pulang. Akses Prima tidak diaktifkan sebagai satu-satunya jalan untuk bertahan hidup.
 
@@ -577,7 +612,7 @@ Pada ending kerja, Raka mengirim konfirmasi tugas sebelum mengabarkan tanggal mu
 
 ### 4.4 Storyboards
 
-Seluruh adegan memakai sudut pandang pemain atau tampilan benda dekat. Tidak diperlukan animasi tubuh lengkap atau cutscene sinematik terpisah. Visualisasi tersedia di [storyboard](sketchs/05-storyboard.svg).
+Seluruh adegan memakai sudut pandang pemain atau tampilan benda dekat. Tidak diperlukan cutscene sinematik terpisah.
 
 | Shot | Framing dan perkiraan durasi | Gerak atau aksi | Audio dan teks | Fungsi |
 | --- | --- | --- | --- | --- |
@@ -618,21 +653,23 @@ Referensi kreatif digunakan untuk mempelajari penyampaian suasana dan cerita:
 
 Lingkungan dibangun sebagai satu scene permainan dengan kelompok objek untuk kondisi normal dan tiga Retakan. Menu memakai scene terpisah yang ringan. Setiap Retakan memanfaatkan mesh kamar atau modul lorong yang sama, dengan salinan layout serta collider yang sudah disusun.
 
-| Area | Ukuran target | Progres dan batas |
+| Area | Acuan scene (`Assets/progress.unity`) | Progres dan batas |
 | --- | --- | --- |
-| Kamar 07 | Interior 3 × 4 meter; tinggi 2,8 meter | Area utama selama tujuh hari; jendela dan pintu menjadi orientasi tetap |
-| Lorong kos | Panjang 6 meter, lebar 1,5 meter | Dalam keadaan normal pemain hanya dapat mencapai bangku dan ujung tertutup; akses keluar kota tidak tersedia |
-| Retakan 1 | Salinan kamar dengan panjang 7 meter | Jalur tunggal dari kartu ke meja; kembali ke layout normal setelah solusi |
-| Retakan 2 | Modul lorong yang sama dengan tiga muka pintu | Pintu 07 menjadi satu-satunya tujuan sah |
-| Retakan 3 | Kamar normal dengan kursi tambahan | Pemain tetap memiliki jalur minimal 0,8 meter ke jendela |
+| Kamar 07 (`SM_Kamar_Kanan`) | Kamar kos Raka dengan kamar mandi dalam (`Mandi` 1×/hari), area kerja & tidur di sisi timur | Area utama selama maksimal tujuh hari; jendela, meja, kasur, kamar mandi, dan pintu menjadi orientasi tetap |
+| Kamar Dita 06 (`SM_Kamar_Kiri`) | Kamar tetangga tepat di seberang kamar Raka; memakai ulang aset furnitur modular kamar kos | Tempat menemui NPC 3D Dita (`Temui Dita`, 2 jam, +2 Tenaga / −2 Tekanan); tidak memerlukan sistem AI berjalan bebas |
+| Lorong kos (`SM_Lorong_3Kamar`) | Lorong 3 pintu dengan bangku lorong (`SM_Bangku_Lorong`), menghubungkan Kamar 07 (kanan), Kamar Dita 06 (kiri), dan pintu ujung lorong | Dilewati pemain saat mengunjungi Dita; pintu ujung terkunci pada kondisi normal; akses keluar kota tidak tersedia |
+| Studio Interview (Off-screen) | Booth kantor minimalis tersembunyi + kamera `RenderTexture` `512 × 512` (hanya aktif saat interview) | Menampilkan NPC 3D Nara atau Bagas dengan gerakan halus (*idle*, mengangguk, menyimak) pada layar laptop |
+| Retakan 1 (`Tekanan ≥ 5`, Hari 1+) | Salinan kamar memanjang (`SM_Kamar07_Shell_Retakan1_Panjang7m` atau modul ekstensi) | Jalur tunggal dari kartu E0 ke meja; kembali ke layout normal setelah solusi (`Tekanan → 3`) |
+| Retakan 2 (`Tekanan ≥ 5`, Hari 3+) | Lorong 3 pintu yang sama (`SM_Lorong_3Kamar`) dengan tiga varian label pintu | Pintu 07 menjadi satu-satunya tujuan sah di antara label DITERIMA dan TERLAMBAT (`Tekanan → 3`) |
+| Retakan 3 (`Tekanan ≥ 5`, Hari 5+) | Kamar normal (`SM_Kamar_Kanan`) dengan kursi tambahan | Pemain tetap memiliki jalur minimal 0,8 meter ke kursi dekat jendela (`Tekanan → 3`) |
 
-Setiap transisi mengembalikan pemain ke titik aman yang ditentukan, bukan koordinat lama yang mungkin tertutup mesh. Tidak ada loading ke kota, kendaraan, atau interior perusahaan.
+Setiap transisi mengembalikan pemain ke titik aman yang ditentukan, bukan koordinat lama yang mungkin tertutup mesh. Tidak ada loading ke kota, kendaraan, atau gedung perusahaan.
 
 ### 5.2 Game World and Environment
 
-Kos berada di kawasan hunian dekat kampus. Detail lokal berupa lantai keramik kusam, kabel sambungan berlabel, sandal di dekat pintu, gantungan kunci nomor kamar, dan tirai pendek hasil jahitan ulang. Barang memiliki alasan berada di tempatnya; kamar tidak dipenuhi sampah untuk menandai kondisi psikologis.
+Kos berada di kawasan hunian dekat kampus. Layout ruang mengikuti scene [progress.unity](../Assets/progress.unity): lorong tiga kamar (`SM_Lorong_3Kamar`) dengan bangku lorong dan tiga pintu, dengan kamar Raka di sisi kanan (`SM_Kamar_Kanan`) lengkap dengan kamar mandi dalam (`SM_Pintu_KM`, bak mandi, kloset jongkok, shower, gantungan handuk) dan **kamar Dita (Kamar 06) di sisi kiri (`SM_Kamar_Kiri`) tepat di depan pintu kamar Raka**. Kamar Dita memanfaatkan ulang aset furnitur modular yang sama dengan tata letak sedikit berbeda sehingga memperkaya dunia kos tanpa membebani produksi aset baru. Detail lokal mencakup lantai keramik kusam, saklar lampu, lampu plafon dan meja, rak buku, kipas, kalender dinding, dan tirai. Barang memiliki alasan berada di tempatnya; kamar tidak dipenuhi sampah untuk menandai kondisi psikologis.
 
-Meja berada di dinding utara menghadap papan bukti. Kasur menempel pada sisi barat. Pintu berada di selatan, sedangkan jendela dan kursi berada di timur. Komposisi ini membuat laptop, kasur, pintu, dan kursi terlihat sebagai empat tujuan berbeda. Tidak ada kamar mandi yang dapat dimasuki karena tidak mendukung aktivitas inti.
+Di dalam area utama kamar Raka (`SM_Kamar_Kanan`), meja kerja (`SM_Meja`, laptop, ponsel, lampu meja) dan papan bukti (`SM_Papan_Bukti`) berada di sisi selatan-timur berdampingan dengan rak buku (`SM_Rak`). Jendela (`SM_Jendela`), tirai, kipas, dan kalender berada di dinding timur, dengan kursi (`SM_Kursi_Jendela`) dan tas di dekat area kerja/jendela. Kasur (`SM_Kasur`) berada di sisi utara-timur. Kamar mandi dalam dapat dimasuki untuk aktivitas pemulihan **`Mandi`** (`1 jam`, `+2 Tenaga`, `−3 Tekanan`, maksimal sekali sehari) serta interaksi pintu dan saklar lampu.
 
 ![Kamar Kos Raka - Tampilan First-Person](visuals/01-kamar-kos-firstperson.webp)
 
@@ -646,53 +683,45 @@ Art direction bernama *Cat Poster Kos*: bentuk 3D low-poly yang rapi, bidang war
 
 | Character | Peran dan sifat | Bentuk aset | Batas penulisan |
 | --- | --- | --- | --- |
-| Raka, 23 tahun | Lulusan Informatika; senang memperjelas antarmuka, belum mandiri menangani server, menghindari percakapan tentang penolakan | Kamera first-person; identitas melalui benda dan dialog; tidak memerlukan model tubuh | Tidak dijadikan wakil semua pencari kerja atau diagnosis tertentu |
-| Dita, 23 tahun | Teman kuliah yang juga bekerja; cepat memberi saran praktis, belajar mendengarkan, menawarkan tempat tinggal transisi dengan batas satu bulan | Satu potret dengan ekspresi netral dan tersenyum tipis; pesan teks | Tidak menjadi terapis, menjanjikan pekerjaan, atau selalu memiliki jawaban benar |
-| Ibu | Orang tua yang menanyakan jadwal perjalanan, menyiapkan tempat pulang, dan menyepakati bantuan kebutuhan dasar sementara | Teks dan foto kecil bergaya ilustrasi | Tidak dipakai sebagai ancaman rasa bersalah atau hukuman atas kegagalan |
-| Nara, Studio Lajur | Perekrut yang meminta penjelasan lingkup kerja | Potret 2D, tiga ekspresi | Menilai bukti, bukan kebersihan kamar atau kondisi mental |
-| Bagas, Koperasi Pijar | Koordinator yang membutuhkan dokumentasi pengujian | Potret 2D, tiga ekspresi | Tidak menjanjikan perpanjangan kontrak otomatis |
-| Admin Akses Prima | Kontak yang menghindari pertanyaan spesifik | Avatar logo geometris dan teks | Risiko ditunjukkan melalui perilaku serta kontrak, bukan bentuk wajah atau kebangsaan |
+| Raka, 23 tahun | Lulusan Informatika; senang memperjelas antarmuka, belum mandiri menangani server, menghindari percakapan tentang penolakan | Tubuh first-person beranimasi (`Ren_Animated.prefab` + `PergerakanPemain.controller`); identitas melalui benda, gerak tangan/duduk, dan dialog | Tidak dijadikan wakil semua pencari kerja atau diagnosis tertentu |
+| Dita, 23 tahun | Teman kuliah sekaligus **tetangga kamar seberang lorong (Kamar 06, `SM_Kamar_Kiri`)** yang sudah bekerja; cepat memberi saran praktis, belajar mendengarkan, membantu rencana tempat tinggal transisi satu bulan | NPC 3D di Kamar 06 dengan animasi halus (*sit/stand idle*, mengangguk) + pesan teks di Ponsel (fallback potret 2D) | Tidak menjadi terapis, menjanjikan pekerjaan, atau selalu memiliki jawaban benar |
+| Ibu | Orang tua yang menanyakan jadwal perjalanan, menyiapkan tempat pulang, dan menyepakati bantuan kebutuhan dasar sementara | Teks dan foto kecil bergaya ilustrasi di Ponsel | Tidak dipakai sebagai ancaman rasa bersalah atau hukuman atas kegagalan |
+| Nara, Studio Lajur | Perekrut yang meminta penjelasan lingkup kerja | NPC 3D pada *video-call studio booth* (`RenderTexture` `512 × 512`, gerakan halus: *idle*, mengangguk, menyimak; fallback potret 2D) | Menilai bukti, bukan kebersihan kamar atau kondisi mental |
+| Bagas, Koperasi Pijar | Koordinator yang membutuhkan dokumentasi pengujian | NPC 3D pada *video-call studio booth* (`RenderTexture` `512 × 512`, gerakan halus: *idle*, mengangguk, mempertimbangkan; fallback potret 2D) | Tidak menjanjikan perpanjangan kontrak otomatis |
+| Admin Akses Prima | Kontak yang menghindari pertanyaan spesifik dan menolak panggilan video | Avatar logo geometris `AP` dan teks saja | Risiko ditunjukkan melalui perilaku serta kontrak, bukan bentuk wajah atau kebangsaan |
 
 ![Desain Karakter dan Potret 2D Sesi Interview](visuals/06-karakter-potret-interview.webp)
 
-Tidak ada monster yang mewakili depresi, musuh ber-NPC AI, atau karakter 3D beranimasi penuh. Kehadiran manusia disampaikan lewat pesan, potret, dan cara benda ditempatkan.
+Tidak ada monster yang mewakili depresi atau musuh ber-NPC AI berjalan bebas. Kehadiran manusia diwujudkan melalui NPC 3D berposisi tetap dengan animasi halus (Dita di kamar seberang, Nara & Bagas saat video-call interview), pesan teks, dan benda di kamar.
 
 ### 5.4 Objects
 
 | Object | Interaksi dan state | Kebutuhan aset |
 | --- | --- | --- |
-| Meja dan papan bukti | Focus; menyusun E0/E1/E2; dua keadaan rapi | Satu meja, papan, tiga mesh kartu yang berbagi material |
-| Laptop | Membuka tiga tab dan interview | Satu model statis; layar berupa Canvas sederhana saat focus |
-| Ponsel | Membaca pesan gratis atau memulai aktivitas Hubungi Dita | Satu model; tidak memerlukan simulasi perangkat |
-| Kasur | Aktivitas istirahat; tidur penutup hari; membuka keputusan pada malam terakhir | Satu dipan, kasur, dan bantal |
-| Kursi jendela | Aktivitas tanpa layar dan jangkar Retakan ketiga | Satu model yang diulang untuk variasi Retakan |
-| Kalender tujuh hari | Menunjukkan hari, sesi, dan tanggal akhir sewa | Satu bidang tekstur dengan label teks yang diperbarui |
-| Map tawaran | Membandingkan A/B/C dan memilih surat | Satu mesh map; isi ditampilkan melalui UI |
+| Meja dan papan bukti (`SM_Meja`, `SM_Papan_Bukti`) | Focus; menyusun E0/E1/E2 dan pekerjaan portofolio E1/E2; dua keadaan rapi | Satu meja, papan, tiga mesh kartu yang berbagi material |
+| Laptop (`SM_Laptop`) | Membuka tab Lamaran/CV, Pesan Kerja, Catatan, verifikasi, dan video-call interview NPC 3D | Satu model laptop; layar berupa Canvas UI + `RawImage` RenderTexture saat interview |
+| Ponsel (`SM_Ponsel`) | Membaca pesan Ibu & Dita gratis waktu atau memulai `Hubungi Dita` (`2 jam`) | Satu model; tidak memerlukan simulasi perangkat penuh |
+| Pintu & Kamar Dita 06 (`SM_Pintu (2)`, `SM_Kamar_Kiri`) | Mengetuk / mengunjungi tetangga untuk `Temui Dita` (`2 jam`, `+2 Tenaga`, `−2 Tekanan`) | Memakai ulang modul kamar & furnitur kos + NPC 3D Dita |
+| Kasur (`SM_Kasur`) | Aktivitas Beristirahat (`08:00–17:59`, `2 jam`); Tidur / Tutup hari (`18:00+`); mengarahkan ke Keputusan Akhir pada malam Hari 7 | Satu dipan, kasur, dan bantal |
+| Kamar Mandi (`SM_Pintu_KM`, `SM_Shower`, `SM_Bak_Mandi`) | Aktivitas Mandi (`1 jam`, `+2 Tenaga`, `−3 Tekanan`, maksimal sekali sehari) serta interaksi pintu/saklar | Pintu KM, bak mandi, shower, kloset jongkok, gantungan handuk |
+| Kursi jendela (`SM_Kursi_Jendela`) | Aktivitas Duduk tanpa layar (`1 jam`) dan jangkar Retakan ketiga | Satu model yang diulang untuk variasi Retakan |
+| Kalender tujuh hari (`SM_Kalender`) | Menunjukkan hari, jam berjalan, dan tanggal akhir sewa | Satu bidang tekstur dengan label teks yang diperbarui |
+| Map tawaran (`SM_Map_Tawaran`) | Membandingkan A/B/C, memilih `offerChoice` & `decisionNote`, serta memicu sesi persiapan akhir mulai Hari 4 | Satu mesh map; isi ditampilkan melalui UI |
 | Kartu proyek E0 | Dapat dibaca; salinan puzzle menjadi jangkar pertama | Satu gambar proyek fiktif |
 | Kunci 07 | Dapat diperiksa; salinan puzzle dipasang pada pintu 07 | Satu model low-poly dan label besar |
-| Kartu pesan ibu | Terlihat sejak hari 6; salinan puzzle menjadi jangkar ketiga | Kartu kertas dan teks yang terbaca |
-| Pintu dan nomor kamar | Buka ke lorong; variasi muka untuk Retakan kedua | Satu modul pintu dengan tiga varian tulisan |
-| Tas dan tiket | Menegaskan pilihan pulang; komposisi ending | Satu tas dan satu kartu tiket fiktif |
-| Kipas, rak, tirai, sandal, kabel, buku | Pembentuk orientasi dan suasana; umumnya tidak interaktif | Bentuk sederhana, material bersama |
+| Kartu pesan ibu | Terlihat sejak Hari 5 di meja/rak; salinan puzzle menjadi jangkar ketiga | Kartu kertas dan teks yang terbaca |
+| Pintu dan nomor kamar (`SM_Pintu`) | Buka ke lorong `SM_Lorong_3Kamar`; tiga varian label untuk Retakan kedua | Modul pintu lorong dengan tiga varian tulisan |
+| Tas dan tiket (`SM_Tas`, `SM_Tiket`) | Menegaskan pilihan pulang, memicu sesi persiapan akhir (*Kemas barang & siapkan jawaban*) mulai Hari 4, serta komposisi ending | Satu tas dan satu kartu tiket fiktif |
+| Kipas, rak, tirai, lampu, saklar, buku | Pembentuk orientasi, pencahayaan, dan suasana; saklar dapat dinyalakan/dimatikan | Bentuk sederhana, material palet bersama |
 
-Objek interaktif memakai siluet atau penjepit yang konsisten, prompt, dan nama. Benda dekoratif tidak memberikan prompt palsu. Catatan tidak meminta pemain membaca tulisan kecil langsung dari tekstur dunia; memilihnya membuka salinan teks yang dapat diperbesar.
+Objek interaktif memakai siluet atau penjepit yang konsisten, prompt `E`, dan nama. Benda dekoratif tidak memberikan prompt palsu. Catatan tidak meminta pemain membaca tulisan kecil langsung dari tekstur dunia; memilihnya membuka salinan teks yang dapat diperbesar.
 
 ### 5.5 Graphics Scope and Asset Budget
 
-Bagian grafika yang dikerjakan mencakup pemodelan modular, transformasi objek, proyeksi perspektif, UV dan tekstur, pencahayaan sederhana, material, raycast interaksi, serta komposisi kamera. Perubahan ruang menunjukkan penerapan transformasi dan pergantian kelompok objek, tanpa memerlukan teknologi rendering khusus.
+Bagian grafika yang dikerjakan mencakup pemodelan modular (`SM_Lorong_3Kamar`, `SM_Kamar_Kanan`, `SM_Kamar_Kiri` dengan penggunaan ulang furnitur), animasi karakter humanoid (`Ren_Animated` + NPC 3D Dita, Nara, dan Bagas), transformasi objek, proyeksi perspektif, UV dan tekstur palet bersama (`T_SELA_Palette.png`), pencahayaan dinamis Pagi/Siang/Malam, `RenderTexture` terisolasi untuk panggilan video interview, raycast interaksi `E`, serta komposisi kamera. Perubahan ruang pada Retakan menunjukkan penerapan transformasi dan pergantian kelompok objek.
 
-Target aset adalah sekitar 25 mesh unik, satu atlas lingkungan 1024 × 1024, satu atlas properti 1024 × 1024, dan potret 2D terpisah. Geometri yang terlihat ditargetkan di bawah 80.000 triangle. Angka tersebut merupakan batas kerja awal, bukan jaminan performa.
+Aset 3D berbasis modul `progress.unity` memakai palet tekstur bersama (`T_SELA_Palette.png` `1024 × 1024`) dan material ringan agar *draw call* tetap rendah, dengan target geometri terlihat di bawah `80.000` triangle. Kamera `RenderTexture` `512 × 512` untuk NPC interview hanya diaktifkan selama dialog interview berlangsung (0 beban pada Free Roam).
 
-Mayoritas pengalaman berlangsung dengan berjalan dan berinteraksi dalam ruang 3D. Komponen 2D dibatasi pada laptop, potret, label, serta teks. Laptop tidak membuka permainan 2D lain; pemain selalu kembali ke ruang fisik sebagai pusat aktivitas.
+Mayoritas pengalaman berlangsung dengan berjalan dan berinteraksi dalam ruang 3D (kamar Raka, kamar mandi, lorong, dan kamar Dita). Komponen 2D dibatasi pada layar laptop, label, dan teks UI yang dapat diperbesar. Laptop tidak membuka permainan 2D lain; pemain selalu kembali ke ruang fisik sebagai pusat aktivitas.
 
-Visualisasi pendamping:
-
-- [01: Room and Layout](sketchs/01-room-layout.svg)
-- [02: First-Person Room](sketchs/02-first-person.svg)
-- [03: Evidence and Laptop](sketchs/03-evidence-laptop.svg)
-- [04: Character and Props](sketchs/04-character-props.svg)
-- [05: Storyboard](sketchs/05-storyboard.svg)
-
-Sketsa merupakan acuan komposisi dan produksi aset, bukan tangkapan layar build Unity.
-
-Ilustrasi di visuals/ tetap digunakan untuk arah warna, ruang, dan susunan panel. Angka, teks, pilihan, dan syarat implementasi mengikuti GDD serta DESIGN.MD. Perbedaan kecil pada tulisan ilustrasi dicatat saat implementasi; aset gambar tidak perlu dibuat ulang untuk setiap revisi aturan. Teks penting dibuat sebagai elemen UI yang dapat diperbesar.
+Ilustrasi di [visuals/](visuals/README.md) tetap digunakan untuk arah warna, ruang, dan susunan panel. Angka, teks, pilihan, dan syarat implementasi mengikuti GDD serta DESIGN.MD. Perbedaan kecil pada tulisan ilustrasi dicatat saat implementasi; aset gambar tidak perlu dibuat ulang untuk setiap revisi aturan. Teks penting dibuat sebagai elemen UI yang dapat diperbesar.

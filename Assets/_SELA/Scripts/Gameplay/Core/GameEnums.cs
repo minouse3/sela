@@ -61,15 +61,17 @@ namespace SELA.Core
 
     public enum ActivityType
     {
-        ImproveUiExample = 0,  // Rapikan contoh antarmuka -> E1
-        CompleteTestNotes = 1, // Lengkapi catatan pengujian -> E2
-        VerifyCompany = 2,     // Periksa perusahaan (A/B/C)
-        SubmitApplication = 3, // Kirim lamaran (A/B)
-        AttendInterview = 4,   // Ikuti interview (A/B)
-        Rest = 5,              // Beristirahat
-        CallDita = 6,          // Hubungi Dita
-        SitWithoutScreen = 7,  // Duduk tanpa layar
-        TidyDesk = 8           // Rapikan meja
+        ImproveUiExample = 0,  // Rapikan contoh antarmuka -> E1 (3 jam)
+        CompleteTestNotes = 1, // Lengkapi catatan pengujian -> E2 (3 jam)
+        VerifyCompany = 2,     // Periksa perusahaan A/B/C (2 jam)
+        SubmitApplication = 3, // Kirim lamaran A/B (2 jam)
+        AttendInterview = 4,   // Ikuti interview A/B (2 jam, 13:00-15:00)
+        Rest = 5,              // Beristirahat (2 jam, Pagi-Siang)
+        CallDita = 6,          // Hubungi Dita (2 jam)
+        SitWithoutScreen = 7,  // Duduk tanpa layar (1 jam)
+        TidyDesk = 8,          // Rapikan meja (1 jam, 1x/hari)
+        Shower = 9,            // Mandi di kamar mandi (1 jam, 1x/hari, +2 Tenaga / -3 Tekanan)
+        FinalPrep = 10         // Kemas barang & siapkan jawaban (2 jam, Hari 4+ / Hari 7 -> Keputusan Akhir)
     }
 
     public enum JedaChoice

@@ -15,6 +15,7 @@ public class SeatInteraction : MonoBehaviour
     float yaw;
     float pitch;
     bool seated;
+    int satFrame;
 
     public void Sit()
     {
@@ -38,6 +39,7 @@ public class SeatInteraction : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
         seated = true;
+        satFrame = Time.frameCount;
         Current = this;
     }
 
@@ -59,7 +61,8 @@ public class SeatInteraction : MonoBehaviour
             pitch = Mathf.Clamp(pitch - delta.y, -70f, 70f);
             playerCamera.transform.rotation = Quaternion.Euler(pitch, yaw, 0f);
         }
-        if (!Keyboard.current.qKey.wasPressedThisFrame) return;
+        if (Time.frameCount == satFrame) return;
+        if (!Keyboard.current.eKey.wasPressedThisFrame && !Keyboard.current.escapeKey.wasPressedThisFrame) return;
         var controller = player.GetComponent<CharacterController>();
         controller.enabled = false;
         player.transform.position = standingPosition.position;

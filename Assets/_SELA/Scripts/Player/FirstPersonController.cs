@@ -4,7 +4,7 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(CharacterController))]
 public class FirstPersonController : MonoBehaviour
 {
-    [SerializeField] float moveSpeed = 3f;
+    [SerializeField] float moveSpeed = 2.2f;
     [SerializeField] float mouseSensitivity = 0.1f;
     [SerializeField] float gravity = -9.81f;
     [SerializeField] float eyeForwardClearance = 0.18f;

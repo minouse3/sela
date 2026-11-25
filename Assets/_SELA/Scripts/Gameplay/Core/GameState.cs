@@ -22,8 +22,10 @@ namespace SELA.Core
         public CompanyId company;
         public ApplicationStatus status = ApplicationStatus.NotSent;
         public int submittedDay;
+        public int submittedHour;
         public SessionType submittedSession;
         public int interviewDay;
+        public int interviewHour = GameState.InterviewHour;
 
         // Frozen snapshot captured at submission time (read-only afterward).
         public ClaimChoice snapshotClaim1;
@@ -82,18 +84,28 @@ namespace SELA.Core
     [Serializable]
     public class GameState
     {
-        public const int CurrentSaveVersion = 1;
+        public const int CurrentSaveVersion = 2;
         public const int MinDay = 1;
         public const int MaxDay = 7;
+        public const int EarlyFinalizationMinDay = 4;
+
+        public const int StartHour = 8;      // 08:00 (Pagi)
+        public const int SiangStartHour = 12; // 12:00 (Siang)
+        public const int InterviewHour = 13;  // 13:00 (Siang interview start)
+        public const int MalamStartHour = 18; // 18:00 (Malam — sleep available)
+        public const int LateNightHour = 22;  // 22:00 (Late-night cutoff)
+
         public const int MinEnergy = 0;
         public const int MaxEnergy = 4;
         public const int MinPressure = 0;
         public const int MaxPressure = 6;
+        public const int RiftPressureThreshold = 5;
 
         public int saveVersion = CurrentSaveVersion;
         public int day = 1;
-        public SessionType session = SessionType.Pagi;
-        public bool sessionResolved;
+        public int currentHour = StartHour;
+        public SessionType session = SessionType.Pagi; // Environment time-of-day synced from currentHour
+        public bool sessionResolved;                   // True at LateNightHour (22:00)
         public GamePhase phase = GamePhase.FreeRoam;
 
         public int energy = 3;
@@ -125,18 +137,35 @@ namespace SELA.Core
 
         // Daily flags (reset on sleep).
         public bool deskTidiedToday;
+        public bool showeredToday;
         public bool jedaTriggeredToday;
         public bool ditaCalledToday;
+        public bool riftTriggeredToday;
 
         // Track desk visual state & read messages.
         public bool isDeskTidy;
         public List<string> readMessageIds = new List<string>();
         public int sitObservationsSeen;
         public int tidyObservationsSeen;
+        public int showerObservationsSeen;
+
+        public string FormattedTime => $"{currentHour:00}:00";
+        public bool IsLateNight => currentHour >= LateNightHour;
+        public bool CanSleepNow => currentHour >= MalamStartHour;
+        public bool IsNightFinished => IsLateNight;
 
         public static GameState CreateInitial()
         {
-            return new GameState();
+            var state = new GameState();
+            state.SyncTimeOfDay();
+            return state;
+        }
+
+        public static SessionType GetTimeOfDayForHour(int hour)
+        {
+            if (hour < SiangStartHour) return SessionType.Pagi;
+            if (hour < MalamStartHour) return SessionType.Siang;
+            return SessionType.Malam;
         }
 
         public GameState Clone()
@@ -145,11 +174,19 @@ namespace SELA.Core
             return JsonUtility.FromJson<GameState>(json);
         }
 
+        public void SyncTimeOfDay()
+        {
+            currentHour = Mathf.Clamp(currentHour, StartHour, LateNightHour);
+            session = GetTimeOfDayForHour(currentHour);
+            sessionResolved = currentHour >= LateNightHour;
+        }
+
         public void ClampStats()
         {
             day = Mathf.Clamp(day, MinDay, MaxDay);
             energy = Mathf.Clamp(energy, MinEnergy, MaxEnergy);
             pressure = Mathf.Clamp(pressure, MinPressure, MaxPressure);
+            SyncTimeOfDay();
         }
 
         public bool HasEvidence(EvidenceId id)
@@ -220,8 +257,6 @@ namespace SELA.Core
             scheduledCompany = CompanyId.StudioLajur;
             return false;
         }
-
-        public bool IsNightFinished => session == SessionType.Malam && sessionResolved;
 
         public bool IsRiftSolved(int riftNumber)
         {
