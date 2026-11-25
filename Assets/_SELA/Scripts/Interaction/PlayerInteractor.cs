@@ -54,7 +54,10 @@ public class PlayerInteractor : MonoBehaviour
 
         if (found != null && !found.canInteract) found = null;
         SetTarget(found);
-        SetMessage(found ? "Press " + key + " to Interact" : null);
+        string promptLabel = found != null
+            ? (string.IsNullOrWhiteSpace(found.prompt) ? $"Press {key} to Interact" : $"{key} · {found.prompt}")
+            : null;
+        SetMessage(promptLabel);
         if (found != null && Keyboard.current != null && Keyboard.current[key].wasPressedThisFrame)
         {
             found.Interact();

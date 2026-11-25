@@ -60,6 +60,11 @@ public class FirstPersonController : MonoBehaviour
     void Update()
     {
         if (!controller.enabled) return;
+        if (PlayerInteractor.Blocked)
+        {
+            if (animator != null) animator.SetInteger("Animation", 0);
+            return;
+        }
 
         var keyboard = Keyboard.current;
         var mouse = Mouse.current;

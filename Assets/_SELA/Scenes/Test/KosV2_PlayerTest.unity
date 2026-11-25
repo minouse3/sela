@@ -1072,6 +1072,8 @@ GameObject:
   - component: {fileID: 128199753}
   - component: {fileID: 128199752}
   - component: {fileID: 128199751}
+  - component: {fileID: 128199755}
+  - component: {fileID: 128199754}
   m_Layer: 0
   m_Name: SM_Ponsel
   m_TagString: Untagged
@@ -1173,6 +1175,49 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 128199749}
   m_Mesh: {fileID: 8518247789555967932, guid: c45b7bc264112c84dae8bf83c88bbc77, type: 3}
+--- !u!114 &128199754
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 128199749}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4a05d373d97c1c4c89f9d55acaa7bf1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WorldObjectHook
+  station: 3
+--- !u!114 &128199755
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 128199749}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3fed455e3a4103f4381efb3335ed7eab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Interactable
+  prompt: Periksa ponsel / Hubungi Dita
+  singleUse: 0
+  canInteract: 1
+  onInteract:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 128199754}
+        m_TargetAssemblyTypeName: WorldObjectHook, Assembly-CSharp
+        m_MethodName: TriggerStation
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &155694328
 GameObject:
   m_ObjectHideFlags: 0
@@ -1397,6 +1442,72 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   startOpen: 0
+--- !u!1 &165199533
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 165199536}
+  - component: {fileID: 165199535}
+  - component: {fileID: 165199534}
+  m_Layer: 0
+  m_Name: SELA_CoreLoop
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &165199534
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 165199533}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1691ebb16297dd348a7b4479aa331189, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CoreLoopDebugUI
+  startPanelOpen: 0
+--- !u!114 &165199535
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 165199533}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9853bfe650a65454a907544fa9120bde, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameLoopController
+  autoLoadSaveOnStart: 0
+  mainDirectionalLight: {fileID: 0}
+  morningLightColor: {r: 1, g: 0.92, b: 0.78, a: 1}
+  morningIntensity: 1.6
+  noonLightColor: {r: 0.98, g: 0.98, b: 0.96, a: 1}
+  noonIntensity: 2
+  nightLightColor: {r: 0.55, g: 0.65, b: 0.85, a: 1}
+  nightIntensity: 0.45
+--- !u!4 &165199536
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 165199533}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &172193792
 GameObject:
   m_ObjectHideFlags: 0
@@ -1437,6 +1548,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 183110693}
+  - component: {fileID: 183110695}
+  - component: {fileID: 183110694}
   m_Layer: 0
   m_Name: SM_Kasur
   m_TagString: Untagged
@@ -1463,6 +1576,49 @@ Transform:
   - {fileID: 1574329037}
   m_Father: {fileID: 1385833712}
   m_LocalEulerAnglesHint: {x: 0, y: -90, z: 0}
+--- !u!114 &183110694
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 183110692}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4a05d373d97c1c4c89f9d55acaa7bf1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WorldObjectHook
+  station: 2
+--- !u!114 &183110695
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 183110692}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3fed455e3a4103f4381efb3335ed7eab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Interactable
+  prompt: Beristirahat
+  singleUse: 0
+  canInteract: 1
+  onInteract:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 183110694}
+        m_TargetAssemblyTypeName: WorldObjectHook, Assembly-CSharp
+        m_MethodName: TriggerStation
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &188702362
 GameObject:
   m_ObjectHideFlags: 0
@@ -6073,6 +6229,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 976914899}
+  - component: {fileID: 976914901}
+  - component: {fileID: 976914900}
   m_Layer: 0
   m_Name: SM_Kalender
   m_TagString: Untagged
@@ -6097,6 +6255,49 @@ Transform:
   - {fileID: 931725072}
   m_Father: {fileID: 1385833712}
   m_LocalEulerAnglesHint: {x: 0, y: -90, z: 0}
+--- !u!114 &976914900
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 976914898}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4a05d373d97c1c4c89f9d55acaa7bf1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WorldObjectHook
+  station: 6
+--- !u!114 &976914901
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 976914898}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3fed455e3a4103f4381efb3335ed7eab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Interactable
+  prompt: Lihat kalender
+  singleUse: 0
+  canInteract: 1
+  onInteract:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 976914900}
+        m_TargetAssemblyTypeName: WorldObjectHook, Assembly-CSharp
+        m_MethodName: TriggerStation
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &983905733
 GameObject:
   m_ObjectHideFlags: 0
@@ -12208,6 +12409,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1880319668}
+  - component: {fileID: 1880319670}
+  - component: {fileID: 1880319669}
   m_Layer: 0
   m_Name: SM_Meja
   m_TagString: Untagged
@@ -12232,6 +12435,49 @@ Transform:
   - {fileID: 1517315800}
   m_Father: {fileID: 1385833712}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1880319669
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1880319667}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4a05d373d97c1c4c89f9d55acaa7bf1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WorldObjectHook
+  station: 4
+--- !u!114 &1880319670
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1880319667}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3fed455e3a4103f4381efb3335ed7eab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Interactable
+  prompt: Rapikan meja
+  singleUse: 0
+  canInteract: 1
+  onInteract:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1880319669}
+        m_TargetAssemblyTypeName: WorldObjectHook, Assembly-CSharp
+        m_MethodName: TriggerStation
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &1904857387
 GameObject:
   m_ObjectHideFlags: 0
@@ -13032,6 +13278,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1961006614}
+  - component: {fileID: 1961006616}
+  - component: {fileID: 1961006615}
   m_Layer: 0
   m_Name: SM_Laptop
   m_TagString: Untagged
@@ -13056,6 +13304,49 @@ Transform:
   - {fileID: 1389819165}
   m_Father: {fileID: 1385833712}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1961006615
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1961006613}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4a05d373d97c1c4c89f9d55acaa7bf1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WorldObjectHook
+  station: 0
+--- !u!114 &1961006616
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1961006613}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3fed455e3a4103f4381efb3335ed7eab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Interactable
+  prompt: Buka laptop
+  singleUse: 0
+  canInteract: 1
+  onInteract:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1961006615}
+        m_TargetAssemblyTypeName: WorldObjectHook, Assembly-CSharp
+        m_MethodName: TriggerStation
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &1961361889
 GameObject:
   m_ObjectHideFlags: 0
@@ -14402,6 +14693,8 @@ GameObject:
   - component: {fileID: 2119356714}
   - component: {fileID: 2119356713}
   - component: {fileID: 2119356712}
+  - component: {fileID: 2119356716}
+  - component: {fileID: 2119356715}
   m_Layer: 0
   m_Name: SM_Papan_Bukti
   m_TagString: Untagged
@@ -14503,6 +14796,49 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2119356710}
   m_Mesh: {fileID: -6449141610261953168, guid: 6d55e9c5abaf9e145928281cfa615d6e, type: 3}
+--- !u!114 &2119356715
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2119356710}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4a05d373d97c1c4c89f9d55acaa7bf1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WorldObjectHook
+  station: 1
+--- !u!114 &2119356716
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2119356710}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3fed455e3a4103f4381efb3335ed7eab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Interactable
+  prompt: Lihat papan bukti
+  singleUse: 0
+  canInteract: 1
+  onInteract:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 2119356715}
+        m_TargetAssemblyTypeName: WorldObjectHook, Assembly-CSharp
+        m_MethodName: TriggerStation
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &2121976489
 GameObject:
   m_ObjectHideFlags: 0
@@ -14771,3 +15107,4 @@ SceneRoots:
   - {fileID: 1735226398}
   - {fileID: 1385833712}
   - {fileID: 1961361892}
+  - {fileID: 165199536}

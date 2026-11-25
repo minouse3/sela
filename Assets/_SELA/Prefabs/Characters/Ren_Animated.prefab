@@ -64,6 +64,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: Ren_Animated
       objectReference: {fileID: 0}
+    - target: {fileID: 5724689671837151920, guid: 0308c53485b00db4b9021a60fdcc77ea, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 27dc3bf53d017b742a9510994447c172, type: 2}
+    - target: {fileID: 6034501271207528196, guid: 0308c53485b00db4b9021a60fdcc77ea, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 95855a9aff7275740b5a5946bc6efd87, type: 2}
     - target: {fileID: 8746640242405702250, guid: 0308c53485b00db4b9021a60fdcc77ea, type: 3}
       propertyPath: m_LocalRotation.x
       value: -0.034037843
