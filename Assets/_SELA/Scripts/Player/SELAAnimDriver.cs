@@ -44,4 +44,17 @@ public class SELAAnimDriver : MonoBehaviour
     }
 
     public void Drop() { SetHolding(false); }
+
+    public void PutDown()
+    {
+        if (!animator) return;
+        animator.SetTrigger("Place");
+        StartCoroutine(ReleaseHold());
+    }
+
+    IEnumerator ReleaseHold()
+    {
+        yield return new WaitForSeconds(0.15f);   // beri waktu transisi ke PickUp dimulai
+        animator.SetBool("IsHolding", false);
+    }
 }

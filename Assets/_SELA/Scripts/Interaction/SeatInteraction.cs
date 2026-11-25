@@ -11,6 +11,7 @@ public class SeatInteraction : MonoBehaviour
     [Header("Pose")]
     public Pose pose = Pose.Duduk;
     public float moveTime = 1f;
+    public float standUpTime = 1.5f;     // durasi transisi bangun mengikuti mata (sesuaikan dengan durasi klip TidurKeBerdiri)
 
     [Header("Titik")]
     public Transform seatView;
@@ -34,7 +35,7 @@ public class SeatInteraction : MonoBehaviour
     Quaternion savedCameraRotation;
     Coroutine moveRoutine;
     float yaw, pitch;
-    bool seated, settled;
+    bool seated, settled, standingUp;
 
     Vector3 TargetPos() => bodyPoint ? bodyPoint.position : seatView.TransformPoint(bodyOffset);
 
@@ -42,7 +43,7 @@ public class SeatInteraction : MonoBehaviour
 
     public void Sit()
     {
-        if (seated) return;
+        if (seated || standingUp) return;
         player = Object.FindFirstObjectByType<FirstPersonController>();
         if (!player || !seatView || !standingPosition) return;
         playerCamera = player.GetComponentInChildren<Camera>();
@@ -63,6 +64,7 @@ public class SeatInteraction : MonoBehaviour
         pitch = Mathf.DeltaAngle(0f, seatView.eulerAngles.x);
 
         settled = false;
+        standingUp = false;
         if (moveRoutine != null) StopCoroutine(moveRoutine);
         moveRoutine = StartCoroutine(MoveToSeat(TargetPos(), TargetRot()));
 
@@ -99,7 +101,7 @@ public class SeatInteraction : MonoBehaviour
 
     void Update()
     {
-        if (!seated || lookLocked || Keyboard.current == null) return;
+        if (!seated || lookLocked || standingUp || Keyboard.current == null) return;
         var flyCamera = playerCamera ? playerCamera.GetComponent<FlyCamera>() : null;
         if (flyCamera && flyCamera.IsFlying) return;
 
@@ -117,9 +119,9 @@ public class SeatInteraction : MonoBehaviour
 
     void LateUpdate()
     {
-        if (!seated || !player) return;
+        if ((!seated && !standingUp) || !player) return;
 
-        if (settled) player.transform.position = TargetPos();
+        if (settled && !standingUp) player.transform.position = TargetPos();
 
         if (lookLocked || !playerCamera) return;   // laptop terbuka: kamera diatur LaptopInteraction
 
@@ -138,32 +140,58 @@ public class SeatInteraction : MonoBehaviour
 
     public void StandUp()
     {
-        if (!seated || lookLocked) return;
+        if (!seated || lookLocked || standingUp) return;
 
         if (moveRoutine != null) { StopCoroutine(moveRoutine); moveRoutine = null; }
         settled = false;
+        standingUp = true;
 
         if (player != null)
         {
-            var controller = player.GetComponent<CharacterController>();
-            if (controller) controller.enabled = false;
-            player.transform.position = standingPosition.position;
-            if (controller) controller.enabled = true;
-
-            if (playerCamera != null)
-            {
-                playerCamera.transform.localPosition = savedCameraPosition;
-                playerCamera.transform.localRotation = savedCameraRotation;
-            }
-
             if (pose == Pose.Kasur) player.SetLying(false);
             else player.SetSeated(false);
 
-            player.enabled = true;
-            if (interactor) interactor.enabled = true;
+            moveRoutine = StartCoroutine(StandUpRoutine());
+        }
+    }
+
+    IEnumerator StandUpRoutine()
+    {
+        Vector3 startPos = player.transform.position;
+        Quaternion startRot = player.transform.rotation;
+        Quaternion targetRot = Quaternion.Euler(0f, standingPosition.eulerAngles.y, 0f);
+
+        float durasi = followEyes ? standUpTime : 0.2f;
+        float t = 0f;
+
+        while (t < 1f)
+        {
+            t += Time.deltaTime / Mathf.Max(0.01f, durasi);
+            float k = Mathf.SmoothStep(0f, 1f, t);
+
+            // Geser badan ke Standing Position secara halus sembari kamera terus mengikuti mata di LateUpdate
+            player.transform.position = Vector3.Lerp(startPos, standingPosition.position, k);
+            player.transform.rotation = Quaternion.Slerp(startRot, targetRot, k);
+            yield return null;
         }
 
+        var controller = player.GetComponent<CharacterController>();
+        if (controller) controller.enabled = false;
+        player.transform.position = standingPosition.position;
+        if (controller) controller.enabled = true;
+
+        if (playerCamera != null)
+        {
+            playerCamera.transform.localPosition = savedCameraPosition;
+            playerCamera.transform.localRotation = savedCameraRotation;
+        }
+
+        player.enabled = true;
+        if (interactor) interactor.enabled = true;
+
+        standingUp = false;
         seated = false;
+        moveRoutine = null;
         if (Current == this) Current = null;
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
