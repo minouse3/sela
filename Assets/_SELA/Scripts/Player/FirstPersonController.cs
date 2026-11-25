@@ -1,19 +1,35 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(CharacterController))]
 public class FirstPersonController : MonoBehaviour
 {
-    [SerializeField] float moveSpeed = 2.2f;
+    [Header("Pergerakan")]
+    [SerializeField] float walkSpeed = 2.5f;
+    [SerializeField] float runSpeed = 5.5f;
     [SerializeField] float mouseSensitivity = 0.1f;
     [SerializeField] float gravity = -9.81f;
     [SerializeField] float eyeForwardClearance = 0.18f;
+
+    [Header("Jongkok")]
+    [SerializeField] float crouchCameraDrop = 0.5f;   // seberapa turun pandangan (meter)
+    [SerializeField] float crouchSmooth = 8f;
+
+    [Header("Animasi SELA")]
+    [SerializeField] SELAAnimDriver driver;
 
     CharacterController controller;
     Animator animator;
     Camera playerCamera;
     float pitch;
     float verticalVelocity;
+    bool isSeated;
+    bool isCrouching;
+    float standingCamY;      // tinggi kamera saat berdiri
+    float crouchOffset;      // 0 = berdiri, crouchCameraDrop = jongkok penuh
+
+    public bool IsSeated => isSeated;
 
     void Awake()
     {
@@ -21,6 +37,9 @@ public class FirstPersonController : MonoBehaviour
         animator = GetComponentInChildren<Animator>();
         if (animator != null)
             animator.applyRootMotion = false;
+
+        if (driver == null) driver = GetComponent<SELAAnimDriver>();
+
         playerCamera = GetComponentInChildren<Camera>();
         if (playerCamera != null)
         {
@@ -35,7 +54,7 @@ public class FirstPersonController : MonoBehaviour
 
     void AlignCameraToEyes()
     {
-        if (!animator) return;
+        if (!animator || !playerCamera) return;
         var left = animator.GetBoneTransform(HumanBodyBones.LeftEye);
         var right = animator.GetBoneTransform(HumanBodyBones.RightEye);
         if (!left || !right) return;
@@ -49,6 +68,7 @@ public class FirstPersonController : MonoBehaviour
     void Start()
     {
         AlignCameraToEyes();
+        standingCamY = playerCamera.transform.localPosition.y;
         SetCursorLocked(true);
     }
 
@@ -59,17 +79,11 @@ public class FirstPersonController : MonoBehaviour
 
     void Update()
     {
-        if (!controller.enabled) return;
-        if (PlayerInteractor.Blocked)
-        {
-            if (animator != null) animator.SetInteger("Animation", 0);
-            return;
-        }
+        if (!controller.enabled || isSeated || PlayerInteractor.Blocked) return;
 
         var keyboard = Keyboard.current;
         var mouse = Mouse.current;
 
-        // WASD: gerak; mouse: lihat; Esc: lepas kursor; klik kiri: kunci lagi.
         if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
             SetCursorLocked(false);
         else if (Cursor.lockState != CursorLockMode.Locked && mouse != null && mouse.leftButton.wasPressedThisFrame)
@@ -83,31 +97,111 @@ public class FirstPersonController : MonoBehaviour
             playerCamera.transform.localRotation = Quaternion.Euler(pitch, 0f, 0f);
         }
 
+        // Input WASD
         Vector2 input = Vector2.zero;
+        bool isRunning = false;
+
         if (keyboard != null && Cursor.lockState == CursorLockMode.Locked)
         {
             input.x = (keyboard.dKey.isPressed ? 1f : 0f) - (keyboard.aKey.isPressed ? 1f : 0f);
             input.y = (keyboard.wKey.isPressed ? 1f : 0f) - (keyboard.sKey.isPressed ? 1f : 0f);
             input = Vector2.ClampMagnitude(input, 1f);
+
+            if (keyboard.leftShiftKey.isPressed && input.sqrMagnitude > 0.01f)
+                isRunning = true;
         }
 
+        // Toggle jongkok (C)
+        if (keyboard != null && keyboard.cKey.wasPressedThisFrame)
+        {
+            isCrouching = !isCrouching;
+            if (driver) driver.SetCrouch(isCrouching);
+        }
+        if (isCrouching && isRunning) isRunning = false;   // tidak lari saat jongkok
+
+        // Gravitasi
         if (controller.isGrounded && verticalVelocity < 0f)
             verticalVelocity = -2f;
         verticalVelocity += gravity * Time.deltaTime;
 
-        Vector3 movement = (transform.right * input.x + transform.forward * input.y) * moveSpeed;
+        float currentSpeed = isRunning ? runSpeed : walkSpeed;
+        if (isCrouching) currentSpeed = walkSpeed * 0.5f;
+
+        Vector3 movement = (transform.right * input.x + transform.forward * input.y) * currentSpeed;
         movement.y = verticalVelocity;
-        Vector3 previousPosition = transform.position;
         controller.Move(movement * Time.deltaTime);
-        if (animator != null)
+    }
+
+    // Pandangan turun halus saat jongkok
+    void LateUpdate()
+    {
+        if (!playerCamera || isSeated) return;
+        float target = isCrouching ? crouchCameraDrop : 0f;
+        crouchOffset = Mathf.Lerp(crouchOffset, target, Time.deltaTime * crouchSmooth);
+        var p = playerCamera.transform.localPosition;
+        p.y = standingCamY - crouchOffset;
+        playerCamera.transform.localPosition = p;
+    }
+
+    // ---------- Pose (dipanggil SeatInteraction) ----------
+
+    void CancelCrouch()
+    {
+        isCrouching = false;
+        crouchOffset = 0f;
+        if (driver) driver.SetCrouch(false);
+    }
+
+    public void SetSeated(bool seated)
+    {
+        if (seated)
         {
-            Vector3 displacement = transform.position - previousPosition;
-            displacement.y = 0f;
-            animator.SetInteger("Animation", displacement.sqrMagnitude > 0.00000001f ? 1 : 0);
+            StopAllCoroutines();
+            CancelCrouch();
+            isSeated = true;
+            if (driver) driver.SetSitting(true);
+        }
+        else
+        {
+            if (driver)
+            {
+                driver.SetTyping(false);
+                driver.SetSitting(false);
+            }
+            StartCoroutine(UnlockAfter(1f));
         }
     }
 
-    static void SetCursorLocked(bool locked)
+    public void SetLying(bool lying)
+    {
+        if (lying)
+        {
+            StopAllCoroutines();
+            CancelCrouch();
+            isSeated = true;
+            if (driver) driver.SetLying(true);
+        }
+        else
+        {
+            if (driver) driver.SetLying(false);
+            StartCoroutine(UnlockAfter(1.2f));
+        }
+    }
+
+    public void SetTyping(bool typing)
+    {
+        if (driver) driver.SetTyping(typing);
+    }
+
+    IEnumerator UnlockAfter(float t)
+    {
+        yield return new WaitForSeconds(t);
+        isSeated = false;
+    }
+
+    public void SetAnimationState(int stateCode) { }
+
+    public static void SetCursorLocked(bool locked)
     {
         Cursor.lockState = locked ? CursorLockMode.Locked : CursorLockMode.None;
         Cursor.visible = !locked;

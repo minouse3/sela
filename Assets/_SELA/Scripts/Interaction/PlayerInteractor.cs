@@ -32,11 +32,11 @@ public class PlayerInteractor : MonoBehaviour
     {
         if (Blocked || !cam) { SetTarget(null); SetMessage(null); return; }
 
-        // Saat duduk, tampilkan prompt E · Berdiri (sesuai standar tombol E di GDD §3.9).
+        // Saat duduk, berdiri memakai tombol Q agar E tetap bebas dipakai untuk membuka Laptop.
         if (SeatInteraction.Current != null)
         {
             SetTarget(null);
-            SetMessage($"{key} · Berdiri");
+            SetMessage("Q · Berdiri");
             return;
         }
 
@@ -55,7 +55,7 @@ public class PlayerInteractor : MonoBehaviour
         if (found != null && !found.canInteract) found = null;
         SetTarget(found);
         string promptLabel = found != null
-            ? (string.IsNullOrWhiteSpace(found.prompt) ? $"Press {key} to Interact" : $"{key} · {found.prompt}")
+            ? (string.IsNullOrWhiteSpace(found.prompt) ? $"{key} · Interaksi" : $"{key} · {found.prompt}")
             : null;
         SetMessage(promptLabel);
         if (found != null && Keyboard.current != null && Keyboard.current[key].wasPressedThisFrame)

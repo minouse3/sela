@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+// FlyCamera murni berfungsi sebagai freecam bebas (tekan F).
+// Tidak mengintervensi atau mengubah sistem animasi karakter.
 [RequireComponent(typeof(Camera))]
 public class FlyCamera : MonoBehaviour
 {
@@ -37,6 +39,7 @@ public class FlyCamera : MonoBehaviour
         }
 
         if (!flying) return;
+
         if (keyboard.escapeKey.wasPressedThisFrame)
         {
             Cursor.lockState = CursorLockMode.None;
@@ -56,6 +59,7 @@ public class FlyCamera : MonoBehaviour
             pitch = Mathf.Clamp(pitch - delta.y, -89f, 89f);
             transform.rotation = Quaternion.Euler(pitch, yaw, 0f);
         }
+
         Vector3 input = new Vector3(
             (keyboard.dKey.isPressed ? 1 : 0) - (keyboard.aKey.isPressed ? 1 : 0),
             (keyboard.eKey.isPressed ? 1 : 0) - (keyboard.qKey.isPressed ? 1 : 0),
@@ -73,22 +77,35 @@ public class FlyCamera : MonoBehaviour
         Vector3 angles = transform.eulerAngles;
         yaw = angles.y;
         pitch = Mathf.DeltaAngle(0f, angles.x);
+
         playerWasEnabled = player.enabled;
         player.enabled = false;
-        var animator = player.GetComponentInChildren<Animator>();
-        if (animator != null && playerWasEnabled) animator.SetInteger("Animation", 0);
+
+        var cc = player.GetComponent<CharacterController>();
+        if (cc) cc.enabled = false;
+
         transform.SetParent(null, true);
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
         flying = true;
     }
 
-    void ExitFlyMode()
+    public void ExitFlyMode()
     {
-        transform.SetParent(originalParent, false);
+        if (originalParent != null && gameObject.activeInHierarchy)
+        {
+            transform.SetParent(originalParent, false);
+        }
         transform.localPosition = originalPosition;
         transform.localRotation = originalRotation;
-        player.enabled = playerWasEnabled;
+
+        if (player != null)
+        {
+            var cc = player.GetComponent<CharacterController>();
+            if (cc && playerWasEnabled) cc.enabled = true;
+            player.enabled = playerWasEnabled;
+        }
+
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
         flying = false;
@@ -96,6 +113,15 @@ public class FlyCamera : MonoBehaviour
 
     void OnDisable()
     {
-        if (flying && player != null) ExitFlyMode();
+        if (flying)
+        {
+            flying = false;
+            if (player != null)
+            {
+                var cc = player.GetComponent<CharacterController>();
+                if (cc && playerWasEnabled) cc.enabled = true;
+                player.enabled = playerWasEnabled;
+            }
+        }
     }
 }
