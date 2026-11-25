@@ -32,7 +32,7 @@ public class PlayerInteractor : MonoBehaviour
     {
         if (Blocked || !cam) { SetTarget(null); SetMessage(null); return; }
 
-        // Duduk memakai tombol Q; jangan tampilkan prompt E saat duduk.
+        // Duduk memakai tombol Q; tampilkan prompt Q saat duduk.
         if (SeatInteraction.Current != null)
         {
             SetTarget(null);
@@ -54,7 +54,17 @@ public class PlayerInteractor : MonoBehaviour
 
         if (found != null && !found.canInteract) found = null;
         SetTarget(found);
-        SetMessage(found ? "Press " + key + " to Interact" : null);
+
+        if (found != null)
+        {
+            string actionText = !string.IsNullOrEmpty(found.prompt) ? found.prompt : "Interact";
+            SetMessage($"Press {key} to {actionText}");
+        }
+        else
+        {
+            SetMessage(null);
+        }
+
         if (found != null && Keyboard.current != null && Keyboard.current[key].wasPressedThisFrame)
         {
             found.Interact();
