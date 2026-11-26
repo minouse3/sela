@@ -8,6 +8,7 @@ public class FirstPersonController : MonoBehaviour
     [SerializeField] float mouseSensitivity = 0.1f;
     [SerializeField] float gravity = -9.81f;
     [SerializeField] float eyeForwardClearance = 0.18f;
+    [SerializeField] bool invertY = false;
 
     CharacterController controller;
     Animator animator;
@@ -74,7 +75,7 @@ public class FirstPersonController : MonoBehaviour
         {
             Vector2 look = mouse.delta.ReadValue() * mouseSensitivity;
             transform.Rotate(Vector3.up * look.x);
-            pitch = Mathf.Clamp(pitch - look.y, -89f, 89f);
+            pitch = Mathf.Clamp(pitch + (invertY ? look.y : -look.y), -89f, 89f);
             playerCamera.transform.localRotation = Quaternion.Euler(pitch, 0f, 0f);
         }
 
