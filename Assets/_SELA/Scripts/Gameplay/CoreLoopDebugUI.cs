@@ -28,7 +28,7 @@ public partial class CoreLoopDebugUI : MonoBehaviour
     PlayerCarry phoneOwner;
     DitaConversationShot ditaShot;
     ActivityPreview ditaPreview;
-    enum LaptopPage { Home, Applications, WorkMessages, Notes }
+    enum LaptopPage { Home, Applications, CvBuilder, WorkMessages, Notes }
     enum PhonePage { Home, Inbox, Mother, Dita }
     PhonePage phonePage;
     LaptopPage laptopPage;
@@ -104,6 +104,7 @@ public partial class CoreLoopDebugUI : MonoBehaviour
         if (btnActiveTex != null) Destroy(btnActiveTex);
         if (noticeTex != null) Destroy(noticeTex);
         if (warnTex != null) Destroy(warnTex);
+        DestroyJobPortalTextures();
     }
 
     void Update()
@@ -292,6 +293,21 @@ public partial class CoreLoopDebugUI : MonoBehaviour
         scrollPos = Vector2.zero;
     }
 
+    public void ShowNoticeThought(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return;
+        ShowThought(new DialogueLine("Raka", text));
+    }
+
+    public void RequestConfirmation(ActivityRequest req)
+    {
+        if (!CanOpenStation()) return;
+        ResetPage();
+        pendingRequest = req;
+        panelOpen = true;
+        SyncCursorAndBlock();
+    }
+
     void BackFromConfirmation()
     {
         pendingRequest = null;
@@ -385,82 +401,94 @@ public partial class CoreLoopDebugUI : MonoBehaviour
 
         if (panelStyle == null)
         {
-            panelStyle = new GUIStyle(GUI.skin.box)
+            Color warnInk = new Color(0.45f, 0.14f, 0.08f, 1f);
+
+            panelStyle = LockTextColor(new GUIStyle(GUI.skin.box)
             {
-                normal = { background = paperTex, textColor = InkColor },
+                normal = { background = paperTex },
                 padding = new RectOffset(16, 16, 14, 14)
-            };
-            cardStyle = new GUIStyle(GUI.skin.box)
+            }, InkColor);
+            cardStyle = LockTextColor(new GUIStyle(GUI.skin.box)
             {
-                normal = { background = cardTex, textColor = InkColor },
+                normal = { background = cardTex },
                 padding = new RectOffset(10, 10, 8, 8)
-            };
-            noticeStyle = new GUIStyle(GUI.skin.box)
+            }, InkColor);
+            noticeStyle = LockTextColor(new GUIStyle(GUI.skin.box)
             {
-                normal = { background = noticeTex, textColor = InkColor },
+                normal = { background = noticeTex },
                 wordWrap = true,
                 fontSize = 13,
                 alignment = TextAnchor.MiddleLeft,
                 padding = new RectOffset(10, 10, 6, 6)
-            };
-            warnStyle = new GUIStyle(GUI.skin.box)
+            }, InkColor);
+            warnStyle = LockTextColor(new GUIStyle(GUI.skin.box)
             {
-                normal = { background = warnTex, textColor = new Color(0.45f, 0.14f, 0.08f, 1f) },
+                normal = { background = warnTex },
                 wordWrap = true,
                 fontSize = 13,
                 alignment = TextAnchor.MiddleLeft,
                 padding = new RectOffset(10, 10, 6, 6)
-            };
-            headerStyle = new GUIStyle(GUI.skin.label)
+            }, warnInk);
+            headerStyle = LockTextColor(new GUIStyle(GUI.skin.label)
             {
                 richText = true,
                 fontSize = 17,
-                fontStyle = FontStyle.Bold,
-                normal = { textColor = InkColor }
-            };
-            subStyle = new GUIStyle(GUI.skin.label)
+                fontStyle = FontStyle.Bold
+            }, InkColor);
+            subStyle = LockTextColor(new GUIStyle(GUI.skin.label)
             {
                 richText = true,
                 fontSize = 14,
-                fontStyle = FontStyle.Bold,
-                normal = { textColor = InkColor }
-            };
-            bodyStyle = new GUIStyle(GUI.skin.label)
+                fontStyle = FontStyle.Bold
+            }, InkColor);
+            bodyStyle = LockTextColor(new GUIStyle(GUI.skin.label)
             {
                 richText = true,
                 fontSize = 13,
-                wordWrap = true,
-                normal = { textColor = InkColor }
-            };
-            mutedStyle = new GUIStyle(GUI.skin.label)
+                wordWrap = true
+            }, InkColor);
+            mutedStyle = LockTextColor(new GUIStyle(GUI.skin.label)
             {
                 fontSize = 12,
-                wordWrap = true,
-                normal = { textColor = MutedInk }
-            };
-            buttonStyle = new GUIStyle(GUI.skin.button)
+                wordWrap = true
+            }, MutedInk);
+            buttonStyle = LockTextColor(new GUIStyle(GUI.skin.button)
             {
                 fontSize = 13,
                 fontStyle = FontStyle.Bold,
                 padding = new RectOffset(10, 10, 6, 6),
-                normal = { background = btnNormalTex, textColor = InkColor },
-                hover = { background = btnHoverTex, textColor = InkColor },
-                active = { background = btnActiveTex, textColor = InkColor },
-                onNormal = { background = btnHoverTex, textColor = InkColor }
-            };
-            dialogueChoiceStyle = new GUIStyle(buttonStyle) { wordWrap = true, alignment = TextAnchor.MiddleLeft };
-            selectedChoiceStyle = new GUIStyle(dialogueChoiceStyle);
+                normal = { background = btnNormalTex },
+                hover = { background = btnHoverTex },
+                active = { background = btnActiveTex },
+                focused = { background = btnNormalTex },
+                onNormal = { background = btnHoverTex },
+                onHover = { background = btnHoverTex },
+                onActive = { background = btnActiveTex },
+                onFocused = { background = btnHoverTex }
+            }, InkColor);
+            dialogueChoiceStyle = LockTextColor(new GUIStyle(buttonStyle) { wordWrap = true, alignment = TextAnchor.MiddleLeft }, InkColor);
+            selectedChoiceStyle = LockTextColor(new GUIStyle(dialogueChoiceStyle), InkColor);
             selectedChoiceStyle.normal.background = btnHoverTex;
-            toggleStyle = new GUIStyle(GUI.skin.toggle)
+            selectedChoiceStyle.focused.background = btnHoverTex;
+            toggleStyle = LockTextColor(new GUIStyle(GUI.skin.toggle)
             {
                 fontSize = 13,
-                wordWrap = true,
-                normal = { textColor = InkColor },
-                hover = { textColor = InkColor },
-                onNormal = { textColor = InkColor },
-                onHover = { textColor = InkColor }
-            };
+                wordWrap = true
+            }, InkColor);
         }
+    }
+
+    static GUIStyle LockTextColor(GUIStyle style, Color color)
+    {
+        style.normal.textColor = color;
+        style.hover.textColor = color;
+        style.active.textColor = color;
+        style.focused.textColor = color;
+        style.onNormal.textColor = color;
+        style.onHover.textColor = color;
+        style.onActive.textColor = color;
+        style.onFocused.textColor = color;
+        return style;
     }
 
     static Texture2D MakeTex(Color c)
@@ -553,6 +581,8 @@ public partial class CoreLoopDebugUI : MonoBehaviour
         if (laptop != null) DrawLaptopDevice(engine, state, width, height);
         else if (phoneOwner != null) DrawPhoneDevice(state, width, height);
         else if (ditaShot != null) DrawDitaScene(width, height);
+        else if (activeSection == "Calendar") DrawCalendarView(state, width, height);
+        else if (activeSection == "EvidenceBoard") DrawEvidenceBoardView(engine, state, width, height);
         else return false;
         return true;
     }
@@ -791,26 +821,29 @@ public partial class CoreLoopDebugUI : MonoBehaviour
         switch (laptopPage)
         {
             case LaptopPage.Applications:
-                DrawCvDraftEditor(engine, state);
-                GUILayout.Space(8);
-                GUILayout.Label("Lowongan", subStyle);
-                DrawCompanyBlock(engine, state, CompanyId.StudioLajur);
-                DrawCompanyBlock(engine, state, CompanyId.KoperasiPijar);
-                DrawCompanyBlock(engine, state, CompanyId.AksesPrima);
+                DrawJobPortalApp(engine, state);
+                break;
+            case LaptopPage.CvBuilder:
+                DrawCvBuilderApp(engine, state);
                 break;
             case LaptopPage.WorkMessages:
+                GUILayout.Label("Kotak Masuk", headerStyle);
+                GUILayout.Space(6);
                 DrawWorkMessage(engine, state.GetApplication(CompanyId.StudioLajur));
                 DrawWorkMessage(engine, state.GetApplication(CompanyId.KoperasiPijar));
                 if (state.day >= 4)
                 {
-                    GUILayout.Label("Akses Prima · Tawaran langsung", subStyle);
+                    GUILayout.BeginVertical(cardStyle);
+                    GUILayout.Label("Akses Prima  ·  Tawaran Langsung", subStyle);
                     GUILayout.Label("Kontrak meminta ijazah asli dan membatasi pengunduran diri.", bodyStyle);
+                    GUILayout.EndVertical();
+                    GUILayout.Space(6);
                 }
                 if (state.HasOffer(CompanyId.StudioLajur) || state.HasOffer(CompanyId.KoperasiPijar) || state.day >= 4)
                     DrawOfferChoiceSection(engine, state);
                 if (state.day < 4 && state.applicationA.status == ApplicationStatus.NotSent &&
                     state.applicationB.status == ApplicationStatus.NotSent)
-                    GUILayout.Label("Belum ada pesan kerja.", mutedStyle);
+                    GUILayout.Label("Belum ada email masuk.", mutedStyle);
                 break;
             case LaptopPage.Notes:
                 DrawNotes(state);
@@ -861,17 +894,18 @@ public partial class CoreLoopDebugUI : MonoBehaviour
         string warn = preview.Availability.WillMissScheduledInterview ? " [LEWAT INTERVIEW]" : "";
         if (preview.WillTriggerRift > 0) warn += $" [RETAKAN {preview.WillTriggerRift}]";
         string title = preview.Title;
-        if (GUILayout.Button($"{title} ({preview.DurationHours}j){warn}", buttonStyle))
+        if (GUILayout.Button($"{title} ({preview.DurationHours}j){warn}", buttonStyle, GUILayout.MinWidth(230), GUILayout.ExpandWidth(false), GUILayout.Height(30)))
         {
             pendingRequest = req;
             scrollPos = Vector2.zero;
         }
         GUI.enabled = true;
 
+        GUILayout.Space(8);
         string info = preview.Availability.IsAvailable
             ? $"{preview.StartHour:00}:00 → {preview.EndHour:00}:00  ·  Tenaga {preview.EnergyBefore}→{preview.EnergyAfter}  ·  Tekanan {preview.PressureBefore}→{preview.PressureAfter}"
             : preview.Availability.Reason;
-        GUILayout.Label(info, preview.Availability.IsAvailable ? bodyStyle : mutedStyle);
+        GUILayout.Label(info, preview.Availability.IsAvailable ? bodyStyle : mutedStyle, GUILayout.ExpandWidth(true));
         GUILayout.EndHorizontal();
     }
 

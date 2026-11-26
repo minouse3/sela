@@ -77,12 +77,23 @@ public class PlayerInteractor : MonoBehaviour
             promptLabel = $"[{key}] {(string.IsNullOrWhiteSpace(found.prompt) ? "Interaksi" : found.prompt)}";
         if (phoneInHand) AppendHint(ref promptLabel, "[P] Cek ponsel");
         if (seat != null)
+        {
+            if (SELA.Gameplay.DiegeticActivityController.Instance != null && found == null)
+                AppendHint(ref promptLabel, $"[{key}] Duduk tenang (1 jam)");
             AppendHint(ref promptLabel, "[Q] Berdiri");
+        }
         else if (carry != null && carry.Carrying)
             AppendHint(ref promptLabel, $"[G] Letakkan {carry.CarriedItemName}");
         SetMessage(promptLabel);
 
-        if (found == null || kb == null) return;
+        if (kb == null) return;
+        if (seat != null && found == null && kb[key].wasPressedThisFrame &&
+            SELA.Gameplay.DiegeticActivityController.Instance != null)
+        {
+            SELA.Gameplay.DiegeticActivityController.Instance.TriggerSitWithoutScreen();
+            return;
+        }
+        if (found == null) return;
         if (!requiresSeat && kb[key].wasPressedThisFrame)
         {
             found.Interact();

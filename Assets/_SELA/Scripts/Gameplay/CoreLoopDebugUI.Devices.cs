@@ -22,6 +22,8 @@ public partial class CoreLoopDebugUI
     GUIStyle deviceCenteredLabel;
     GUIStyle deviceClockStyle;
     GUIStyle deviceMessageStyle;
+    GUIStyle calendarHeaderSubStyle;
+    GUIStyle calendarPillStyle;
     readonly GUIContent deviceMeasureContent = new GUIContent();
     int deviceClockHour = -1;
     string deviceClockText;
@@ -33,23 +35,18 @@ public partial class CoreLoopDebugUI
     void DrawLaptopDevice(GameLoopEngine engine, GameState state, float width, float height)
     {
         EnsureDeviceStyles();
-        float w = Mathf.Min(850f, width - 80f);
-        float h = Mathf.Min(500f, height - 56f);
-        var shell = new Rect((width - w) * 0.5f, (height - h) * 0.5f, w, h);
-        var screen = new Rect(shell.x + 10f, shell.y + 13f, w - 20f, h - 29f);
-        var desktop = new Rect(screen.x, screen.y, screen.width, screen.height - 38f);
-        var taskbar = new Rect(screen.x, desktop.yMax, screen.width, 38f);
+        var shell = new Rect(0f, 0f, width, height);
+        var screen = new Rect(8f, 10f, width - 16f, height - 20f);
+        var desktop = new Rect(screen.x, screen.y, screen.width, screen.height - 42f);
+        var taskbar = new Rect(screen.x, desktop.yMax, screen.width, 42f);
         var page = laptopPage;
         bool inDialogue = dialogue != null;
         bool confirming = pendingRequest.HasValue;
         bool appOpen = page != LaptopPage.Home || inDialogue || confirming;
         string appName = page != LaptopPage.Home ? DesktopAppName(page) : inDialogue ? "Percakapan" : "Konfirmasi";
 
-        DeviceFill(new Rect(shell.x + 3f, shell.y + 5f, w, h + 4f), DeviceShadow, 12f);
-        DeviceFill(shell, DeviceChassis, 10f);
-        DeviceFill(new Rect(shell.center.x - 2f, shell.y + 4f, 4f, 4f), DesktopBlue, 2f);
-        DeviceFill(new Rect(shell.x - 6f, shell.yMax - 9f, w + 12f, 12f), DeviceChassis, 5f);
-        DeviceFill(new Rect(shell.center.x - 34f, shell.yMax - 9f, 68f, 3f), DesktopBlue, 1f);
+        DeviceFill(shell, DeviceChassis);
+        DeviceFill(new Rect(shell.center.x - 2f, 3f, 4f, 4f), DesktopBlue, 2f);
         DrawLaptopWallpaper(desktop);
 
         if (appOpen)
@@ -58,48 +55,50 @@ public partial class CoreLoopDebugUI
             DrawLaptopLauncher(desktop);
 
         DeviceFill(taskbar, DesktopBar);
-        DeviceFill(new Rect(taskbar.x + 14f, taskbar.center.y - 4f, 8f, 8f), appOpen ? DesktopGold : DevicePaper, 2f);
-        GUI.Label(new Rect(taskbar.x + 30f, taskbar.y, 150f, taskbar.height), appOpen ? appName : "Desktop", deviceLightLabel);
-        float clockX = taskbar.xMax - (appOpen ? 62f : 208f);
-        DeviceFill(new Rect(clockX - 8f, taskbar.y + 10f, 1f, 18f), DesktopBlue);
-        GUI.Label(new Rect(clockX, taskbar.y, 54f, taskbar.height), DeviceTime(state), deviceLightLabel);
-        if (!appOpen && GUI.Button(new Rect(taskbar.xMax - 148f, taskbar.y + 5f, 141f, 28f), "Tutup laptop [Esc]", buttonStyle))
+        DeviceFill(new Rect(taskbar.x + 16f, taskbar.center.y - 4f, 8f, 8f), appOpen ? DesktopGold : DevicePaper, 2f);
+        GUI.Label(new Rect(taskbar.x + 32f, taskbar.y, 200f, taskbar.height), appOpen ? appName : "Desktop", deviceLightLabel);
+        float clockX = taskbar.xMax - (appOpen ? 76f : 252f);
+        DeviceFill(new Rect(clockX - 10f, taskbar.y + 11f, 1f, 20f), DesktopBlue);
+        GUI.Label(new Rect(clockX, taskbar.y, 62f, taskbar.height), DeviceTime(state), deviceLightLabel);
+        if (!appOpen && GUI.Button(new Rect(taskbar.xMax - 172f, taskbar.y + 7f, 162f, 28f), "Tutup laptop [Esc]", buttonStyle))
             ClosePanel();
     }
 
     void DrawLaptopLauncher(Rect desktop)
     {
-        float x = desktop.x + 22f;
-        float y = desktop.y + Mathf.Max(12f, (desktop.height - 184f) * 0.5f);
-        if (DrawLaptopTile(new Rect(x, y, 157f, 54f), LaptopPage.Applications))
+        float x = desktop.x + 30f;
+        float y = desktop.y + 30f;
+        if (DrawLaptopTile(new Rect(x, y, 196f, 58f), LaptopPage.Applications))
             SetLaptopPage(LaptopPage.Applications);
-        if (DrawLaptopTile(new Rect(x, y + 65f, 157f, 54f), LaptopPage.WorkMessages))
+        if (DrawLaptopTile(new Rect(x, y + 70f, 196f, 58f), LaptopPage.CvBuilder))
+            SetLaptopPage(LaptopPage.CvBuilder);
+        if (DrawLaptopTile(new Rect(x, y + 140f, 196f, 58f), LaptopPage.WorkMessages))
             SetLaptopPage(LaptopPage.WorkMessages);
-        if (DrawLaptopTile(new Rect(x, y + 130f, 157f, 54f), LaptopPage.Notes))
+        if (DrawLaptopTile(new Rect(x, y + 210f, 196f, 58f), LaptopPage.Notes))
             SetLaptopPage(LaptopPage.Notes);
     }
 
     bool DrawLaptopTile(Rect rect, LaptopPage page)
     {
         DeviceFill(rect, rect.Contains(Event.current.mousePosition) ? DesktopTileHover : DesktopTile, 5f);
-        DrawDesktopIcon(new Rect(rect.x + 10f, rect.y + 10f, 34f, 34f), page);
-        GUI.Label(new Rect(rect.x + 54f, rect.y, rect.width - 60f, rect.height), DesktopAppName(page), deviceLightLabel);
+        DrawDesktopIcon(new Rect(rect.x + 12f, rect.y + 12f, 34f, 34f), page);
+        GUI.Label(new Rect(rect.x + 56f, rect.y, rect.width - 62f, rect.height), DesktopAppName(page), deviceLightLabel);
         return GUI.Button(rect, GUIContent.none, GUIStyle.none);
     }
 
     void DrawLaptopWindow(GameLoopEngine engine, GameState state, Rect desktop, LaptopPage page, string appName, bool inDialogue, bool confirming)
     {
-        var window = new Rect(desktop.x + 12f, desktop.y + 10f, desktop.width - 24f, desktop.height - 20f);
+        var window = new Rect(desktop.x + 8f, desktop.y + 8f, desktop.width - 16f, desktop.height - 16f);
         DeviceFill(new Rect(window.x + 3f, window.y + 3f, window.width, window.height), DeviceShadow, 5f);
         DeviceFill(window, DevicePaper, 5f);
-        DeviceFill(new Rect(window.x, window.y, window.width, 36f), DesktopTile, 4f);
+        DeviceFill(new Rect(window.x, window.y, window.width, 38f), DesktopTile, 4f);
         if (page != LaptopPage.Home)
-            DrawDesktopIcon(new Rect(window.x + 8f, window.y + 5f, 26f, 26f), page);
-        GUI.Label(new Rect(window.x + 42f, window.y, window.width - 176f, 36f), appName, deviceLightLabel);
+            DrawDesktopIcon(new Rect(window.x + 10f, window.y + 6f, 26f, 26f), page);
+        GUI.Label(new Rect(window.x + 44f, window.y, window.width - 210f, 38f), appName, deviceLightLabel);
         string backLabel = inDialogue ? "Batal [Esc]" : confirming ? "Kembali [Esc]" : "Desktop [Esc]";
-        bool back = GUI.Button(new Rect(window.xMax - 127f, window.y + 4f, 120f, 28f), backLabel, buttonStyle);
+        bool back = GUI.Button(new Rect(window.xMax - 152f, window.y + 5f, 144f, 28f), backLabel, buttonStyle);
 
-        GUILayout.BeginArea(new Rect(window.x + 12f, window.y + 44f, window.width - 24f, window.height - 52f));
+        GUILayout.BeginArea(new Rect(window.x + 16f, window.y + 48f, window.width - 32f, window.height - 58f));
         scrollPos = GUILayout.BeginScrollView(scrollPos);
         if (inDialogue)
             DrawDialogue(state);
@@ -118,7 +117,8 @@ public partial class CoreLoopDebugUI
         switch (page)
         {
             case LaptopPage.Applications: return "Lamaran";
-            case LaptopPage.WorkMessages: return "Pesan Kerja";
+            case LaptopPage.CvBuilder: return "CV Builder";
+            case LaptopPage.WorkMessages: return "Email";
             case LaptopPage.Notes: return "Catatan";
             default: return "Desktop";
         }
@@ -134,6 +134,14 @@ public partial class CoreLoopDebugUI
                 DeviceFill(new Rect(center.x - 10f, center.y - 8f, 9f, 6f), DesktopBar, 1f);
                 DeviceFill(new Rect(center.x - 10f, center.y - 4f, 20f, 12f), DesktopBar, 2f);
                 DeviceFill(new Rect(center.x - 8f, center.y - 1f, 16f, 7f), DevicePaper, 1f);
+                break;
+            case LaptopPage.CvBuilder:
+                DeviceFill(rect, PhoneBlush, 4f);
+                DeviceFill(new Rect(center.x - 8f, center.y - 10f, 16f, 20f), DeviceLight, 2f);
+                DeviceFill(new Rect(center.x - 6f, center.y - 7f, 6f, 5f), DesktopBar, 1f);
+                DeviceFill(new Rect(center.x + 2f, center.y - 6f, 4f, 2f), DesktopBlue);
+                DeviceFill(new Rect(center.x - 6f, center.y + 1f, 12f, 2f), DesktopBar);
+                DeviceFill(new Rect(center.x - 6f, center.y + 5f, 9f, 2f), DesktopBlue);
                 break;
             case LaptopPage.WorkMessages:
                 DeviceFill(rect, DevicePaper, 4f);
@@ -295,22 +303,179 @@ public partial class CoreLoopDebugUI
         GUI.Label(new Rect(rect.x + 10f, rect.y + 8f, rect.width - 20f, rect.height - 16f), text, deviceMessageStyle);
     }
 
+    void DrawCalendarView(GameState state, float width, float height)
+    {
+        EnsureDeviceStyles();
+        EnsureJobPortalStyles();
+
+        float w = Mathf.Min(1040f, width - 36f);
+        float h = Mathf.Min(580f, height - 36f);
+        var panel = new Rect((width - w) * 0.5f, (height - h) * 0.5f, w, h);
+
+        // Paper wall-calendar backing (matching SELA paper UI)
+        DeviceFill(new Rect(panel.x + 5f, panel.y + 6f, panel.width, panel.height), DeviceShadow, 4f);
+        DeviceFill(new Rect(panel.x - 2f, panel.y - 2f, panel.width + 4f, panel.height + 4f), DeviceChassis, 4f);
+        DeviceFill(panel, DevicePaper, 3f);
+
+        // Top header bar
+        var headerBar = new Rect(panel.x, panel.y, panel.width, 56f);
+        DeviceFill(headerBar, DeviceChassis);
+        DeviceFill(new Rect(panel.x, headerBar.yMax - 3f, panel.width, 3f), PhoneClay);
+
+        GUI.Label(new Rect(panel.x + 20f, panel.y + 8f, panel.width - 180f, 24f),
+            "KALENDER KAMAR 07  ·  7 HARI TERAKHIR", deviceLightLabel);
+        GUI.Label(new Rect(panel.x + 20f, panel.y + 32f, panel.width - 180f, 18f),
+            $"Hari {state.day} dari {GameState.MaxDay}  ·  {state.FormattedTime} ({state.session})",
+            calendarHeaderSubStyle);
+
+        bool close = GUI.Button(new Rect(panel.xMax - 142f, panel.y + 13f, 124f, 28f), "Tutup [Esc]", buttonStyle);
+
+        // 4 x 2 Grid (Days 1-7 + Today's Summary Card)
+        float padX = 16f;
+        float padTop = 68f;
+        float gap = 10f;
+        float gridW = panel.width - padX * 2f;
+        float gridH = panel.height - padTop - 16f;
+        float cellW = (gridW - gap * 3f) / 4f;
+        float cellH = (gridH - gap) / 2f;
+
+        for (int day = 1; day <= GameState.MaxDay; day++)
+        {
+            int idx = day - 1;
+            int col = idx % 4;
+            int row = idx / 4;
+            var cell = new Rect(panel.x + padX + col * (cellW + gap), panel.y + padTop + row * (cellH + gap), cellW, cellH);
+            DrawCalendarDayCard(cell, state, day);
+        }
+
+        // 8th slot (bottom-right): Summary & Focus Card
+        var summaryCell = new Rect(panel.x + padX + 3f * (cellW + gap), panel.y + padTop + (cellH + gap), cellW, cellH);
+        DrawCalendarSummaryCard(summaryCell, state);
+
+        if (close) ClosePanel();
+    }
+
+    void DrawCalendarDayCard(Rect rect, GameState state, int day)
+    {
+        bool isPast = day < state.day;
+        bool isToday = day == state.day;
+        bool isDeadline = day == GameState.MaxDay;
+
+        Color borderCol = isToday ? PhoneClay : isDeadline ? DesktopGold : new Color32(180, 170, 148, 255);
+        Color bgCol = isToday ? DeviceLight : isPast ? new Color32(230, 221, 200, 255) : PortalSurface;
+        Color topCol = isToday ? PhoneClay : isPast ? new Color32(158, 152, 138, 255) : isDeadline ? DesktopBar : DesktopTile;
+
+        DeviceFill(new Rect(rect.x - 1f, rect.y - 1f, rect.width + 2f, rect.height + 2f), borderCol, 4f);
+        DeviceFill(rect, bgCol, 3f);
+        DeviceFill(new Rect(rect.x, rect.y, rect.width, 30f), topCol, 2f);
+
+        GUI.Label(new Rect(rect.x + 10f, rect.y, 76f, 30f), $"HARI {day}", deviceLightLabel);
+
+        string tag = isToday ? "HARI INI" : isPast ? "Selesai" : isDeadline ? "Batas Kos" : "";
+        if (!string.IsNullOrEmpty(tag))
+        {
+            var tagRect = new Rect(rect.xMax - 84f, rect.y + 5f, 76f, 20f);
+            DeviceFill(tagRect, isToday ? DeviceLight : isDeadline ? DesktopGold : DevicePaper, 3f);
+            GUI.Label(tagRect, tag, portalBadgeStyle);
+        }
+
+        // Auto-flowing GUILayout body prevents any overlap or vertical clipping
+        var inner = new Rect(rect.x + 10f, rect.y + 36f, rect.width - 20f, rect.height - 44f);
+        GUILayout.BeginArea(inner);
+        DrawCalendarInterviewBadge(state.applicationA, day);
+        DrawCalendarInterviewBadge(state.applicationB, day);
+        GUILayout.Label(GetCalendarDayNote(day), isPast ? portalSmallStyle : deviceMessageStyle);
+        GUILayout.EndArea();
+    }
+
+    void DrawCalendarInterviewBadge(ApplicationRecord app, int day)
+    {
+        if (app == null || app.status != ApplicationStatus.Scheduled || app.interviewDay != day)
+            return;
+
+        string label = $"{app.interviewHour:00}:00  Interview\n{ActivitySystem.GetCompanyName(app.company)}";
+        var pill = GUILayoutUtility.GetRect(new GUIContent(label), calendarPillStyle, GUILayout.ExpandWidth(true));
+        DeviceFill(pill, DesktopGold, 4f);
+        GUI.Label(pill, label, calendarPillStyle);
+        GUILayout.Space(6);
+    }
+
+    static string GetCalendarDayNote(int day)
+    {
+        switch (day)
+        {
+            case 1: return "• Awal pekan di Kamar 07\n• Studio Lajur dibuka\n• Rapikan bukti E1 di papan";
+            case 2: return "• Studio Lajur masih dibuka\n• Cek syarat kontrak di laptop";
+            case 3: return "• Koperasi Pijar & E2 dibuka\n• Tutup Studio Lajur (22:00)";
+            case 4: return "• Tawaran langsung masuk\n• Keputusan akhir terbuka";
+            case 5: return "• Tutup Koperasi Pijar (22:00)\n• Pesan lanjutan dari Ibu";
+            case 6: return "• Persiapan terakhir sebelum batas kos";
+            case 7: return "• Batas sewa kos & tiket pulang\n• Kunci keputusan akhir";
+            default: return "";
+        }
+    }
+
+    void DrawCalendarSummaryCard(Rect rect, GameState state)
+    {
+        DeviceFill(new Rect(rect.x - 1f, rect.y - 1f, rect.width + 2f, rect.height + 2f), DesktopTile, 4f);
+        DeviceFill(rect, PortalSidebar, 3f);
+        DeviceFill(new Rect(rect.x, rect.y, rect.width, 30f), DesktopBar, 2f);
+        GUI.Label(new Rect(rect.x + 10f, rect.y, rect.width - 20f, 30f), "RINGKASAN", deviceLightLabel);
+
+        int daysLeft = Mathf.Max(0, GameState.MaxDay - state.day);
+        string countdown = daysLeft == 0 ? "Hari terakhir di kos." : $"Sisa {daysLeft} hari sebelum batas kos.";
+        string hint = ActivitySystem.GetObjectiveHint(state);
+
+        string offerLabel = FormatOfferChoiceLabel(state.offerChoice);
+
+        var inner = new Rect(rect.x + 10f, rect.y + 36f, rect.width - 20f, rect.height - 44f);
+        GUILayout.BeginArea(inner);
+        GUILayout.Label(countdown, subStyle);
+        GUILayout.Space(4);
+        GUILayout.Label(hint, deviceMessageStyle);
+        GUILayout.FlexibleSpace();
+        string footerText = $"Pilihan: {offerLabel}";
+        var footerRect = GUILayoutUtility.GetRect(new GUIContent(footerText), calendarPillStyle, GUILayout.ExpandWidth(true));
+        DeviceFill(footerRect, DevicePaper, 3f);
+        GUI.Label(footerRect, footerText, calendarPillStyle);
+        GUILayout.EndArea();
+    }
+
+    static string FormatOfferChoiceLabel(OfferChoice choice)
+    {
+        switch (choice)
+        {
+            case OfferChoice.StudioLajur: return "Studio Lajur";
+            case OfferChoice.KoperasiPijar: return "Koperasi Pijar";
+            case OfferChoice.AksesPrima: return "Akses Prima";
+            default: return "Pulang";
+        }
+    }
+
     void EnsureDeviceStyles()
     {
         if (deviceLightLabel != null) return;
-        deviceLightLabel = new GUIStyle(subStyle)
+        deviceLightLabel = LockTextColor(new GUIStyle(subStyle)
         {
-            alignment = TextAnchor.MiddleLeft,
-            normal = { textColor = DeviceLight }
-        };
-        deviceCenteredLabel = new GUIStyle(subStyle) { alignment = TextAnchor.MiddleCenter };
-        deviceClockStyle = new GUIStyle(deviceLightLabel) { fontSize = 36 };
-        deviceMessageStyle = new GUIStyle(bodyStyle)
+            alignment = TextAnchor.MiddleLeft
+        }, DeviceLight);
+        deviceCenteredLabel = LockTextColor(new GUIStyle(subStyle) { alignment = TextAnchor.MiddleCenter }, InkColor);
+        deviceClockStyle = LockTextColor(new GUIStyle(deviceLightLabel) { fontSize = 36 }, DeviceLight);
+        deviceMessageStyle = LockTextColor(new GUIStyle(bodyStyle)
         {
             alignment = TextAnchor.UpperLeft,
             padding = new RectOffset(),
             richText = false
-        };
+        }, InkColor);
+        calendarHeaderSubStyle = LockTextColor(new GUIStyle(mutedStyle), DevicePaper);
+        calendarPillStyle = LockTextColor(new GUIStyle(GUI.skin.label)
+        {
+            fontSize = 11,
+            fontStyle = FontStyle.Bold,
+            wordWrap = true,
+            alignment = TextAnchor.MiddleCenter,
+            padding = new RectOffset(6, 6, 4, 4)
+        }, InkColor);
     }
 
     string DeviceTime(GameState state)
