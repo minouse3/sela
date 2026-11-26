@@ -21,7 +21,7 @@ Aturan main:
   Selalu pakai `unity command script recompile`.
 - Semua teks game tumbuh dari `SelaContent` (`Assets/_SELA/Scripts/Narrative/`, 14 file partial).
   Tidak boleh ada string UI yang ditulis langsung di kode layar.
-- Komentar kode hanya kalau penetrate *why*-nya (keterbatasan tersembunyi, invarian).
+- Komentar kode hanya kalau menjelaskan *why*-nya (keterbatasan tersembunyi, invarian).
 - Tidak boleh ada karakter CJK/garbled di `Docs/**` dan `Assets/_SELA/Scripts/**`.
 
 ---
@@ -58,7 +58,7 @@ UiTheme   -> palet + tipografi
    akan melebar sampai 100% karena `anchorMax = (1,1)`. **Selalu pakai `UiKit.Column` untuk split layout.**
 2. **`PaperPanel` tidak meregangkan dirinya.** `UiKit.PaperPanel` membuat RectTransform dengan
    anchor/size bawaan Unity (0.5/0.5, 100x100) — **tidak** seperti `UiKit.Box`.
-   Tombol yang dibuat di dalamnya butuh layout group di parent-nya, kalau tidak they'll jadi kotak 100x100.
+   Tombol yang dibuat di dalamnya butuh layout group di parent-nya, kalau tidak ukurannya jadi kotak 100x100.
 3. **TMP tidak implementasi `ILayoutElement`** → tanpa `TmpAutoHeight`, teks panjang menimpa isi di bawahnya.
    Semua teks panjang harus pakai `UiKit.Paragraph`.
 4. **`Object.Destroy` tertunda sampai akhir frame** → `childCount` masih berisi objek lama.
