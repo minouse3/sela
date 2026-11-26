@@ -14,6 +14,7 @@ namespace SELA.UI
     {
         private UiSheet _sheet;
         private RectTransform _content;
+        private RectTransform _footer;
 
         protected override string ScreenName
         {
@@ -26,6 +27,10 @@ namespace SELA.UI
             RectTransform scrollContent;
             UiKit.Scroll(_sheet.Content, out scrollContent);
             _content = scrollContent;
+
+            // Kembali tetap terlihat; dulu tombol ini ikut tergulir sampai keluar layar.
+            _footer = _sheet.EnsureFooter(56f);
+            UiKit.HorizontalStack(_footer, 12f, new RectOffset(0, 0, 0, 0));
         }
 
         public override void Refresh()
@@ -33,6 +38,10 @@ namespace SELA.UI
             for (int i = _content.childCount - 1; i >= 0; i--)
             {
                 Object.Destroy(_content.GetChild(i).gameObject);
+            }
+            for (int i = _footer.childCount - 1; i >= 0; i--)
+            {
+                Object.Destroy(_footer.GetChild(i).gameObject);
             }
 
             SelaState state = SelaState.Current;
@@ -83,8 +92,8 @@ namespace SELA.UI
                 UiKit.Height(button, 44f);
             }
 
-            Button back = UiKit.Button(_content, SelaContent.Ui.Back, Router.CloseTop, UiTheme.HijauMeja, UiTheme.TextOnPaper);
-            UiKit.Height(back, 44f);
+            Button back = UiKit.Button(_footer, SelaContent.Ui.Back, Router.CloseTop,
+                UiTheme.HijauMeja, UiTheme.TextOnPaper);
         }
 
         private void ToggleAttach(EvidenceId id, bool owned)
@@ -116,6 +125,7 @@ namespace SELA.UI
         private OfferId _offer = OfferId.A;
         private UiSheet _sheet;
         private RectTransform _content;
+        private RectTransform _footer;
 
         protected override string ScreenName
         {
@@ -133,6 +143,10 @@ namespace SELA.UI
             RectTransform scrollContent;
             UiKit.Scroll(_sheet.Content, out scrollContent);
             _content = scrollContent;
+
+            // Tombol kirim dan batal tidak boleh ikut tergulir keluar layar.
+            _footer = _sheet.EnsureFooter(58f);
+            UiKit.HorizontalStack(_footer, 12f, new RectOffset(0, 0, 0, 0));
         }
 
         public override void Refresh()
@@ -140,6 +154,10 @@ namespace SELA.UI
             for (int i = _content.childCount - 1; i >= 0; i--)
             {
                 Object.Destroy(_content.GetChild(i).gameObject);
+            }
+            for (int i = _footer.childCount - 1; i >= 0; i--)
+            {
+                Object.Destroy(_footer.GetChild(i).gameObject);
             }
 
             SelaState state = SelaState.Current;
@@ -187,12 +205,11 @@ namespace SELA.UI
                 "Biaya: Tenaga -1, Tekanan +1, satu sesi.",
                 UiTheme.BodyFontSize, UiTheme.TextOnPaper, TextAlignmentOptions.TopLeft);
 
-            Button send = UiKit.Button(_content, SelaContent.Ui.SendApplication, Send,
+            Button send = UiKit.Button(_footer, SelaContent.Ui.SendApplication, Send,
                 UiTheme.BiruTinta, UiTheme.TextOnInk);
-            UiKit.Height(send, 48f);
 
-            Button cancel = UiKit.Button(_content, SelaContent.Ui.Cancel, Router.CloseTop, UiTheme.HijauMeja, UiTheme.TextOnPaper);
-            UiKit.Height(cancel, 44f);
+            Button cancel = UiKit.Button(_footer, SelaContent.Ui.Cancel, Router.CloseTop,
+                UiTheme.HijauMeja, UiTheme.TextOnPaper);
         }
 
         private bool Required(EvidenceId id)
@@ -212,7 +229,7 @@ namespace SELA.UI
             state.NotifyChanged();
             SelaSaveStore.Write(state);
             Router.Close(this);
-            SelaBootstrap.Instance.AdvanceSessionAfterActivity();
+            SelaBootstrap.Instance.FinishActivityEvents();
         }
     }
 }

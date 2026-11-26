@@ -24,18 +24,41 @@ public static class UiTest
     public static string Click(string target)
     {
         Button exact = null;
+        Button exactBlocked = null;
         Button partial = null;
+        Button partialBlocked = null;
         int partialCount = 0;
 
         foreach (Button b in ActiveButtons())
         {
             TextMeshProUGUI tmp = b.GetComponentInChildren<TextMeshProUGUI>();
             if (tmp == null) { continue; }
-            if (tmp.text == target) { exact = b; break; }
-            if (tmp.text.Contains(target)) { partialCount++; if (partial == null) { partial = b; } }
+            if (tmp.text == target)
+            {
+                // Panel belakang bisa punya label sama; dahulukan yang benar-benar bisa diklik.
+                if (IsHittable(b)) { exact = b; break; }
+                if (exactBlocked == null) { exactBlocked = b; }
+                continue;
+            }
+
+            if (tmp.text.Contains(target))
+            {
+                partialCount++;
+                if (IsHittable(b))
+                {
+                    if (partial == null) { partial = b; }
+                }
+                else if (partialBlocked == null)
+                {
+                    partialBlocked = b;
+                }
+            }
         }
 
-        Button found = exact != null ? exact : partial;
+        Button found = exact != null ? exact
+            : partial != null ? partial
+            : exactBlocked != null ? exactBlocked
+            : partialBlocked;
         if (found == null)
         {
             return "TIDAK ADA: " + target + " || aktif: " + Label();
@@ -195,6 +218,31 @@ public static class UiTest
         return sb.ToString();
     }
 
+    /// <summary>Teks penuh tiap label pada layar terbuka, untuk memeriksa naskah.</summary>
+    public static string Texts(string screenName)
+    {
+        Canvas canvas = UnityEngine.Object.FindFirstObjectByType<Canvas>();
+        Transform root = canvas.transform.Find("Screens");
+        if (root == null) { return "(tidak ada Screens)"; }
+
+        Transform target = root.Find(screenName);
+        if (target == null)
+        {
+            return "(layar " + screenName + " tidak ada) || terbuka: " + Screens();
+        }
+
+        StringBuilder sb = new StringBuilder();
+        TextMeshProUGUI[] labels = target.GetComponentsInChildren<TextMeshProUGUI>(true);
+        foreach (TextMeshProUGUI label in labels)
+        {
+            if (string.IsNullOrEmpty(label.text)) { continue; }
+            sb.Append("[" + label.name + "] ");
+            sb.Append(label.text.Replace("\n", " / "));
+            sb.Append(" || ");
+        }
+        return sb.Length == 0 ? "(tidak ada teks)" : sb.ToString();
+    }
+
     /// <summary>Ringkasan state permainan yang sedang berjalan.</summary>
     public static string State()
     {
@@ -289,6 +337,16 @@ public static class UiTest
             return "BUKA: " + methodName + "(" + arg + ")";
         }
         return "(metode " + methodName + " dengan satu parameter tidak ada)";
+    }
+
+    /// <summary>Menutup panel teratas, sama seperti menekan Esc. Hanya untuk alat uji.</summary>
+    public static string CloseTop()
+    {
+        SELA.UI.UiRouter router = SELA.UI.UiRouter.Instance;
+        if (router == null) { return "(UiRouter tidak ada)"; }
+        string before = Screens();
+        router.CloseTop();
+        return "TUTUP TERATAS: " + before + " -> " + Screens();
     }
 
     /// <summary>Memindahkan hari tanpa tidur, untuk menguji undangan interview hari berikutnya.</summary>

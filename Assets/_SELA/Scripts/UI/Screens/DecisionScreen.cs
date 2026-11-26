@@ -13,6 +13,7 @@ namespace SELA.UI
     {
         private UiSheet _sheet;
         private RectTransform _content;
+        private RectTransform _footer;
         private bool _riskAcknowledged;
 
         protected override string ScreenName
@@ -26,6 +27,10 @@ namespace SELA.UI
             RectTransform scrollContent;
             UiKit.Scroll(_sheet.Content, out scrollContent);
             _content = scrollContent;
+
+            // Tombol finalisasi tetap di tempat, tidak ikut tergulir (DESIGN 9.13).
+            _footer = _sheet.EnsureFooter(58f);
+            UiKit.HorizontalStack(_footer, 12f, new RectOffset(0, 0, 0, 0));
         }
 
         public override void Refresh()
@@ -33,6 +38,10 @@ namespace SELA.UI
             for (int i = _content.childCount - 1; i >= 0; i--)
             {
                 Object.Destroy(_content.GetChild(i).gameObject);
+            }
+            for (int i = _footer.childCount - 1; i >= 0; i--)
+            {
+                Object.Destroy(_footer.GetChild(i).gameObject);
             }
 
             SelaState state = SelaState.Current;
@@ -45,10 +54,16 @@ namespace SELA.UI
             {
                 Button withdraw = UiKit.Button(_content, SelaContent.Ui.DecisionWithdraw, () =>
                 {
-                    state.OfferChoice = OfferChoice.TidakAda;
-                    state.DecisionNote = null;
-                    state.NotifyChanged();
-                    Refresh();
+                    // GDD 3.11: penarikan tawaran yang sudah dipilih memakai konfirmasi.
+                    SelaBootstrap.Instance.AskConfirm(SelaContent.Ui.DecisionWithdraw,
+                        SelaContent.Ui.DecisionWithdrawBody, () =>
+                        {
+                            state.OfferChoice = OfferChoice.TidakAda;
+                            state.DecisionNote = null;
+                            state.NotifyChanged();
+                            SelaSaveStore.Write(state);
+                            Refresh();
+                        });
                 }, UiTheme.LatarSlot, UiTheme.TextOnPaper);
                 UiKit.Height(withdraw, 40f);
             }
@@ -58,7 +73,11 @@ namespace SELA.UI
             OfferId[] offers = { OfferId.A, OfferId.B, OfferId.C };
             foreach (OfferId offer in offers)
             {
-                bool obtained = state.StatusOf(offer) == ApplicationStatus.Ditawari;
+                // GDD 3.6: A/B didapat lewat interview, sedangkan C adalah tawaran langsung
+                // yang berlaku sejak pesannya datang (hari 4) sampai malam hari 7.
+                bool obtained = offer == OfferId.C
+                    ? state.Day >= 4
+                    : state.StatusOf(offer) == ApplicationStatus.Ditawari;
                 bool isCurrent = state.OfferChoice == (OfferChoice)((int)offer + 1);
 
                 string label = SelaContent.OfferName(offer) + "\n" +
@@ -72,7 +91,7 @@ namespace SELA.UI
             }
 
             Button home = UiKit.Button(_content, SelaContent.Ui.DecisionHome + "\n" +
-                                             SelaContent.OfferTitle(OfferId.C),
+                                             SelaContent.Ui.DecisionHomeSub,
                 () => ChooseHome(), state.OfferChoice == OfferChoice.TidakAda ? UiTheme.KuningKusam : UiTheme.LatarKartu,
                 UiTheme.TextOnPaper);
             UiKit.Height(home, 58f);
@@ -101,12 +120,22 @@ namespace SELA.UI
                 BuildNoteChoice(state);
             }
 
-            Button finalize = UiKit.Button(_content, SelaContent.Ui.DecisionFinalize, ConfirmDecision,
+            Button finalize = UiKit.Button(_footer, SelaContent.Ui.DecisionFinalize, RequestDecision,
                 UiTheme.BiruTinta, UiTheme.TextOnInk);
-            UiKit.Height(finalize, 48f);
-            finalize.interactable = state.OfferChoice == OfferChoice.C
+
+            // GDD 3.11: keputusan dikunci hanya setelah sesi malam hari ketujuh selesai.
+            // Pulang selalu sah (GDD 3.12), jadi catatan batas yang menjadi syaratnya, bukan tawaran.
+            bool unlocked = state.Day >= 7 && state.Session == SelaSession.Malam && state.SessionResolved;
+            bool ready = state.OfferChoice == OfferChoice.C
                 ? _riskAcknowledged
-                : state.OfferChoice != OfferChoice.TidakAda && !string.IsNullOrEmpty(state.DecisionNote);
+                : !string.IsNullOrEmpty(state.DecisionNote);
+            finalize.interactable = unlocked && ready;
+
+            if (!unlocked)
+            {
+                UiKit.Paragraph(_content, SelaContent.Ui.DecisionLocked, UiTheme.SmallFontSize,
+                    UiTheme.HijauMeja, TextAlignmentOptions.TopLeft);
+            }
         }
 
         private void BuildNoteChoice(SelaState state)
@@ -134,6 +163,7 @@ namespace SELA.UI
                 {
                     state.DecisionNote = note;
                     state.NotifyChanged();
+                    SelaSaveStore.Write(state);
                     Refresh();
                 }, selected ? UiTheme.KuningKusam : UiTheme.LatarSlot, UiTheme.TextOnPaper);
                 UiKit.Height(button, 44f);
@@ -150,6 +180,7 @@ namespace SELA.UI
             }
             state.OfferChoice = choice;
             state.NotifyChanged();
+            SelaSaveStore.Write(state);
             Refresh();
         }
 
@@ -162,12 +193,35 @@ namespace SELA.UI
             }
             state.OfferChoice = OfferChoice.TidakAda;
             state.NotifyChanged();
+            SelaSaveStore.Write(state);
             Refresh();
         }
 
-        private void ConfirmDecision()
+        /// <summary>Konfirmasi terakhir dengan label spesifik sebelum ending ditutup (DESIGN 9.13).</summary>
+        private void RequestDecision()
         {
             SelaState state = SelaState.Current;
+            if (state.Day < 7 || state.Session != SelaSession.Malam || !state.SessionResolved)
+            {
+                return;
+            }
+
+            string body = state.OfferChoice == OfferChoice.C
+                ? SelaContent.Ui.DecisionRiskWarning + "\n" + SelaContent.Ui.DecisionConfirmBody
+                : SelaContent.Ui.DecisionConfirmBody;
+            SelaBootstrap.Instance.AskConfirm(
+                SelaContent.Endings.DecisionConfirmLabel(state.OfferChoice), body,
+                SelaContent.Endings.DecisionConfirmLabel(state.OfferChoice), FinalizeDecision);
+        }
+
+        private void FinalizeDecision()
+        {
+            SelaState state = SelaState.Current;
+            if (state.Day < 7 || state.Session != SelaSession.Malam || !state.SessionResolved)
+            {
+                return;
+            }
+
             state.SessionResolved = true;
             state.NotifyChanged();
             SelaSaveStore.Write(state);
@@ -193,6 +247,7 @@ namespace SELA.UI
     {
         private UiSheet _sheet;
         private RectTransform _content;
+        private RectTransform _footer;
 
         protected override string ScreenName
         {
@@ -205,6 +260,16 @@ namespace SELA.UI
             RectTransform scrollContent;
             UiKit.Scroll(_sheet.Content, out scrollContent);
             _content = scrollContent;
+
+            // Epilog panjang; tombol baca bantuan dan tutup harus tetap terjangkau (DESIGN 9.13).
+            _footer = _sheet.EnsureFooter(56f);
+            UiKit.HorizontalStack(_footer, 12f, new RectOffset(0, 0, 0, 0));
+
+            Button help = UiKit.Button(_footer, SelaContent.Ui.HelpTitle, SelaBootstrap.Instance.OpenHelp,
+                UiTheme.LatarSlot, UiTheme.TextOnPaper);
+
+            Button back = UiKit.Button(_footer, SelaContent.Ui.Close, SelaBootstrap.Instance.ReturnToMenu,
+                UiTheme.HijauMeja, UiTheme.TextOnPaper);
         }
 
         public override void Refresh()
@@ -244,14 +309,6 @@ namespace SELA.UI
                     SelaContent.Endings.ProgressInsert(state.BestEvidence()),
                     UiTheme.SmallFontSize, UiTheme.HijauMeja, TextAlignmentOptions.TopLeft);
             }
-
-            Button help = UiKit.Button(_content, SelaContent.Ui.HelpTitle, SelaBootstrap.Instance.OpenHelp,
-                UiTheme.LatarSlot, UiTheme.TextOnPaper);
-            UiKit.Height(help, 44f);
-
-            Button back = UiKit.Button(_content, SelaContent.Ui.Close, SelaBootstrap.Instance.ReturnToMenu,
-                UiTheme.HijauMeja, UiTheme.TextOnPaper);
-            UiKit.Height(back, 44f);
         }
 
         private static List<string> EvidenceNames(SelaState state)

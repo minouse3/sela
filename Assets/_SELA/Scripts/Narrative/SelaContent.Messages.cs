@@ -27,7 +27,7 @@ namespace SELA.Narrative
                 return new List<Message>
                 {
                     new Message(MsgSender.Ibu, "Tiket", "Tiket bus sudah Ibu beli, Ka. Berangkat pagi tanggal kedelapan, jadi tinggal enam hari lagi. Tolong kabari sebelum berangkat, tidak usah panjang. Ibu cuma mau tahu ekonominya aman."),
-                    new Message(MsgSender.Dita, "Tempat tinggal sementara", "Kalau nanti kamu ambil kerja di kota, tempatku masih kosong satu bulan. Aku serius, bukan basa-basi. Yang penting kamu tinggal dekat tempat kamu bekerja, biar tidak chega pada hari pertama sudah kelelahan."),
+                    new Message(MsgSender.Dita, "Tempat tinggal sementara", "Kalau nanti kamu ambil kerja di kota, tempatku masih kosong satu bulan. Aku serius, bukan basa-basi. Yang penting kamu tinggal dekat tempat kamu bekerja, biar tidak kelelahan di hari pertama."),
                     new Message(MsgSender.Perusahaan, "Studio Lajur membuka lowongan", "Posisi Junior UI Implementer. Pendaftaran dibuka sampai malam hari ketiga. Bukti E1 harus ikut terkirim di lamaran. Tidak ada trial, tapi ada sesi penjelasan portofolio."),
                     new Message(MsgSender.Sistem, "Isi kamar", "Di meja ada kartu proyek dari kuliah, tiket pulang di dalam tas, dan nomor 07 pada pintu. Semua bisa dibaca tanpa memakai sesi. Mulailah dari apa yang ada di depan mata.")
                 };
@@ -57,7 +57,7 @@ namespace SELA.Narrative
             {
                 return new List<Message>
                 {
-                    new Message(MsgSender.AdminAksesPrima, "Kesempatan tanpa tes", "Kami menyediakan penempatan untuk yang mau langsung bekerja. Penghasilan sampai dua belas juta per bulan. Tidak perlu proses lama. Kirim data pribadi, langsung bisa mulai minggu ini. Balas pesan ini untuk Qualifications."),
+                    new Message(MsgSender.AdminAksesPrima, "Kesempatan tanpa tes", "Kami menyediakan penempatan untuk yang mau langsung bekerja. Penghasilan sampai dua belas juta per bulan. Tidak perlu proses lama. Kirim data pribadi, langsung bisa mulai minggu ini. Balas pesan ini untuk kualifikasi."),
                     new Message(MsgSender.Dita, "Yang satu ini berbeda", "Baca yang tertulis, bukan yang diceritakan orang lain. Kalau memang diminta dokumen asli, tanya dulu untuk apa dan disimpan berapa lama. Kamu boleh menunda. Kebanyakan lowongan cuma langkah pertama, dan langkah pertama boleh pelan.")
                 };
             }

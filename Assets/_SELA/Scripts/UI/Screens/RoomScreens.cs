@@ -307,6 +307,9 @@ namespace SELA.UI
             SelaSessionFlow.Sleep(state);
             state.NotifyChanged();
             SelaSaveStore.Write(state);
+
+            // Setelah pemulihan tidur dan reset flag, state inilah checkpoint awal hari (GDD 3.13).
+            SelaSaveStore.WriteDayStart(state);
             _showMorning = true;
             Refresh();
         }

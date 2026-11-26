@@ -114,7 +114,7 @@ namespace SELA.Narrative
                         {
                             new OfferAspect("Tugas",
                                 "Rincian tugas harian tidak dijelaskan.",
-                                "Tidak bisa dirinci. Kerjamanya mengikuti kebutuhan."),
+                                "Tidak bisa dirinci. Jam kerjanya mengikuti kebutuhan."),
                             new OfferAspect("Kompensasi",
                                 "Sampai Rp12.000.000, bergantung pada jumlah jam.",
                                 "Angkanya bisa lebih tinggi kalau jamnya banyak."),

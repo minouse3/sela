@@ -230,7 +230,9 @@ Tambahan yang perlu tahu:
    python -I Docs/tools/check_compile.py
    ```
 
-   Hasil terakhir: 47 script, 0 error, 0 warning. Screenshot tiap panel ada di `Screenshots/`.
+   Hasil terakhir (27 November 2026): 48 script, 0 error, 0 warning. Bukti rantai penuh
+   ada di `Screenshots/chain-01..23` (E1 → lamaran → snapshot → interview → Retakan →
+   keputusan → epilog A/B/C → Pulang; checkpoint awal hari, daftar pesan yang bisa digulir).
 
 ---
 

@@ -5,7 +5,7 @@ dipecah per anggota mengikuti pembagian tugas di PPT *Kelompok SELA*. Semua angk
 jam kerja tiap anggota terbatas; yang tidak boleh dipotong adalah urutan: minggu 1 fondasi, minggu 2 satu
 rantai utuh, minggu 3 kelengkapan, minggu 4 playable.
 
-Status per 25 November 2026: ✅ selesai · 🟡 sebagian · ⬜ belum.
+Status per 27 November 2026: ✅ selesai · 🟡 sebagian · ⬜ belum.
 
 ---
 
@@ -50,6 +50,11 @@ snapshot, interview A, Retakan 1, lalu keluar dan lanjutkan dari checkpoint.
 
 **Bukti playable:** 1 orang luar tim:main 10 menit, reporter bug di grup.
 
+**Status Luhur (27 Nov): ✅** Rantai E1 → CV → lamaran A → snapshot → interview A (skor 4) →
+Retakan 1 → tidur → interview/hasil → keputusan hari 7 → epilog sudah lulus uji otomatis
+dan screenshot `Screenshots/chain-01..17`. Checkpoint awal hari (`sela-day-start.json`)
+teruji lewat "Ulangi dari checkpoint".
+
 ---
 
 ## Minggu 3 — Kelengkapan konten dan seluruh hari
@@ -63,6 +68,11 @@ snapshot, interview A, Retakan 1, lalu keluar dan lanjutkan dari checkpoint.
 | Luhur | Naskah lengkap sesuai inventaris GDD (pesan harian, 7 percakapan Dita, 3 lowongan + verifikasi, 2 interview, 3 Retakan, 4 epilog), layar: aktivitas, Jeda, keputusan kontrak, epilog, Credits/Sumber/Bantuan | Ending mengikuti pilihan kontrak, bukan stat; epilog purchases Burden berubah sesuai catatan pemain |
 
 **Bukti playable:** 2 orang luar tim menyelesaikan game penuh dengan jalur berbeda (kerja / pulang / berisiko).
+
+**Status Luhur (27 Nov): 🟡** Retakan 1–3, keputusan kontrak (A/B/Pulang/C), konfirmasi akhir,
+epilog A/B/C, penolakan interview, dan tiga bug teks sudah lulus uji + screenshot
+(`chain-18..23`). Masih kurang: interview terlewat, interview B gagal, dan foto layar
+Settings/Credits/Help/Meja Bukti.
 
 ---
 

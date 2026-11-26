@@ -369,6 +369,10 @@ namespace SELA.UI
         public void OnNewGameStarted()
         {
             _gameplayActive = true;
+
+            // Hari pertama dimulai tanpa aktivitas apa pun, jadi state ini adalah checkpoint awal hari.
+            SelaSaveStore.WriteDayStart(SelaState.Current);
+
             _router.Open(_hud);
             _hud.Refresh();
 
@@ -464,7 +468,13 @@ namespace SELA.UI
         /// </summary>
         public void AskConfirm(string title, string body, System.Action onConfirm)
         {
-            _confirm.Ask(title, body, onConfirm);
+            AskConfirm(title, body, SelaContent.Ui.Confirm, onConfirm);
+        }
+
+        /// <summary>Varian dengan label konfirmasi spesifik, misalnya "Konfirmasi pulang" (DESIGN 9.13).</summary>
+        public void AskConfirm(string title, string body, string confirmLabel, System.Action onConfirm)
+        {
+            _confirm.Ask(title, body, confirmLabel, onConfirm);
             _router.Open(_confirm);
         }
 
@@ -498,6 +508,29 @@ namespace SELA.UI
             SelaSaveStore.Write(state);
         }
 
+        /// <summary>
+        /// Urutan sesudah aktivitas: Jeda, lalu Retakan terjadwal, baru sesi pindah (GDD 3.2/3.8).
+        /// Dipakai semua aktivitas, termasuk interview, kirim lamaran, dan verifikasi.
+        /// </summary>
+        public void FinishActivityEvents()
+        {
+            SelaState state = SelaState.Current;
+            if (SelaSessionFlow.ShouldTriggerBreak(state))
+            {
+                OpenBreak();
+                return;
+            }
+
+            int rift = SelaSessionFlow.RiftIndexFor(state);
+            if (rift > 0 && SelaSessionFlow.ShouldTriggerRift(state))
+            {
+                OpenRift(rift);
+                return;
+            }
+
+            AdvanceSessionAfterActivity();
+        }
+
         /// <summary>Menampilkan kembali panel retakan dari panel Jeda.</summary>
         public void ShowRiftHint()
         {
@@ -525,6 +558,7 @@ namespace SELA.UI
 
         public void OpenLaptop()
         {
+            _laptop.ShowApplications();
             _router.Open(_laptop);
         }
 
@@ -588,15 +622,41 @@ namespace SELA.UI
             int day = state.Day;
 
             AskConfirm(SelaContent.Ui.PauseItems[2],
-                SelaContent.Ui.RestartDayWarning + " (Hari " + day + ")",
+                SelaContent.Ui.RestartDayWarning + " (" + SelaContent.Ui.HudDaySession(day, SelaSession.Pagi) + ")",
                 () =>
                 {
-                    state.Session = SelaSession.Pagi;
-                    state.SessionResolved = false;
-                    state.TidiedToday = false;
-                    state.BreakUsedToday = false;
-                    state.NotifyChanged();
-                    SelaSaveStore.Write(state);
+                    // GDD 3.13: "Ulangi dari checkpoint" memuat checkpoint awal hari, bukan hanya
+                    // memundurkan sesi. Tanpa ini Tenaga, Tekanan, dan hasil hari ini ikut terbawa.
+                    SelaState checkpoint = SelaSaveStore.ReadDayStart();
+                    if (checkpoint != null)
+                    {
+                        // Penanda tutorial bersifat lintas hari; jangan diputar ulang tiap restart.
+                        checkpoint.TutorialSeen = state.TutorialSeen || checkpoint.TutorialSeen;
+                        SelaState.Adopt(checkpoint);
+                    }
+                    else
+                    {
+                        state.Session = SelaSession.Pagi;
+                        state.SessionResolved = false;
+                        state.TidiedToday = false;
+                        state.BreakUsedToday = false;
+                        state.NotifyChanged();
+                    }
+
+                    SelaSaveStore.Write(SelaState.Current);
+
+                    // Retakan/Jeda yang belum selesai berasal dari sesi yang dibuang; jangan
+                    // biarkan panelnya menutupi state checkpoint (GDD 3.13).
+                    ActiveRift = -1;
+                    if (_rift.IsOpen)
+                    {
+                        _router.Close(_rift);
+                    }
+                    if (_break.IsOpen)
+                    {
+                        _router.Close(_break);
+                    }
+
                     _router.Close(_pause);
                 });
         }

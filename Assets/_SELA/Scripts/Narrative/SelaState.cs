@@ -264,9 +264,17 @@ namespace SELA.Narrative
     {
         private const string FileName = "sela-save.json";
 
+        /// <summary>Checkpoint awal hari, terpisah dari autosave berjalan (GDD 3.13).</summary>
+        private const string DayStartFileName = "sela-day-start.json";
+
         private static string Path
         {
             get { return System.IO.Path.Combine(Application.persistentDataPath, FileName); }
+        }
+
+        private static string DayStartPath
+        {
+            get { return System.IO.Path.Combine(Application.persistentDataPath, DayStartFileName); }
         }
 
         public static bool Exists()
@@ -274,21 +282,37 @@ namespace SELA.Narrative
             return File.Exists(Path);
         }
 
+        public static bool HasDayStart()
+        {
+            return File.Exists(DayStartPath);
+        }
+
         /// <summary>Hasil penulisan terakhir. Panel Jeda memakai ini untuk status "Tersimpan" (DESIGN 9.14).</summary>
         public static bool LastWriteSucceeded { get; private set; }
 
         public static void Write(SelaState state)
         {
+            WriteTo(Path, state);
+        }
+
+        /// <summary>Menyimpan checkpoint awal hari, dipakai tombol "Ulangi dari checkpoint".</summary>
+        public static void WriteDayStart(SelaState state)
+        {
+            WriteTo(DayStartPath, state);
+        }
+
+        private static void WriteTo(string path, SelaState state)
+        {
             string json = JsonUtility.ToJson(state);
-            string temp = Path + ".tmp";
+            string temp = path + ".tmp";
             try
             {
                 File.WriteAllText(temp, json);
-                if (File.Exists(Path))
+                if (File.Exists(path))
                 {
-                    File.Delete(Path);
+                    File.Delete(path);
                 }
-                File.Move(temp, Path);
+                File.Move(temp, path);
                 LastWriteSucceeded = true;
             }
             catch (Exception)
@@ -299,14 +323,25 @@ namespace SELA.Narrative
 
         public static SelaState Read()
         {
-            if (!Exists())
+            return ReadFrom(Path);
+        }
+
+        /// <summary>Membaca checkpoint awal hari, null bila belum pernah dibuat.</summary>
+        public static SelaState ReadDayStart()
+        {
+            return ReadFrom(DayStartPath);
+        }
+
+        private static SelaState ReadFrom(string path)
+        {
+            if (!File.Exists(path))
             {
                 return null;
             }
 
             try
             {
-                SelaState state = JsonUtility.FromJson<SelaState>(File.ReadAllText(Path));
+                SelaState state = JsonUtility.FromJson<SelaState>(File.ReadAllText(path));
                 if (state == null)
                 {
                     return null;
@@ -341,6 +376,10 @@ namespace SELA.Narrative
             if (Exists())
             {
                 File.Delete(Path);
+            }
+            if (HasDayStart())
+            {
+                File.Delete(DayStartPath);
             }
         }
 

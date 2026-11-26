@@ -121,12 +121,16 @@ namespace SELA.Narrative
             public const string DecisionOfferB = "Koperasi Pijar";
             public const string DecisionOfferC = "Akses Prima";
             public const string DecisionHome = "Pulang";
+            public const string DecisionHomeSub = "Pulang, Bukan Selesai";
+            public const string DecisionLocked = "Keputusan baru bisa diselesaikan setelah sesi malam hari ketujuh.";
             public const string DecisionNotObtained = "Belum ada tawaran";
             public const string DecisionNoteLajur = "Pendampingan dan lingkup tugas";
             public const string DecisionNotePijar = "Persetujuan dan pencatatan lembur";
             public const string DecisionNoteHomeA = "Menata bukti proyek";
             public const string DecisionNoteHomeB = "Menyusun jadwal lamaran terbatas";
             public const string DecisionRiskWarning = "Syarat berisiko: kontrak meminta penyerahan dokumen asli dan membatasi pengunduran diri.";
+            public const string DecisionConfirmBody = "Pilihan akan dikunci setelah konfirmasi ini.";
+            public const string DecisionWithdrawBody = "Tawaran yang dipilih akan ditarik dan catatan batas dihapus.";
 
             public const string RiftHint = "Petunjuk";
             public const string RiftSkip = "Selesaikan adegan";

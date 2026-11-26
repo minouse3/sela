@@ -428,7 +428,8 @@ namespace SELA.UI
             viewport.anchorMin = Vector2.zero;
             viewport.anchorMax = Vector2.one;
             viewport.offsetMin = Vector2.zero;
-            viewport.offsetMax = Vector2.zero;
+            // Sisakan ruang untuk batang gulir supaya teks tidak tertimpa (DESIGN 9.3).
+            viewport.offsetMax = new Vector2(-14f, 0f);
 
             GameObject contentGo = new GameObject("Content", typeof(RectTransform));
             contentGo.transform.SetParent(viewport, false);

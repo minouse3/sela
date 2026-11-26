@@ -169,7 +169,10 @@ namespace SELA.UI
         /// <summary>Kotak kosong tidak digambar, supaya layar tetap bersih.</summary>
         private static void SetLabelVisible(TextMeshProUGUI label, bool visible)
         {
-            Image background = label.GetComponentInParent<Image>();
+            // Jangan pakai GetComponentInParent<Image>(): saat Build() root layar masih nonaktif,
+            // pencarian default melewati induk nonaktif dan latar kosong tetap tampil (DESIGN 9.4).
+            Transform parent = label.transform.parent;
+            Image background = parent != null ? parent.GetComponent<Image>() : null;
             if (background != null)
             {
                 background.enabled = visible;

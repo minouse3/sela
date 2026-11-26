@@ -308,7 +308,7 @@ namespace SELA.UI
             _questionIndex = 0;
             _answerIndex = -1;
             Router.Close(this);
-            SelaBootstrap.Instance.AdvanceSessionAfterActivity();
+            SelaBootstrap.Instance.FinishActivityEvents();
         }
 
         /// <summary>Biaya interview satu sesi berlaku sekali, saat jawaban pertama dipilih (GDD 3.3).</summary>

@@ -92,7 +92,7 @@ namespace SELA.UI
             List<string> lines = new List<string>();
             lines.Add("Hari " + state.Day + " - " + SelaContent.SessionLabel(state.Session) +
                       (state.SessionResolved ? " (sesi selesai)" : string.Empty));
-            lines.Add("Bus berangkat pada pagi hari kedelapan. Ticket tersedia di dalam tas.");
+            lines.Add("Bus berangkat pada pagi hari kedelapan. Tiket tersedia di dalam tas.");
             lines.Add("Interview selalu berlangsung di sesi siang. Undangan terlewat menambah tekanan satu.");
             return string.Join("\n", lines.ToArray());
         }

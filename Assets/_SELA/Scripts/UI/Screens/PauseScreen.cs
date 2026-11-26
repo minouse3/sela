@@ -13,8 +13,6 @@ namespace SELA.UI
     {
         private UiSheet _sheet;
         private RectTransform _list;
-        private TextMeshProUGUI _checkpointInfo;
-        private TextMeshProUGUI _saveInfo;
 
         protected override string ScreenName
         {
@@ -23,18 +21,12 @@ namespace SELA.UI
 
         protected override void Build()
         {
-            _sheet = new UiSheet(Root, "Pause", new Vector2(520f, 560f), false);
+            _sheet = new UiSheet(Root, "Pause", new Vector2(540f, 640f), false);
 
-            _list = UiKit.Rect(_sheet.Content, "Items");
+            RectTransform scrollContent;
+            UiKit.Scroll(_sheet.Content, out scrollContent);
+            _list = scrollContent;
             UiKit.VerticalStack(_list, 12f, new RectOffset(0, 0, 0, 0));
-
-            _checkpointInfo = UiKit.Text(_list, string.Empty, UiTheme.SmallFontSize, UiTheme.ArangHijau,
-                TextAlignmentOptions.TopLeft);
-            UiKit.Height(_checkpointInfo, 60f);
-
-            _saveInfo = UiKit.Text(_list, string.Empty, UiTheme.SmallFontSize, UiTheme.HijauMeja,
-                TextAlignmentOptions.TopLeft);
-            UiKit.Height(_saveInfo, 30f);
         }
 
         public override void Refresh()
@@ -61,14 +53,23 @@ namespace SELA.UI
                 UiKit.Button(_list, SelaContent.Ui.RiftSkip, ConfirmSkipScene, UiTheme.BiruTinta, UiTheme.TextOnInk);
             }
 
-            string last = SelaContent.Ui.ExitCheckpoint + ": Hari " + state.Day + " - " +
-                          SelaContent.SessionLabel(state.Session);
-            string dayStart = SelaContent.Ui.ExitDayStart + ": Hari " + state.Day + " - Pagi";
-            _checkpointInfo.text = last + "\n" + dayStart + "\n" + SelaContent.Ui.ExitWarning;
+            // Label dibuat ulang setiap Refresh karena daftar dibersihkan di atas.
+            string last = SelaContent.Ui.ExitCheckpoint + ": " +
+                          SelaContent.DaySessionLabel(state.Day, state.Session);
+            SelaState dayStart = SelaSaveStore.ReadDayStart();
+            string dayLine = SelaContent.Ui.ExitDayStart + ": " +
+                             SelaContent.DaySessionLabel(dayStart != null ? dayStart.Day : state.Day,
+                                 SelaSession.Pagi);
 
-            _saveInfo.text = SelaSaveStore.LastWriteSucceeded
-                ? SelaContent.Ui.SaveStored
-                : SelaContent.Ui.SaveFailed;
+            TextMeshProUGUI checkpointInfo = UiKit.Text(_list, last + "\n" + dayLine + "\n" +
+                SelaContent.Ui.ExitWarning, UiTheme.SmallFontSize, UiTheme.ArangHijau,
+                TextAlignmentOptions.TopLeft);
+            UiKit.Height(checkpointInfo, 72f);
+
+            TextMeshProUGUI saveInfo = UiKit.Text(_list,
+                SelaSaveStore.LastWriteSucceeded ? SelaContent.Ui.SaveStored : SelaContent.Ui.SaveFailed,
+                UiTheme.SmallFontSize, UiTheme.HijauMeja, TextAlignmentOptions.TopLeft);
+            UiKit.Height(saveInfo, 30f);
         }
 
         private void ConfirmSkipScene()

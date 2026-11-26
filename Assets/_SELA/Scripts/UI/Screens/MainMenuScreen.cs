@@ -83,7 +83,7 @@ namespace SELA.UI
             infoRect.anchorMax = new Vector2(0f, 0f);
             infoRect.pivot = new Vector2(0f, 0f);
             infoRect.anchoredPosition = new Vector2(UiTheme.PanelMargin, 28f);
-            infoRect.sizeDelta = new Vector2(700f, 44f);
+            infoRect.sizeDelta = new Vector2(700f, 56f);
         }
 
         public override void Refresh()
@@ -101,10 +101,18 @@ namespace SELA.UI
                 return;
             }
 
-            string where = "Hari " + saved.Day + " - " + SelaContent.SessionLabel(saved.Session);
-            _continueReason.text = SelaContent.Ui.ResumeReason(where);
-            _continueReason.color = UiTheme.KuningKusam;
-            _checkpointInfo.text = SelaContent.Ui.ExitCheckpoint + ": " + where;
+            string where = SelaContent.DaySessionLabel(saved.Day, saved.Session);
+
+            // DESIGN 9.3: menu hanya menampilkan dua identitas checkpoint. Alasan melanjutkan
+            // di bawah tombol dipakai hanya saat tombol tidak aktif.
+            _continueReason.text = string.Empty;
+
+            SelaState dayStart = SelaSaveStore.ReadDayStart();
+            string dayLine = dayStart != null
+                ? "\n" + SelaContent.Ui.ExitDayStart + ": " +
+                  SelaContent.DaySessionLabel(dayStart.Day, SelaSession.Pagi)
+                : string.Empty;
+            _checkpointInfo.text = SelaContent.Ui.ExitCheckpoint + ": " + where + dayLine;
         }
 
         private void StartNewGame()

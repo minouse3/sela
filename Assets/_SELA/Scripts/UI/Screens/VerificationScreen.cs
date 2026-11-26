@@ -136,7 +136,7 @@ namespace SELA.UI
             state.NotifyChanged();
             SelaSaveStore.Write(state);
             Refresh();
-            SelaBootstrap.Instance.AdvanceSessionAfterActivity();
+            SelaBootstrap.Instance.FinishActivityEvents();
         }
     }
 }

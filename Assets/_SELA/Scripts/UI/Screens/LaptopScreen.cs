@@ -18,6 +18,7 @@ namespace SELA.UI
         private UiSheet _sheet;
         private RectTransform _tabRow;
         private RectTransform _leftList;
+        private GameObject _leftScroll;
         private RectTransform _right;
         private RectTransform _detail;
         private RectTransform _detailHeader;
@@ -65,8 +66,14 @@ namespace SELA.UI
                 new Vector2(0f, 0f), new Vector2(0f, -54f));
 
             // Kolom kiri 32 persen, kolom kanan sisa. Dipakai anchor supaya batasnya tidak bergeser.
-            _leftList = UiKit.Column(body, "List", 0f, 0.32f);
-            UiKit.VerticalStack(_leftList, 8f, new RectOffset(0, 0, 0, 0));
+            // Daftar lamaran/pesan bisa lebih panjang dari panel, jadi kolom kiri digulir
+            // (DESIGN 9.4); tanpa ini pesan lama tidak bisa dibuka sama sekali.
+            RectTransform leftColumn = UiKit.Column(body, "ListColumn", 0f, 0.32f);
+            RectTransform listContent;
+            ScrollRect listScroll = UiKit.Scroll(leftColumn, out listContent);
+            _leftScroll = listScroll.gameObject;
+            _leftList = listContent;
+            listContent.GetComponent<VerticalLayoutGroup>().spacing = 8f;
 
             _right = UiKit.Column(body, "Detail", 0.32f, 1f);
 
@@ -107,7 +114,7 @@ namespace SELA.UI
         /// </summary>
         private void ApplyLayout(bool split)
         {
-            _leftList.gameObject.SetActive(split);
+            _leftScroll.SetActive(split);
             _divider.gameObject.SetActive(split);
 
             _right.anchorMin = new Vector2(split ? 0.32f : 0.16f, 0f);
@@ -182,6 +189,12 @@ namespace SELA.UI
         public void ShowMessages()
         {
             _tab = TabMessages;
+        }
+
+        /// <summary>Kembali ke tab lamaran setiap laptop dibuka dari kamar (DESIGN 9.2).</summary>
+        public void ShowApplications()
+        {
+            _tab = TabApplications;
         }
 
         private void BuildApplications()

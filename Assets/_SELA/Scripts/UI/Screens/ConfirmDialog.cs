@@ -16,6 +16,7 @@ namespace SELA.UI
         private RectTransform _content;
         private RectTransform _footer;
         private string _bodyText = string.Empty;
+        private string _confirmLabel = string.Empty;
         private Action _onConfirm;
 
         protected override string ScreenName
@@ -33,9 +34,10 @@ namespace SELA.UI
         }
 
         /// <summary>Menampilkan dialog. Aksi hanya jalan bila tombol konfirmasi ditekan.</summary>
-        public void Ask(string title, string body, Action onConfirm)
+        public void Ask(string title, string body, string confirmLabel, Action onConfirm)
         {
             _bodyText = body ?? string.Empty;
+            _confirmLabel = string.IsNullOrEmpty(confirmLabel) ? SelaContent.Ui.Confirm : confirmLabel;
             _onConfirm = onConfirm;
             _sheet.TitleText.text = title;
             Refresh();
@@ -50,7 +52,7 @@ namespace SELA.UI
                 TextAlignmentOptions.TopLeft);
 
             UiKit.Button(_footer, SelaContent.Ui.Cancel, Router.CloseTop, UiTheme.HijauMeja, UiTheme.TextOnPaper);
-            UiKit.Button(_footer, SelaContent.Ui.Confirm, Confirm, UiTheme.BiruTinta, UiTheme.TextOnInk);
+            UiKit.Button(_footer, _confirmLabel, Confirm, UiTheme.BiruTinta, UiTheme.TextOnInk);
         }
 
         private static void ClearChildren(RectTransform parent)

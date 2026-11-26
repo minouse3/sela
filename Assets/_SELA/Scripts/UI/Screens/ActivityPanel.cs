@@ -18,6 +18,7 @@ namespace SELA.UI
 
         private UiSheet _sheet;
         private RectTransform _content;
+        private RectTransform _footer;
 
         protected override string ScreenName
         {
@@ -36,14 +37,16 @@ namespace SELA.UI
             RectTransform scrollContent;
             UiKit.Scroll(_sheet.Content, out scrollContent);
             _content = scrollContent;
+
+            // Tombol aksi hidup di footer tetap supaya tidak ikut tergulir dan terpotong (DESIGN 9.5).
+            _footer = _sheet.EnsureFooter(58f);
+            UiKit.HorizontalStack(_footer, 12f, new RectOffset(0, 0, 0, 0));
         }
 
         public override void Refresh()
         {
-            for (int i = _content.childCount - 1; i >= 0; i--)
-            {
-                Object.Destroy(_content.GetChild(i).gameObject);
-            }
+            Clear(_content);
+            Clear(_footer);
 
             if (_stage == 1)
             {
@@ -94,13 +97,20 @@ namespace SELA.UI
                     UiTheme.SmallFontSize, UiTheme.TanahTirai, TextAlignmentOptions.TopLeft);
             }
 
-            Button use = UiKit.Button(_content, SelaContent.Ui.UseSession, UseSession,
+            Button use = UiKit.Button(_footer, SelaContent.Ui.UseSession, UseSession,
                 UiTheme.BiruTinta, UiTheme.TextOnInk);
-            UiKit.Height(use, 48f);
             use.interactable = blocked == null;
 
-            Button cancel = UiKit.Button(_content, SelaContent.Ui.Cancel, Router.CloseTop, UiTheme.HijauMeja, UiTheme.TextOnPaper);
-            UiKit.Height(cancel, 44f);
+            Button cancel = UiKit.Button(_footer, SelaContent.Ui.Cancel, Router.CloseTop,
+                UiTheme.HijauMeja, UiTheme.TextOnPaper);
+        }
+
+        private static void Clear(RectTransform parent)
+        {
+            for (int i = parent.childCount - 1; i >= 0; i--)
+            {
+                Object.Destroy(parent.GetChild(i).gameObject);
+            }
         }
 
         private static SelaSession NextSession(SelaState state)
@@ -167,20 +177,7 @@ namespace SELA.UI
             state.NotifyChanged();
             SelaSaveStore.Write(state);
 
-            if (SelaSessionFlow.ShouldTriggerBreak(state))
-            {
-                SelaBootstrap.Instance.OpenBreak();
-                return;
-            }
-
-            int rift = SelaSessionFlow.RiftIndexFor(state);
-            if (rift > 0 && !state.RiftSolved[rift - 1] && state.Session == SelaSession.Siang)
-            {
-                SelaBootstrap.Instance.OpenRift(rift);
-                return;
-            }
-
-            SelaBootstrap.Instance.AdvanceSessionAfterActivity();
+            SelaBootstrap.Instance.FinishActivityEvents();
         }
 
         private void BuildChoice()
@@ -212,18 +209,16 @@ namespace SELA.UI
             UiKit.SelectableCard(_content, "Pilihan 2", wrong, true, _choiceIndex == 1,
                 () => PickChoice(1), 92f);
 
-            Button confirm = UiKit.Button(_content, "Pakai pilihan ini", ConfirmChoice,
+            Button confirm = UiKit.Button(_footer, "Pakai pilihan ini", ConfirmChoice,
                 UiTheme.BiruTinta, UiTheme.TextOnInk);
-            UiKit.Height(confirm, 48f);
             confirm.interactable = _choiceIndex >= 0;
 
-            Button back = UiKit.Button(_content, SelaContent.Ui.Cancel, () =>
+            Button back = UiKit.Button(_footer, SelaContent.Ui.Cancel, () =>
             {
                 _stage = 0;
                 _choiceIndex = -1;
                 Refresh();
             }, UiTheme.HijauMeja, UiTheme.TextOnPaper);
-            UiKit.Height(back, 44f);
         }
 
         private void PickChoice(int index)
@@ -278,20 +273,18 @@ namespace SELA.UI
                 isE1 ? SelaContent.Evidence.E1Feedback(false) : SelaContent.Evidence.E2Feedback(false),
                 UiTheme.BodyFontSize, UiTheme.TextOnPaper, TextAlignmentOptions.TopLeft);
 
-            Button retry = UiKit.Button(_content, "Coba lagi", () =>
+            Button retry = UiKit.Button(_footer, "Coba lagi", () =>
             {
                 _stage = 1;
                 _choiceIndex = -1;
                 Refresh();
             }, UiTheme.BiruTinta, UiTheme.TextOnInk);
-            UiKit.Height(retry, 48f);
 
-            Button back = UiKit.Button(_content, SelaContent.Ui.Cancel, () =>
+            Button back = UiKit.Button(_footer, SelaContent.Ui.Cancel, () =>
             {
                 _stage = 0;
                 Refresh();
             }, UiTheme.HijauMeja, UiTheme.TextOnPaper);
-            UiKit.Height(back, 44f);
         }
 
         private void BuildResult()
@@ -304,11 +297,11 @@ namespace SELA.UI
                 (isE1 ? SelaContent.Evidence.E1Feedback(true) : SelaContent.Evidence.E2Feedback(true)) +
                 "\n\nTenaga " + state.Energy + "/" + SelaState.MaxEnergy +
                 ", Tekanan " + state.Pressure + "/" + SelaState.MaxPressure +
-                ". Sesi berikutnya: " + SelaContent.SessionLabel(state.Session) + ".",
+                ". Sesi sekarang: " + SelaContent.SessionLabel(state.Session) + ".",
                 UiTheme.BodyFontSize, UiTheme.TextOnPaper, TextAlignmentOptions.TopLeft);
 
-            Button close = UiKit.Button(_content, SelaContent.Ui.Close, Router.CloseTop, UiTheme.HijauMeja, UiTheme.TextOnPaper);
-            UiKit.Height(close, 44f);
+            Button close = UiKit.Button(_footer, SelaContent.Ui.Close, Router.CloseTop,
+                UiTheme.HijauMeja, UiTheme.TextOnPaper);
         }
     }
 
@@ -390,7 +383,7 @@ namespace SELA.UI
             SelaSaveStore.Write(state);
             _message = null;
             Router.Close(this);
-            SelaBootstrap.Instance.AdvanceSessionAfterActivity();
+            SelaBootstrap.Instance.FinishActivityEvents();
         }
     }
 }
