@@ -242,6 +242,28 @@ namespace SELA.UI
             return button;
         }
 
+        /// <summary>Pilihan jawaban panjang: teks dibungkus dan rata kiri, bukan label tombol pendek.</summary>
+        public static Button Choice(Transform parent, string label, Action onClick, Color background,
+            Color textColor, float height = 92f)
+        {
+            Button button = Button(parent, label, onClick, background, textColor);
+            TextMeshProUGUI tmp = button.GetComponentInChildren<TextMeshProUGUI>();
+            if (tmp != null)
+            {
+                tmp.alignment = TextAlignmentOptions.MidlineLeft;
+                tmp.textWrappingMode = TextWrappingModes.Normal;
+                tmp.overflowMode = TextOverflowModes.Truncate;
+                tmp.fontSize = UiTheme.Scaled(UiTheme.SmallFontSize);
+                tmp.enableAutoSizing = true;
+                tmp.fontSizeMin = 12f;
+                tmp.fontSizeMax = UiTheme.Scaled(UiTheme.SmallFontSize);
+                tmp.rectTransform.offsetMin = new Vector2(18f, 10f);
+                tmp.rectTransform.offsetMax = new Vector2(-18f, -10f);
+            }
+            Height(button, height);
+            return button;
+        }
+
         /// <summary>Lebar minimum tombol mengikuti panjang label terpanjangnya.</summary>
         public static float LabelWidth(string label)
         {

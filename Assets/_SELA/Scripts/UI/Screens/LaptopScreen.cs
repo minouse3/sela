@@ -161,7 +161,7 @@ namespace SELA.UI
         private Button AddAction(string label, System.Action onClick, Color background, Color textColor)
         {
             _actionCount++;
-            return AddAction( label, onClick, background, textColor);
+            return UiKit.Button(_actions, label, onClick, background, textColor);
         }
 
         private static void Clear(RectTransform parent)

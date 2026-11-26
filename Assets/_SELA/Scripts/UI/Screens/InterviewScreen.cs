@@ -16,6 +16,8 @@ namespace SELA.UI
         private int _answerIndex = -1;
         private bool _offeredCorrection;
         private bool _finished;
+        private bool _granted;
+        private string _rejection = string.Empty;
         private int _totalValue;
         private bool _everyAnswerAccepted = true;
         private bool _costApplied;
@@ -42,6 +44,8 @@ namespace SELA.UI
             _answerIndex = -1;
             _offeredCorrection = false;
             _finished = false;
+            _granted = false;
+            _rejection = string.Empty;
             _totalValue = 0;
             _everyAnswerAccepted = true;
             _costApplied = false;
@@ -155,13 +159,12 @@ namespace SELA.UI
             for (int i = 0; i < question.Responses.Length; i++)
             {
                 int captured = i;
-                Button button = UiKit.Button(_responseArea, question.Responses[i], () =>
+                Button button = UiKit.Choice(_responseArea, question.Responses[i], () =>
                 {
                     _answerIndex = captured;
                     ApplySessionCost();
                     Refresh();
                 }, UiTheme.LatarSlot, UiTheme.TextOnPaper);
-                UiKit.Height(button, 62f);
             }
 
             if (_answerIndex >= 0)
@@ -193,7 +196,12 @@ namespace SELA.UI
                 return;
             }
             _finished = true;
-            Refresh();
+            ApplyResult();
+
+            // Perubahan state memberi tahu semua layar terbuka, termasuk layar ini. Hasil
+            // digambar dari data yang sudah tersimpan, jadi tidak ada panggilan berulang.
+            SelaState.Current.NotifyChanged();
+            SelaSaveStore.Write(SelaState.Current);
         }
 
         /// <summary>
@@ -225,20 +233,39 @@ namespace SELA.UI
         }
 
         /// <summary>
-        /// Hasil interview. Tawaran diberikan bila bukti wajib ada pada snapshot, tidak ada klaim
-        /// berlebihan yang belum diluruskan, setiap jawaban bernilai minimal 1, dan total
-        /// minimal 3 dari 4 (GDD 3.7).
+        /// Hasil interview dihitung satu kali saat pertanyaan terakhir dijawab, terpisah dari
+        /// penggambaran layar. Dulu perhitungan ini ada di BuildResult dan memanggil
+        /// NotifyChanged di dalam Refresh, sehingga layar memicu dirinya sendiri tanpa henti.
         /// </summary>
-        private void BuildResult()
+        private void ApplyResult()
         {
             SelaState state = SelaState.Current;
 
             bool evidenceOk = RequiredEvidenceSent();
             bool claimsOk = !state.SentHasExcessiveClaim(_offer) || state.ApplicationCorrected[(int)_offer];
             bool answersOk = _everyAnswerAccepted && _totalValue >= 3;
-            bool granted = evidenceOk && claimsOk && answersOk;
+            _granted = evidenceOk && claimsOk && answersOk;
 
-            _questionTitle.text = granted ? "Tawaran" : "Belum lolos";
+            if (_granted)
+            {
+                state.SetStatus(_offer, ApplicationStatus.Ditawari);
+                state.OfferChoice = (OfferChoice)((int)_offer + 1);
+                state.ApplicationInterviewScore[(int)_offer] = _totalValue;
+                state.ApplicationOutcome[(int)_offer] = "Tawaran diterima: " + SelaContent.OfferName(_offer) + ".";
+                return;
+            }
+
+            string[] rejected = SelaContent.Interviews.RejectionReasons();
+            _rejection = !evidenceOk ? rejected[0] : !claimsOk ? rejected[1] : rejected[2];
+
+            state.SetStatus(_offer, ApplicationStatus.Ditolak);
+            state.ApplicationInterviewScore[(int)_offer] = -2;
+            state.ApplicationOutcome[(int)_offer] = _rejection;
+        }
+
+        private void BuildResult()
+        {
+            _questionTitle.text = _granted ? "Tawaran" : "Belum lolos";
 
             TextMeshProUGUI reasons = UiKit.Text(_responseArea, string.Empty, UiTheme.SmallFontSize,
                 UiTheme.ArangHijau, TextAlignmentOptions.TopLeft);
@@ -248,38 +275,23 @@ namespace SELA.UI
             rRect.offsetMin = Vector2.zero;
             rRect.offsetMax = Vector2.zero;
 
-            if (granted)
+            if (_granted)
             {
                 _questionText.text = SelaContent.Interviews.OfferLetter(_offer);
                 reasons.text = "Tawaran ini berlaku sampai malam hari ketujuh. Pilihannya bisa diganti " +
                                "atau ditarik sebelum keputusan difinalisasi.";
-
-                state.SetStatus(_offer, ApplicationStatus.Ditawari);
-                state.OfferChoice = (OfferChoice)((int)_offer + 1);
-                state.ApplicationInterviewScore[(int)_offer] = _totalValue;
-                state.ApplicationOutcome[(int)_offer] = "Tawaran diterima: " + SelaContent.OfferName(_offer) + ".";
             }
             else
             {
-                string[] reasons3 = SelaContent.Interviews.RejectionReasons();
-                string main = !evidenceOk ? reasons3[0] : !claimsOk ? reasons3[1] : reasons3[2];
-
                 _questionText.text = "Belum ada tawaran dari " + SelaContent.OfferName(_offer) + ".";
-                reasons.text = main + "\n\nAlasan lain yang juga berlaku tersimpan di Catatan.";
-
-                state.SetStatus(_offer, ApplicationStatus.Ditolak);
-                state.ApplicationInterviewScore[(int)_offer] = -2;
-                state.ApplicationOutcome[(int)_offer] = main;
+                reasons.text = _rejection + "\n\nAlasan lain yang juga berlaku tersimpan di Catatan.";
             }
-
-            state.NotifyChanged();
-            SelaSaveStore.Write(state);
 
             Button close = UiKit.Button(_responseArea, SelaContent.Ui.Close, CloseResult,
                 UiTheme.HijauMeja, UiTheme.TextOnPaper);
             UiKit.Height(close, 44f);
 
-            if (granted)
+            if (_granted)
             {
                 Button offer = UiKit.Button(_responseArea, "Baca tawaran", () =>
                 {
