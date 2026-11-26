@@ -28,19 +28,22 @@ namespace SELA.Narrative
                 "Dokumen pribadi"
             };
 
-            /// <summary>Dokumen tawaran fiktif, maksimal 180 kata (GDD 3.15).</summary>
+            /// <summary>
+            /// Dokumen tawaran fiktif, maksimal 180 kata (GDD 3.15).
+            /// Dicetak sebagai beberapa paragraf supaya mudah dibaca, bukan satu blok rapat.
+            /// </summary>
             public static string Document(OfferId offer)
             {
                 switch (offer)
                 {
                     case OfferId.A:
                         return "Studio Lajur membuka posisi Junior UI Implementer." +
-                               "Bagianmu adalah mengerjakan antarmuka produk: merapikan formulir," +
+                               " Bagianmu adalah mengerjakan antarmuka produk: merapikan formulir," +
                                " menulis komponen yang bisa dipakai ulang, dan menulis panduan singkat untuk tim." +
-                               " Gaji Rp4.200.000 per bulan, jam kerja empat puluh jam seminggu, dua hari istirahat." +
+                               "\n\nGaji Rp4.200.000 per bulan, jam kerja empat puluh jam seminggu, dua hari istirahat." +
                                " Ada pendamping yang ditetapkan sejak hari pertama." +
                                " Lembur perlu persetujuan atasan dan dicatat beserta kompensasinya." +
-                               " Dokumen asli seperti ijazah dan KTP tetap dipegang pekerja dan tidak ditahan oleh perusahaan." +
+                               "\n\nDokumen asli seperti ijazah dan KTP tetap dipegang pekerja dan tidak ditahan oleh perusahaan." +
                                " Jaminan sosial disebutkan secara tertulis dalam kontrak." +
                                " Lamaran disertai satu bukti hasil pekerjaan antarmuka.";
 
@@ -48,10 +51,10 @@ namespace SELA.Narrative
                         return "Koperasi Pijar membuka posisi Web Support untuk pemeliharaan formulir." +
                                " Tugas awal dibatasi pada perbaikan formulir dan pencatatan hasil pengujian," +
                                " dengan pendampingan selama dua bulan pertama." +
-                               " Kontrak berlangsung tiga bulan. Gaji Rp3.800.000 per bulan," +
+                               "\n\nKontrak berlangsung tiga bulan. Gaji Rp3.800.000 per bulan," +
                                " jam kerja tiga puluh lima jam seminggu, dua hari istirahat." +
                                " Jaminan sosial disebutkan secara tertulis dalam kontrak." +
-                               " Evaluasi menjelang akhir kontrak tidak menjamin perpanjangan." +
+                               "\n\nEvaluasi menjelang akhir kontrak tidak menjamin perpanjangan." +
                                " Perusahaan tidak meminta dokumen asli." +
                                " Lamaran disertai dua bukti: satu hasil pekerjaan antarmuka dan satu catatan pengujian.";
 
@@ -59,11 +62,10 @@ namespace SELA.Narrative
                         return "Akses Prima membuka penempatan Operator Digital." +
                                " Penghasilan diklaim sampai Rp12.000.000 per bulan." +
                                " Tidak ada lamaran dan tidak ada interview: cukup kirim data pribadi dan mulai minggu ini." +
-                               " Jadwal mengikuti kebutuhan perusahaan, tanpa batas jam kerja yang tertulis." +
-                               " Kontrak meminta penyerahan dokumen asli," +
-                               " dan membatasi pengunduran diri." +
+                               "\n\nJadwal mengikuti kebutuhan perusahaan, tanpa batas jam kerja yang tertulis." +
+                               " Kontrak meminta penyerahan dokumen asli, dan membatasi pengunduran diri." +
                                " Rincian tugas harian tidak dijelaskan." +
-                               " Tawaran berlaku sampai malam hari ketujuh." +
+                               "\n\nTawaran berlaku sampai malam hari ketujuh." +
                                " Admin menolak merinci pekerjaan dan mempertahankan syarat dokumen.";
                 }
             }
@@ -141,9 +143,38 @@ namespace SELA.Narrative
             }
 
             /// <summary>Label status lowongan pada daftar Lamaran (DESIGN 9.9).</summary>
-            public static string StatusLabel(ApplicationStatus status, bool opened)
+            /// <summary>
+            /// Hari pertama lowongan perusahaan terbit. Studio Lajur terbit hari 1,
+            /// Koperasi Pijar hari 3, dan Akses Prima hari 4 sebagai tawaran langsung (GDD 3.4).
+            /// </summary>
+            public static int OpeningDay(OfferId offer)
             {
-                if (!opened)
+                switch (offer)
+                {
+                    case OfferId.A: return 1;
+                    case OfferId.B: return 3;
+                    default: return 4;
+                }
+            }
+
+            /// <summary>
+            /// Hari terakhir lamaran diterima. Batas Studio Lajur malam hari 3,
+            /// Koperasi Pijar malam hari 5, dan Akses Prima malam hari 7 (GDD 3.4).
+            /// </summary>
+            public static int ClosingDay(OfferId offer)
+            {
+                switch (offer)
+                {
+                    case OfferId.A: return 3;
+                    case OfferId.B: return 5;
+                    default: return 7;
+                }
+            }
+
+            /// <summary>Status lamaran yang tampil di daftar, selalu disertai keterangan (DESIGN 9.9).</summary>
+            public static string StatusLabel(ApplicationStatus status, OfferId offer, int day)
+            {
+                if (day < OpeningDay(offer))
                 {
                     return "Belum dibuka";
                 }
@@ -153,23 +184,53 @@ namespace SELA.Narrative
                     case ApplicationStatus.Terjadwal: return "Interview terjadwal";
                     case ApplicationStatus.Ditolak: return "Ditolak";
                     case ApplicationStatus.Ditawari: return "Tawaran tersedia";
-                    default: return "Terbuka sampai hari ketiga malam";
                 }
+
+                if (offer == OfferId.C)
+                {
+                    return "Tawaran langsung tersedia";
+                }
+
+                if (day > ClosingDay(offer))
+                {
+                    return "Jendela lamaran berakhir";
+                }
+
+                return "Terbuka sampai malam hari " + ClosingDay(offer);
             }
 
-            /// <summary>Alasan tombol kirim tidak aktif (DESIGN 9.9).</summary>
-            public static string SendBlockedReason(ApplicationStatus status, bool scheduleTaken)
+            /// <summary>Alasan lowongan belum bisa dibaca, selalu menyebut tanggal (DESIGN 9.9).</summary>
+            public static string NotPublishedReason(OfferId offer)
+            {
+                int day = OpeningDay(offer);
+                if (offer == OfferId.C)
+                {
+                    return "Akses Prima belum membuka tawaran langsung. Kabar itu sampai hari " + day + ".";
+                }
+
+                return OfferName(offer) + " belum membuka lowongan. Iklannya terbit mulai hari " + day + ".";
+            }
+            /// <summary>Alasan tombol kirim tidak aktif, memperhitungkan hari dan jadwal (DESIGN 9.9).</summary>
+            public static string SendBlockedReason(ApplicationStatus status, OfferId offer, int day, bool scheduleTaken)
             {
                 if (status != ApplicationStatus.BelumDikirim)
                 {
                     return "Lamaran untuk perusahaan ini sudah dikirim. Satu kesempatan pengiriman per perusahaan.";
+                }
+                if (day < OpeningDay(offer))
+                {
+                    return NotPublishedReason(offer);
+                }
+                if (offer != OfferId.C && day > ClosingDay(offer))
+                {
+                    return "Jendela lamaran " + OfferName(offer) + " berakhir pada malam hari " +
+                           ClosingDay(offer) + ".";
                 }
                 if (scheduleTaken)
                 {
                     return "Sesi siang besok sudah dipakai untuk interview. Kirim di hari lain selama jendela lamaran masih terbuka.";
                 }
                 return null;
-            }
-        }
+            }        }
     }
 }

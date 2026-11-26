@@ -236,9 +236,8 @@ namespace SELA.UI
             UiKit.Scroll(sheet.Content, out content);
             UiKit.VerticalStack(content, 8f, new RectOffset(0, 0, 0, 0));
 
-            TextMeshProUGUI body = UiKit.TextIn(content, SelaContent.Endings.Credits(), UiTheme.BodyFontSize,
+            TextMeshProUGUI body = UiKit.Paragraph(content, SelaContent.Endings.Credits(), UiTheme.BodyFontSize,
                 UiTheme.TextOnPaper, TextAlignmentOptions.TopLeft);
-            UiKit.Height(body, 420f);
 
             Button back = UiKit.Button(sheet.EnsureFooter(), SelaContent.Ui.Back, Router.CloseTop,
                 UiTheme.HijauMeja, UiTheme.TextOnPaper);
@@ -261,9 +260,8 @@ namespace SELA.UI
             UiKit.Scroll(sheet.Content, out content);
             UiKit.VerticalStack(content, 8f, new RectOffset(0, 0, 0, 0));
 
-            TextMeshProUGUI body = UiKit.TextIn(content, SelaContent.Endings.Reflection(), UiTheme.BodyFontSize,
+            TextMeshProUGUI body = UiKit.Paragraph(content, SelaContent.Endings.Reflection(), UiTheme.BodyFontSize,
                 UiTheme.TextOnPaper, TextAlignmentOptions.TopLeft);
-            UiKit.Height(body, 420f);
 
             Button back = UiKit.Button(sheet.EnsureFooter(), SelaContent.Ui.Back, Router.CloseTop,
                 UiTheme.HijauMeja, UiTheme.TextOnPaper);
@@ -286,9 +284,8 @@ namespace SELA.UI
             UiKit.Scroll(sheet.Content, out content);
             UiKit.VerticalStack(content, 10f, new RectOffset(0, 0, 0, 0));
 
-            TextMeshProUGUI body = UiKit.TextIn(content, SelaContent.Endings.ContentInfo(), UiTheme.BodyFontSize,
+            TextMeshProUGUI body = UiKit.Paragraph(content, SelaContent.Endings.ContentInfo(), UiTheme.BodyFontSize,
                 UiTheme.TextOnPaper, TextAlignmentOptions.TopLeft);
-            UiKit.Height(body, 380f);
 
             // Tiga pilihan tetap terlihat di bawah area scroll: Pengaturan, Kembali ke menu, Lanjut (DESIGN 9.15).
             RectTransform footer = sheet.EnsureFooter(64f);

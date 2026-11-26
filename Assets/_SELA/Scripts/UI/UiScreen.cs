@@ -37,6 +37,10 @@ namespace SELA.UI
         {
             IsOpen = true;
             Root.gameObject.SetActive(true);
+
+            // Layar yang baru dibuka menggambar di atas layar yang sudah ada,
+            // sehingga panel modal selalu menutupi HUD.
+            Root.SetAsLastSibling();
             Refresh();
         }
 

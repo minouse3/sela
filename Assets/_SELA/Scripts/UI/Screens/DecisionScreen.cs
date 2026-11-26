@@ -37,10 +37,9 @@ namespace SELA.UI
 
             SelaState state = SelaState.Current;
 
-            TextMeshProUGUI current = UiKit.TextIn(_content,
+            TextMeshProUGUI current = UiKit.Paragraph(_content,
                 SelaContent.Ui.DecisionCurrent + ": " + ChoiceLabel(state.OfferChoice),
                 UiTheme.BodyFontSize, UiTheme.ArangHijau, TextAlignmentOptions.TopLeft);
-            UiKit.Height(current, 34f);
 
             if (state.OfferChoice != OfferChoice.TidakAda)
             {
@@ -82,9 +81,8 @@ namespace SELA.UI
 
             if (state.OfferChoice == OfferChoice.C)
             {
-                TextMeshProUGUI warning = UiKit.TextIn(_content, SelaContent.Ui.DecisionRiskWarning,
+                TextMeshProUGUI warning = UiKit.Paragraph(_content, SelaContent.Ui.DecisionRiskWarning,
                     UiTheme.BodyFontSize, UiTheme.MerahPeringatan, TextAlignmentOptions.TopLeft);
-                UiKit.Height(warning, 70f);
 
                 Button acknowledge = UiKit.Button(_content, "Pilih sementara meski berisiko", () =>
                 {
@@ -231,23 +229,20 @@ namespace SELA.UI
             summary.Add("Bukti yang dipakai: " + string.Join(", ", EvidenceNames(state)));
             summary.Add("Aspek yang diperiksa: " + VerifiedAspectCount(state) + " dari 12");
 
-            TextMeshProUGUI summaryText = UiKit.TextIn(_content, string.Join("\n", summary.ToArray()),
+            TextMeshProUGUI summaryText = UiKit.Paragraph(_content, string.Join("\n", summary.ToArray()),
                 UiTheme.BodyFontSize, UiTheme.TextOnPaper, TextAlignmentOptions.TopLeft);
-            UiKit.Height(summaryText, 150f);
 
             UiKit.Divider(_content, UiTheme.HijauMeja);
 
-            TextMeshProUGUI epilog = UiKit.TextIn(_content,
+            TextMeshProUGUI epilog = UiKit.Paragraph(_content,
                 SelaContent.Endings.Epilog(state.OfferChoice, state.BestEvidence()),
                 UiTheme.BodyFontSize, UiTheme.TextOnPaper, TextAlignmentOptions.TopLeft);
-            UiKit.Height(epilog, 330f);
 
             if (state.OfferChoice == OfferChoice.TidakAda)
             {
-                TextMeshProUGUI progress = UiKit.TextIn(_content,
+                TextMeshProUGUI progress = UiKit.Paragraph(_content,
                     SelaContent.Endings.ProgressInsert(state.BestEvidence()),
                     UiTheme.SmallFontSize, UiTheme.HijauMeja, TextAlignmentOptions.TopLeft);
-                UiKit.Height(progress, 40f);
             }
 
             Button help = UiKit.Button(_content, SelaContent.Ui.HelpTitle, SelaBootstrap.Instance.OpenHelp,

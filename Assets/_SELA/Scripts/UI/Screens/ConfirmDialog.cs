@@ -46,9 +46,8 @@ namespace SELA.UI
             ClearChildren(_content);
             ClearChildren(_footer);
 
-            TextMeshProUGUI body = UiKit.TextIn(_content, _bodyText, UiTheme.BodyFontSize, UiTheme.TextOnPaper,
+            TextMeshProUGUI body = UiKit.Paragraph(_content, _bodyText, UiTheme.BodyFontSize, UiTheme.TextOnPaper,
                 TextAlignmentOptions.TopLeft);
-            UiKit.Height(body, 120f);
 
             UiKit.Button(_footer, SelaContent.Ui.Cancel, Router.CloseTop, UiTheme.HijauMeja, UiTheme.TextOnPaper);
             UiKit.Button(_footer, SelaContent.Ui.Confirm, Confirm, UiTheme.BiruTinta, UiTheme.TextOnInk);

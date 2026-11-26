@@ -40,12 +40,11 @@ namespace SELA.UI
 
             UiKit.SectionTitle(_content, "Pesan masuk", UiTheme.ArangHijau);
 
-            TextMeshProUGUI summary = UiKit.TextIn(_content,
+            TextMeshProUGUI summary = UiKit.Paragraph(_content,
                 unread > 0
                     ? "Ada " + unread + " pesan baru. Membaca pesan tidak memakai sesi."
                     : "Semua pesan sudah dibaca.",
                 UiTheme.BodyFontSize, UiTheme.TextOnPaper, TextAlignmentOptions.TopLeft);
-            UiKit.Height(summary, 44f);
 
             Button read = UiKit.Button(_content, "Baca pesan - gratis sesi", () =>
             {
@@ -61,10 +60,9 @@ namespace SELA.UI
             }, UiTheme.HijauMeja, UiTheme.TextOnPaper);
             UiKit.Height(call, 48f);
 
-            TextMeshProUGUI note = UiKit.TextIn(_content,
+            TextMeshProUGUI note = UiKit.Paragraph(_content,
                 "Percakapan pertama tiap hari berbeda. Mengulang conversation tidak memberi pemulihan baru.",
                 UiTheme.SmallFontSize, UiTheme.HijauMeja, TextAlignmentOptions.TopLeft);
-            UiKit.Height(note, 60f);
 
             Button close = UiKit.Button(_content, SelaContent.Ui.Close, Router.CloseTop,
                 UiTheme.LatarSlot, UiTheme.TextOnPaper);
@@ -144,9 +142,8 @@ namespace SELA.UI
                 element.flexibleWidth = 1f;
             }
 
-            TextMeshProUGUI legend = UiKit.TextIn(_content, DayLegend(state), UiTheme.SmallFontSize,
+            TextMeshProUGUI legend = UiKit.Paragraph(_content, DayLegend(state), UiTheme.SmallFontSize,
                 UiTheme.TextOnPaper, TextAlignmentOptions.TopLeft);
-            UiKit.Height(legend, 44f);
 
             UiKit.Divider(_content, UiTheme.HijauMeja);
 
@@ -158,19 +155,16 @@ namespace SELA.UI
                 sessions += (i > 0 ? "  -  " : "") + SelaContent.SessionLabel(session) +
                             (session == state.Session ? "  (sekarang)" : string.Empty);
             }
-            TextMeshProUGUI sessionText = UiKit.TextIn(_content, sessions, UiTheme.BodyFontSize,
+            TextMeshProUGUI sessionText = UiKit.Paragraph(_content, sessions, UiTheme.BodyFontSize,
                 UiTheme.TextOnPaper, TextAlignmentOptions.TopLeft);
-            UiKit.Height(sessionText, 34f);
 
             UiKit.SectionTitle(_content, "Jadwal", UiTheme.ArangHijau);
-            TextMeshProUGUI schedule = UiKit.TextIn(_content, ScheduleText(state), UiTheme.BodyFontSize,
+            TextMeshProUGUI schedule = UiKit.Paragraph(_content, ScheduleText(state), UiTheme.BodyFontSize,
                 UiTheme.TextOnPaper, TextAlignmentOptions.TopLeft);
-            UiKit.Height(schedule, 110f);
 
-            TextMeshProUGUI hint = UiKit.TextIn(_content,
+            TextMeshProUGUI hint = UiKit.Paragraph(_content,
                 "Bus berangkat pada pagi hari kedelapan. Tidak ada kotak hari kedelapan yang dapat dimainkan.",
                 UiTheme.SmallFontSize, UiTheme.HijauMeja, TextAlignmentOptions.TopLeft);
-            UiKit.Height(hint, 44f);
 
             Button close = UiKit.Button(_content, SelaContent.Ui.Close, Router.CloseTop,
                 UiTheme.LatarSlot, UiTheme.TextOnPaper);
@@ -260,12 +254,11 @@ namespace SELA.UI
 
             UiKit.SectionTitle(_content, state.Day >= 7 ? "Tinjau keputusan terakhir" : "Kasur", UiTheme.ArangHijau);
 
-            TextMeshProUGUI note = UiKit.TextIn(_content,
+            TextMeshProUGUI note = UiKit.Paragraph(_content,
                 state.Day >= 7
                     ? "Besok pagi bus berangkat. Malam terakhir di kamar 07, dan keputusan belum ditutup."
                     : "Beristirahat memakai satu sesi. Tidur menutup hari dan memulai hari baru.",
                 UiTheme.BodyFontSize, UiTheme.TextOnPaper, TextAlignmentOptions.TopLeft);
-            UiKit.Height(note, 60f);
 
             Button rest = UiKit.Button(_content, "Beristirahat - 1 sesi (Tenaga +3, Tekanan -2)", () =>
             {
@@ -291,10 +284,9 @@ namespace SELA.UI
             }
             else
             {
-                TextMeshProUGUI reason = UiKit.TextIn(_content,
+                TextMeshProUGUI reason = UiKit.Paragraph(_content,
                     "Tombol Tutup hari belum tersedia. Selesaikan sesi malam dulu.",
                     UiTheme.BodyFontSize, UiTheme.MerahPeringatan, TextAlignmentOptions.TopLeft);
-                UiKit.Height(reason, 44f);
             }
 
             Button close = UiKit.Button(_content, SelaContent.Ui.Close, Router.CloseTop,
@@ -323,20 +315,18 @@ namespace SELA.UI
         {
             UiKit.SectionTitle(_content, "Hari " + state.Day + " - Pagi", UiTheme.ArangHijau);
 
-            TextMeshProUGUI summary = UiKit.TextIn(_content,
+            TextMeshProUGUI summary = UiKit.Paragraph(_content,
                 "Tenaga " + state.Energy + "/" + SelaState.MaxEnergy +
                 ", Tekanan " + state.Pressure + "/" + SelaState.MaxPressure + ".\n" +
                 "Sesi Pagi dibuka. Tekanan kembali ke 4 dan tidak memakai sesi.",
                 UiTheme.BodyFontSize, UiTheme.TextOnPaper, TextAlignmentOptions.TopLeft);
-            UiKit.Height(summary, 80f);
 
             OfferId? invitation = state.InterviewOfferToday();
             if (invitation.HasValue)
             {
-                TextMeshProUGUI invite = UiKit.TextIn(_content,
+                TextMeshProUGUI invite = UiKit.Paragraph(_content,
                     "Interview siang ini memerlukan Tenaga 1. Tenaga saat ini " + state.Energy + ".",
                     UiTheme.BodyFontSize, UiTheme.TanahTirai, TextAlignmentOptions.TopLeft);
-                UiKit.Height(invite, 44f);
             }
 
             Button close = UiKit.Button(_content, "Lanjut", () =>

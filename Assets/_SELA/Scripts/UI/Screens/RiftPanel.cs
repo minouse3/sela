@@ -48,23 +48,20 @@ namespace SELA.UI
 
             UiKit.SectionTitle(_content, "Adegan " + _rift, UiTheme.ArangHijau);
 
-            TextMeshProUGUI opening = UiKit.TextIn(_content,
+            TextMeshProUGUI opening = UiKit.Paragraph(_content,
                 SelaContent.Rifts.Opening(_rift, hasOffer, hasE1),
                 UiTheme.BodyFontSize, UiTheme.TextOnPaper, TextAlignmentOptions.TopLeft);
-            UiKit.Height(opening, 80f);
 
-            TextMeshProUGUI carried = UiKit.TextIn(_content,
+            TextMeshProUGUI carried = UiKit.Paragraph(_content,
                 "Dibawa: " + SelaContent.Rifts.PuzzleObjectName(_rift),
                 UiTheme.BodyFontSize, UiTheme.HijauMeja, TextAlignmentOptions.TopLeft);
-            UiKit.Height(carried, 34f);
 
             UiKit.Button(_content, SelaContent.Ui.RiftHint, ShowHint, UiTheme.LatarSlot, UiTheme.TextOnPaper);
 
             if (_hintShown)
             {
-                TextMeshProUGUI hint = UiKit.TextIn(_content, SelaContent.Rifts.Hint(_rift),
+                TextMeshProUGUI hint = UiKit.Paragraph(_content, SelaContent.Rifts.Hint(_rift),
                     UiTheme.BodyFontSize, UiTheme.HijauMeja, TextAlignmentOptions.TopLeft);
-                UiKit.Height(hint, 90f);
             }
 
             Button skip = UiKit.Button(_content, SelaContent.Ui.RiftSkip, Skip,
@@ -73,9 +70,8 @@ namespace SELA.UI
 
             if (state.RiftSolved[_rift - 1])
             {
-                TextMeshProUGUI solved = UiKit.TextIn(_content, SelaContent.Rifts.Solved(_rift),
+                TextMeshProUGUI solved = UiKit.Paragraph(_content, SelaContent.Rifts.Solved(_rift),
                     UiTheme.BodyFontSize, UiTheme.TextOnPaper, TextAlignmentOptions.TopLeft);
-                UiKit.Height(solved, 100f);
             }
         }
 

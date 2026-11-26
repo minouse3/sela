@@ -49,27 +49,23 @@ namespace SELA.UI
 
             UiKit.Divider(_content, UiTheme.HijauMeja);
             UiKit.SectionTitle(_content, SelaContent.Ui.NotesSchedule, UiTheme.ArangHijau);
-            TextMeshProUGUI schedule = UiKit.TextIn(_content, ScheduleText(state), UiTheme.BodyFontSize,
+            TextMeshProUGUI schedule = UiKit.Paragraph(_content, ScheduleText(state), UiTheme.BodyFontSize,
                 UiTheme.TextOnPaper, TextAlignmentOptions.TopLeft);
-            UiKit.Height(schedule, 90f);
 
             UiKit.Divider(_content, UiTheme.HijauMeja);
             UiKit.SectionTitle(_content, SelaContent.Ui.NotesRoomFacts, UiTheme.ArangHijau);
-            TextMeshProUGUI facts = UiKit.TextIn(_content, RoomFactsText(state), UiTheme.BodyFontSize,
+            TextMeshProUGUI facts = UiKit.Paragraph(_content, RoomFactsText(state), UiTheme.BodyFontSize,
                 UiTheme.TextOnPaper, TextAlignmentOptions.TopLeft);
-            UiKit.Height(facts, 90f);
 
             UiKit.Divider(_content, UiTheme.HijauMeja);
             UiKit.SectionTitle(_content, SelaContent.Ui.NotesHistory, UiTheme.ArangHijau);
-            TextMeshProUGUI history = UiKit.TextIn(_content, HistoryText(state), UiTheme.BodyFontSize,
+            TextMeshProUGUI history = UiKit.Paragraph(_content, HistoryText(state), UiTheme.BodyFontSize,
                 UiTheme.TextOnPaper, TextAlignmentOptions.TopLeft);
-            UiKit.Height(history, 110f);
 
             UiKit.Divider(_content, UiTheme.HijauMeja);
             UiKit.SectionTitle(_content, "Cara_MAIN", UiTheme.ArangHijau);
-            TextMeshProUGUI guide = UiKit.TextIn(_content, GuideText(), UiTheme.SmallFontSize,
+            TextMeshProUGUI guide = UiKit.Paragraph(_content, GuideText(), UiTheme.SmallFontSize,
                 UiTheme.TextOnPaper, TextAlignmentOptions.TopLeft);
-            UiKit.Height(guide, 190f);
 
             Button reopen = UiKit.Button(_content, "Buka pengenalan lagi", () => SelaBootstrap.Instance.OpenTutorial(),
                 UiTheme.HijauMeja, UiTheme.TextOnPaper);
@@ -115,8 +111,8 @@ namespace SELA.UI
         {
             List<string> lines = new List<string>();
             lines.Add("Bukti yang sudah dimiliki: " + string.Join(", ", Names(state)));
-            lines.Add("Lamaran A: " + SelaContent.Offers.StatusLabel(state.StatusOf(OfferId.A), state.ApplicationOpened[0]));
-            lines.Add("Lamaran B: " + SelaContent.Offers.StatusLabel(state.StatusOf(OfferId.B), state.ApplicationOpened[1]));
+            lines.Add("Lamaran A: " + SelaContent.Offers.StatusLabel(state.StatusOf(OfferId.A), OfferId.A, state.Day));
+            lines.Add("Lamaran B: " + SelaContent.Offers.StatusLabel(state.StatusOf(OfferId.B), OfferId.B, state.Day));
             lines.Add("Pilihan kontrak: " + ChoiceLabel(state.OfferChoice));
             if (!string.IsNullOrEmpty(state.DecisionNote))
             {

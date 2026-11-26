@@ -36,6 +36,10 @@ namespace SELA.UI
 
         public const float BodyFontSize = 23f;
         public const float SmallFontSize = 19f;
+
+        /// <summary>Ukuran teks untuk dokumen panjang, supaya seluruh lowongan terbaca tanpa banyak menggulir.</summary>
+        public const float DocumentFontSize = 19f;
+
         public const float TitleFontSize = 36f;
         public const float SectionFontSize = 26f;
 

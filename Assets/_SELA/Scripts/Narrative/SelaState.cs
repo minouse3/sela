@@ -31,7 +31,6 @@ namespace SELA.Narrative
         {
             ApplicationStatus.BelumDikirim, ApplicationStatus.BelumDikirim, ApplicationStatus.BelumDikirim
         };
-        public bool[] ApplicationOpened = { false, false, false };
         public bool[] ApplicationCorrected = { false, false, false };
         public int[] ApplicationInterviewScore = { -1, -1, -1 };
 
@@ -323,7 +322,6 @@ namespace SELA.Narrative
 
                 // Simpanan lama dibuat saat masih ada dua tawaran; diperpanjang ke tiga agar indeks tidak salah.
                 state.Application = Fit(state.Application, 3, ApplicationStatus.BelumDikirim);
-                state.ApplicationOpened = Fit(state.ApplicationOpened, 3, false);
                 state.ApplicationCorrected = Fit(state.ApplicationCorrected, 3, false);
                 state.ApplicationInterviewScore = Fit(state.ApplicationInterviewScore, 3, -1);
                 state.ApplicationSentDay = Fit(state.ApplicationSentDay, 3, -1);

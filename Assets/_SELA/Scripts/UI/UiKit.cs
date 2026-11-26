@@ -131,6 +131,33 @@ namespace SELA.UI
             return rect;
         }
 
+        /// <summary>
+        /// Kolom dengan lebar persentase dari panel induknya. Pakai anchor, bukan offset piksel,
+        /// supaya batas kolom ikut berubah kalau ukuran panel berubah.
+        /// </summary>
+        public static RectTransform Column(Transform parent, string name, float startFraction, float endFraction)
+        {
+            RectTransform rt = Rect(parent, name);
+            rt.anchorMin = new Vector2(startFraction, 0f);
+            rt.anchorMax = new Vector2(endFraction, 1f);
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+            return rt;
+        }
+
+        /// <summary>Garis pembatas vertikal di antara dua kolom.</summary>
+        public static Image VerticalDivider(Transform parent, float fraction)
+        {
+            Image image = PaperPanel(parent, "Divider", UiTheme.HijauMeja);
+            RectTransform rt = image.rectTransform;
+            rt.anchorMin = new Vector2(fraction, 0f);
+            rt.anchorMax = new Vector2(fraction, 1f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.sizeDelta = new Vector2(2f, 0f);
+            image.raycastTarget = false;
+            return image;
+        }
+
         public static TextMeshProUGUI Text(Transform parent, string content, float size, Color color,
             TextAlignmentOptions align = TextAlignmentOptions.TopLeft, bool bold = false)
         {
@@ -159,6 +186,21 @@ namespace SELA.UI
             rt.anchorMax = Vector2.one;
             rt.offsetMin = new Vector2(0f, 0f);
             rt.offsetMax = new Vector2(0f, 0f);
+            return tmp;
+        }
+
+        /// <summary>
+        /// Paragraf yang tinggi{-nya} diukur dari isi teks, jadi tidak pernah menimpa
+        /// isi yang ada di bawahnya. Dipakai untuk semua teks panjang.
+        /// </summary>
+        public static TextMeshProUGUI Paragraph(Transform parent, string content, float size, Color color,
+            TextAlignmentOptions align = TextAlignmentOptions.TopLeft, bool bold = false, float minHeight = 0f)
+        {
+            TextMeshProUGUI tmp = TextIn(parent, content, size, color, align, bold);
+            tmp.overflowMode = TextOverflowModes.Overflow;
+            TmpAutoHeight auto = tmp.gameObject.AddComponent<TmpAutoHeight>();
+            auto.MinHeight = minHeight;
+            auto.BottomPadding = 6f;
             return tmp;
         }
 
@@ -213,6 +255,68 @@ namespace SELA.UI
                 }
             }
             return Mathf.Max(96f, longest.Length * UiTheme.Scaled(UiTheme.BodyFontSize) * 0.58f + 40f);
+        }
+
+        /// <summary>
+        /// Tombol daftar di kolom samping: label rata kiri, dua baris paling banyak,
+        /// dan tinggi otomatis mengikuti isi. Dipakai di daftar perusahaan dan pesan.
+        /// </summary>
+        public static Button ListButton(Transform parent, string title, string subtitle, bool selected, Action onClick)
+        {
+            Image bg = PaperPanel(parent, "ListItem", selected ? UiTheme.KuningKusam : UiTheme.LatarSlot);
+            Button button = bg.gameObject.AddComponent<Button>();
+            button.targetGraphic = bg;
+
+            RectTransform rt = bg.rectTransform;
+            rt.sizeDelta = new Vector2(0f, 56f);
+
+            TextMeshProUGUI head = TextIn(rt, title, UiTheme.BodyFontSize, UiTheme.TextOnPaper,
+                TextAlignmentOptions.TopLeft, true);
+            head.rectTransform.anchorMin = new Vector2(0f, 1f);
+            head.rectTransform.anchorMax = new Vector2(1f, 1f);
+            head.rectTransform.pivot = new Vector2(0.5f, 1f);
+            head.rectTransform.offsetMin = new Vector2(14f, -30f);
+            head.rectTransform.offsetMax = new Vector2(-14f, -6f);
+            head.textWrappingMode = TextWrappingModes.NoWrap;
+            head.enableAutoSizing = true;
+            head.fontSizeMin = 13f;
+            head.fontSizeMax = UiTheme.Scaled(UiTheme.BodyFontSize);
+
+            if (!string.IsNullOrEmpty(subtitle))
+            {
+                TextMeshProUGUI sub = TextIn(rt, subtitle, UiTheme.SmallFontSize, UiTheme.TextOnPaper,
+                    TextAlignmentOptions.TopLeft);
+                sub.rectTransform.anchorMin = new Vector2(0f, 0f);
+                sub.rectTransform.anchorMax = new Vector2(1f, 1f);
+                sub.rectTransform.offsetMin = new Vector2(14f, 6f);
+                sub.rectTransform.offsetMax = new Vector2(-14f, -30f);
+                sub.textWrappingMode = TextWrappingModes.NoWrap;
+                sub.enableAutoSizing = true;
+                sub.fontSizeMin = 12f;
+                sub.fontSizeMax = UiTheme.Scaled(UiTheme.SmallFontSize);
+            }
+
+            button.colors = new ColorBlock
+            {
+                normalColor = Color.white,
+                highlightedColor = new Color(1f, 1f, 1f, 0.92f),
+                pressedColor = new Color(0.86f, 0.86f, 0.86f, 1f),
+                selectedColor = Color.white,
+                disabledColor = new Color(0.55f, 0.55f, 0.55f, 0.65f),
+                colorMultiplier = 1f,
+                fadeDuration = 0.08f
+            };
+
+            if (onClick != null)
+            {
+                button.onClick.AddListener(() => onClick());
+            }
+
+            LayoutElement element = rt.gameObject.AddComponent<LayoutElement>();
+            element.minHeight = 56f;
+            element.preferredHeight = 56f;
+            MakeFocusable(head, UiTheme.KuningKusam);
+            return button;
         }
 
         /// <summary>Memberi garis fokus tebal pada elemen yang sedang dipilih (DESIGN 9.1).</summary>
@@ -331,7 +435,73 @@ namespace SELA.UI
             ContentSizeFitter fitter = content.gameObject.AddComponent<ContentSizeFitter>();
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
+            AddScrollbar(scroll, scrollGo.transform, content, viewport, scrollGo);
+
             return scroll;
+        }
+
+        /// <summary>
+        /// Menempelkan scrollbar tipis di tepi kanan area isi. Batangnya digambar sendiri
+        /// oleh ScrollBarDriver, jadi ScrollRect tidak ikut mengubah ukurannya.
+        /// </summary>
+        private static void AddScrollbar(ScrollRect scroll, Transform parent, RectTransform content,
+            RectTransform viewport, GameObject scrollObject)
+        {
+            GameObject barGo = new GameObject("Scrollbar", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            barGo.transform.SetParent(parent, false);
+            Image barImage = barGo.GetComponent<Image>();
+            barImage.color = new Color(0f, 0f, 0f, 0f);
+            barImage.raycastTarget = false;
+
+            RectTransform barRect = (RectTransform)barGo.transform;
+            barRect.anchorMin = new Vector2(1f, 0f);
+            barRect.anchorMax = new Vector2(1f, 1f);
+            barRect.pivot = new Vector2(1f, 0.5f);
+            barRect.sizeDelta = new Vector2(6f, 0f);
+            barRect.anchoredPosition = Vector2.zero;
+
+            GameObject handleGo = new GameObject("Handle", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            handleGo.transform.SetParent(barGo.transform, false);
+            Image handleImage = handleGo.GetComponent<Image>();
+            handleImage.color = UiTheme.HijauMeja;
+            handleImage.raycastTarget = true;
+
+            RectTransform handleRect = (RectTransform)handleGo.transform;
+            handleRect.sizeDelta = new Vector2(6f, 60f);
+
+            scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
+
+            // Sisakan ruang di kanan supaya teks tidak menempel pada scrollbar,
+            // dan ruang di kiri supaya tidak menyentuh panel sebelahnya.
+            content.offsetMin = new Vector2(14f, 0f);
+            content.offsetMax = new Vector2(-10f, 0f);
+
+            ScrollBarDriver driver = scrollObject.AddComponent<ScrollBarDriver>();
+            driver.Track = barRect;
+            driver.Thumb = handleRect;
+        }
+
+        /// <summary>
+        /// Baris tombol aksi. Tombolnya memakai tinggi alaminya, tidak diregangkan
+        /// setinggi baris, supaya tidak terlihat berlebihan.
+        /// </summary>
+        public static HorizontalLayoutGroup ActionRow(RectTransform parent, float spacing, RectOffset padding)
+        {
+            HorizontalLayoutGroup group = HorizontalStack(parent, spacing, padding);
+            group.childForceExpandHeight = false;
+            group.childAlignment = TextAnchor.MiddleLeft;
+            return group;
+        }
+
+        /// <summary>Baris kosong sebagai pemisah di dalam daftar.</summary>
+        public static RectTransform Spacer(Transform parent, float height)
+        {
+            RectTransform rt = Rect(parent, "Spacer");
+            rt.sizeDelta = new Vector2(0f, height);
+            LayoutElement element = rt.gameObject.AddComponent<LayoutElement>();
+            element.minHeight = height;
+            element.preferredHeight = height;
+            return rt;
         }
 
         /// <summary>Baris pemisah tipis.</summary>

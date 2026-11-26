@@ -32,12 +32,13 @@ namespace SELA.UI
             RectTransform body = UiKit.Box(_sheet.Content, "Body", Vector2.zero, Vector2.one,
                 new Vector2(0f, 0f), new Vector2(0f, -54f));
 
-            _cards = UiKit.Box(body, "Cards", Vector2.zero, Vector2.one,
-                new Vector2(0f, 0f), new Vector2(0.42f, 0f));
+            // Kolom kiri 42 persen berisi tiga kartu bukti, kolom kanan berisi detailnya.
+            UiKit.VerticalDivider(body, 0.42f);
+
+            _cards = UiKit.Column(body, "Cards", 0f, 0.42f);
             UiKit.VerticalStack(_cards, 10f, new RectOffset(0, 0, 0, 0));
 
-            _detail = UiKit.Box(body, "Detail", Vector2.zero, Vector2.one,
-                new Vector2(0.42f, 0f), new Vector2(0f, 0f));
+            _detail = UiKit.Column(body, "Detail", 0.42f, 1f);
         }
 
         public override void Refresh()
@@ -75,16 +76,15 @@ namespace SELA.UI
             bool owned = state.HasEvidence(_selected);
             bool attached = state.IsAttached(_selected);
 
-            UiKit.SectionTitle(_detail, SelaContent.Evidence.SlotLabel(_selected), UiTheme.ArangHijau);
-
             RectTransform scroll;
             UiKit.Scroll(_detail, out scroll);
             UiKit.VerticalStack(scroll, 10f, new RectOffset(0, 0, 0, 0));
 
-            TextMeshProUGUI body = UiKit.TextIn(scroll,
+            UiKit.SectionTitle(scroll, SelaContent.Evidence.SlotLabel(_selected), UiTheme.ArangHijau);
+
+            TextMeshProUGUI body = UiKit.Paragraph(scroll,
                 owned ? SelaContent.Evidence.CardText(_selected) : SelaContent.Evidence.MissingText(_selected),
                 UiTheme.BodyFontSize, UiTheme.TextOnPaper, TextAlignmentOptions.TopLeft);
-            UiKit.Height(body, 170f);
 
             UiKit.Divider(scroll, UiTheme.HijauMeja);
 
@@ -92,29 +92,26 @@ namespace SELA.UI
             for (int line = 0; line < SelaContent.Cv.ClaimLines.Length; line++)
             {
                 string claim = SelaContent.Cv.ClaimOptions(line)[state.CvClaim[line]];
-                TextMeshProUGUI claimText = UiKit.TextIn(scroll,
+                TextMeshProUGUI claimText = UiKit.Paragraph(scroll,
                     SelaContent.Cv.ClaimLines[line] + ": " + claim,
                     UiTheme.SmallFontSize, UiTheme.TextOnPaper, TextAlignmentOptions.TopLeft);
-                UiKit.Height(claimText, 46f);
 
                 string support = SelaContent.Cv.SupportsClaim(line, _selected)
                     ? "Bukti ini bisa mendukung kalimat ini."
                     : SelaContent.Cv.UnsupportedNote();
-                TextMeshProUGUI supportText = UiKit.TextIn(scroll, support,
+                TextMeshProUGUI supportText = UiKit.Paragraph(scroll, support,
                     UiTheme.SmallFontSize,
                     SelaContent.Cv.SupportsClaim(line, _selected) ? UiTheme.HijauMeja : UiTheme.MerahPeringatan,
                     TextAlignmentOptions.TopLeft);
-                UiKit.Height(supportText, 34f);
             }
 
             UiKit.Divider(scroll, UiTheme.HijauMeja);
 
             if (!owned)
             {
-                TextMeshProUGUI note = UiKit.TextIn(scroll,
+                TextMeshProUGUI note = UiKit.Paragraph(scroll,
                     "Kartu ini belum ada, jadi belum bisa dipasang ke penjepit.",
                     UiTheme.BodyFontSize, UiTheme.MerahPeringatan, TextAlignmentOptions.TopLeft);
-                UiKit.Height(note, 40f);
             }
             else
             {

@@ -48,18 +48,16 @@ namespace SELA.UI
 
             if (!state.VerificationDone[(int)_offer])
             {
-                TextMeshProUGUI intro = UiKit.TextIn(_content,
+                TextMeshProUGUI intro = UiKit.Paragraph(_content,
                     "Periksa empat aspek berikut. Penandaanmu tidak memakai sesi. " +
                     "Satu sesi dipakai untuk membaca ringkasan dan jawaban klarifikasi.",
                     UiTheme.BodyFontSize, UiTheme.TextOnPaper, TextAlignmentOptions.TopLeft);
-                UiKit.Height(intro, 60f);
             }
             else
             {
-                TextMeshProUGUI intro = UiKit.TextIn(_content,
+                TextMeshProUGUI intro = UiKit.Paragraph(_content,
                     SelaContent.Offers.VerificationQuestion(_offer),
                     UiTheme.BodyFontSize, UiTheme.ArangHijau, TextAlignmentOptions.TopLeft);
-                UiKit.Height(intro, 50f);
             }
 
             for (int i = 0; i < aspects.Length; i++)
@@ -107,15 +105,13 @@ namespace SELA.UI
 
                 if (state.VerificationDone[(int)_offer])
                 {
-                    TextMeshProUGUI initial = UiKit.TextIn(_content,
+                    TextMeshProUGUI initial = UiKit.Paragraph(_content,
                         SelaContent.Ui.VerificationInitial + ": " + aspect.Initial,
                         UiTheme.SmallFontSize, UiTheme.ArangHijau, TextAlignmentOptions.TopLeft);
-                    UiKit.Height(initial, 44f);
 
-                    TextMeshProUGUI answer = UiKit.TextIn(_content,
+                    TextMeshProUGUI answer = UiKit.Paragraph(_content,
                         SelaContent.Ui.VerificationClarification + ": " + aspect.Clarification,
                         UiTheme.SmallFontSize, UiTheme.ArangHijau, TextAlignmentOptions.TopLeft);
-                    UiKit.Height(answer, 44f);
                 }
             }
 

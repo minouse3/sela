@@ -67,36 +67,31 @@ namespace SELA.UI
 
             UiKit.SectionTitle(_content, SelaContent.Ui.ActivityTitle(_activity), UiTheme.ArangHijau);
 
-            TextMeshProUGUI location = UiKit.TextIn(_content,
+            TextMeshProUGUI location = UiKit.Paragraph(_content,
                 "Lokasi: " + SelaContent.Ui.ActivityLocation(_activity) + "\nDurasi: " + SelaContent.Ui.OneSession,
                 UiTheme.BodyFontSize, UiTheme.TextOnPaper, TextAlignmentOptions.TopLeft);
-            UiKit.Height(location, 60f);
 
             string cost = SelaContent.Ui.ActivityCost(_activity);
-            TextMeshProUGUI costText = UiKit.TextIn(_content,
+            TextMeshProUGUI costText = UiKit.Paragraph(_content,
                 "Tenaga: " + state.Energy + " -> " + SelaSessionFlow.PreviewEnergy(state, _activity) + "\n" +
                 "Tekanan: " + state.Pressure + " -> " + SelaSessionFlow.PreviewPressure(state, _activity) + "\n" +
                 "Sesi berikutnya: " + SelaContent.SessionLabel(NextSession(state)),
                 UiTheme.BodyFontSize, UiTheme.TextOnPaper, TextAlignmentOptions.TopLeft);
-            UiKit.Height(costText, 84f);
 
-            TextMeshProUGUI note = UiKit.TextIn(_content, cost + "\n" + SelaContent.Recovery.RecoveryNote(_activity),
+            TextMeshProUGUI note = UiKit.Paragraph(_content, cost + "\n" + SelaContent.Recovery.RecoveryNote(_activity),
                 UiTheme.SmallFontSize, UiTheme.HijauMeja, TextAlignmentOptions.TopLeft);
-            UiKit.Height(note, 70f);
 
             string blocked = SelaSessionFlow.BlockedReason(state, _activity);
             if (blocked != null)
             {
-                TextMeshProUGUI warning = UiKit.TextIn(_content, blocked, UiTheme.BodyFontSize,
+                TextMeshProUGUI warning = UiKit.Paragraph(_content, blocked, UiTheme.BodyFontSize,
                     UiTheme.MerahPeringatan, TextAlignmentOptions.TopLeft);
-                UiKit.Height(warning, 60f);
             }
             else if (SelaSessionFlow.ShouldTriggerBreak(state))
             {
-                TextMeshProUGUI breakNote = UiKit.TextIn(_content,
+                TextMeshProUGUI breakNote = UiKit.Paragraph(_content,
                     "Tekanan sudah 6. Aktivitas ini akan memicu Jeda setelah selesai.",
                     UiTheme.SmallFontSize, UiTheme.TanahTirai, TextAlignmentOptions.TopLeft);
-                UiKit.Height(breakNote, 40f);
             }
 
             Button use = UiKit.Button(_content, SelaContent.Ui.UseSession, UseSession,
@@ -279,10 +274,9 @@ namespace SELA.UI
 
             UiKit.SectionTitle(_content, "Belum tepat", UiTheme.ArangHijau);
 
-            TextMeshProUGUI reason = UiKit.TextIn(_content,
+            TextMeshProUGUI reason = UiKit.Paragraph(_content,
                 isE1 ? SelaContent.Evidence.E1Feedback(false) : SelaContent.Evidence.E2Feedback(false),
                 UiTheme.BodyFontSize, UiTheme.TextOnPaper, TextAlignmentOptions.TopLeft);
-            UiKit.Height(reason, 180f);
 
             Button retry = UiKit.Button(_content, "Coba lagi", () =>
             {
@@ -306,13 +300,12 @@ namespace SELA.UI
             SelaState state = SelaState.Current;
 
             UiKit.SectionTitle(_content, "Hasil", UiTheme.ArangHijau);
-            TextMeshProUGUI result = UiKit.TextIn(_content,
+            TextMeshProUGUI result = UiKit.Paragraph(_content,
                 (isE1 ? SelaContent.Evidence.E1Feedback(true) : SelaContent.Evidence.E2Feedback(true)) +
                 "\n\nTenaga " + state.Energy + "/" + SelaState.MaxEnergy +
                 ", Tekanan " + state.Pressure + "/" + SelaState.MaxPressure +
                 ". Sesi berikutnya: " + SelaContent.SessionLabel(state.Session) + ".",
                 UiTheme.BodyFontSize, UiTheme.TextOnPaper, TextAlignmentOptions.TopLeft);
-            UiKit.Height(result, 240f);
 
             Button close = UiKit.Button(_content, SelaContent.Ui.Close, Router.CloseTop, UiTheme.HijauMeja, UiTheme.TextOnPaper);
             UiKit.Height(close, 44f);
@@ -354,10 +347,9 @@ namespace SELA.UI
                 return;
             }
 
-            TextMeshProUGUI text = UiKit.TextIn(_content,
+            TextMeshProUGUI text = UiKit.Paragraph(_content,
                 "Tekanan sudah penuh. Kamu boleh berhenti sebentar. Tidak ada pilihan yang terkunci, dan aktivitas pemulihan tetap tersedia.",
                 UiTheme.BodyFontSize, UiTheme.TextOnPaper, TextAlignmentOptions.TopLeft);
-            UiKit.Height(text, 80f);
 
             UiKit.Button(_content, SelaContent.Ui.BreakSit,
                 () => Finish("Duduk sebentar. Kamar diam sebentar, lalu suara lorong kembali."),
@@ -366,20 +358,17 @@ namespace SELA.UI
                 () => Finish("Dita menjawab singkat. Tidak ada yang perlu dijelaskan lebih jauh."),
                 UiTheme.HijauMeja, UiTheme.TextOnPaper);
 
-            TextMeshProUGUI summary = UiKit.TextIn(_content, SelaContent.Ui.BreakSummary, UiTheme.SmallFontSize,
+            TextMeshProUGUI summary = UiKit.Paragraph(_content, SelaContent.Ui.BreakSummary, UiTheme.SmallFontSize,
                 UiTheme.HijauMeja, TextAlignmentOptions.TopLeft);
-            UiKit.Height(summary, 30f);
         }
 
         private void BuildMessage()
         {
-            TextMeshProUGUI text = UiKit.TextIn(_content, _message, UiTheme.BodyFontSize,
+            TextMeshProUGUI text = UiKit.Paragraph(_content, _message, UiTheme.BodyFontSize,
                 UiTheme.TextOnPaper, TextAlignmentOptions.TopLeft);
-            UiKit.Height(text, 120f);
 
-            TextMeshProUGUI summary = UiKit.TextIn(_content, SelaContent.Ui.BreakSummary, UiTheme.SmallFontSize,
+            TextMeshProUGUI summary = UiKit.Paragraph(_content, SelaContent.Ui.BreakSummary, UiTheme.SmallFontSize,
                 UiTheme.HijauMeja, TextAlignmentOptions.TopLeft);
-            UiKit.Height(summary, 30f);
 
             Button next = UiKit.Button(_content, "Lanjut", Finish, UiTheme.BiruTinta, UiTheme.TextOnInk);
             UiKit.Height(next, 48f);

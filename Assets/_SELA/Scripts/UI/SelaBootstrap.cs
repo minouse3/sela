@@ -53,17 +53,55 @@ namespace SELA.UI
         private PlayerInteractor _interactor;
         private FirstPersonController _controller;
         private Camera _playerCamera;
+
+        /// <summary>Disimpan sebagai field Unity supaya tetap benar setelah domain reload.</summary>
+        [SerializeField]
         private bool _gameplayActive;
 
         private void Awake()
         {
+            BuildUi();
+        }
+
+        /// <summary>
+        /// Dipanggil lagi setelah domain reload, yaitu ketika skrip diubah selagi game berjalan.
+        /// Awake tidak dijalankan ulang, jadi UI lama harus dibuang dan dibangun ulang supaya
+        /// tombol dan panel tetap berfungsi.
+        /// </summary>
+        private void OnEnable()
+        {
+            if (Instance != this)
+            {
+                BuildUi();
+            }
+        }
+
+        private void BuildUi()
+        {
             Instance = this;
+
+            // Buang UI dari sebelum reload, kalau ada.
+            Transform previous = transform.Find("SELA UI");
+            if (previous != null)
+            {
+                previous.gameObject.SetActive(false);
+                Destroy(previous.gameObject);
+            }
+
             BuildCanvas();
             BuildEventSystem();
             BuildScreens();
             CacheSceneObjects();
             ApplySettings();
             HookState();
+
+            // Kalau permainan sedang berjalan, HUD dibuka lagi supaya pemain tidak
+            // melihat layar kosong setelah skrip diubah.
+            if (_gameplayActive)
+            {
+                _router.Open(_hud);
+                _hud.Refresh();
+            }
         }
 
         private void OnDestroy()

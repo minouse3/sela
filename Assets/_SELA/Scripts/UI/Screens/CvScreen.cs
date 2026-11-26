@@ -63,9 +63,8 @@ namespace SELA.UI
                 // Klaim tanpa dukungan ditulis apa adanya, tanpa ikon gembok (DESIGN 9.2).
                 string support = SelaContent.Cv.ClaimSupportSummary(line, state.CvClaim[line], state.CvAttached);
                 bool supported = !support.Contains(SelaContent.Cv.UnsupportedNote());
-                TextMeshProUGUI supportText = UiKit.TextIn(_content, support, UiTheme.SmallFontSize,
+                TextMeshProUGUI supportText = UiKit.Paragraph(_content, support, UiTheme.SmallFontSize,
                     supported ? UiTheme.HijauMeja : UiTheme.MerahPeringatan, TextAlignmentOptions.TopLeft);
-                UiKit.Height(supportText, 32f);
             }
 
             UiKit.Divider(_content, UiTheme.HijauMeja);
@@ -150,9 +149,8 @@ namespace SELA.UI
             for (int line = 0; line < 2; line++)
             {
                 string claim = SelaContent.Cv.ClaimOptions(line)[state.CvClaim[line]];
-                TextMeshProUGUI text = UiKit.TextIn(_content, SelaContent.Cv.ClaimLines[line] + ": " + claim,
+                TextMeshProUGUI text = UiKit.Paragraph(_content, SelaContent.Cv.ClaimLines[line] + ": " + claim,
                     UiTheme.BodyFontSize, UiTheme.TextOnPaper, TextAlignmentOptions.TopLeft);
-                UiKit.Height(text, 34f);
             }
 
             UiKit.Divider(_content, UiTheme.HijauMeja);
@@ -162,10 +160,9 @@ namespace SELA.UI
             foreach (EvidenceId id in new[] { EvidenceId.E0, EvidenceId.E1, EvidenceId.E2 })
             {
                 bool attached = state.IsAttached(id);
-                TextMeshProUGUI text = UiKit.TextIn(_content,
+                TextMeshProUGUI text = UiKit.Paragraph(_content,
                     SelaContent.Evidence.SlotLabel(id) + ": " + (attached ? "terpasang" : "tidak ikut"),
                     UiTheme.BodyFontSize, UiTheme.TextOnPaper, TextAlignmentOptions.TopLeft);
-                UiKit.Height(text, 30f);
 
                 if (Required(id) && !attached)
                 {
@@ -175,23 +172,20 @@ namespace SELA.UI
 
             if (missing.Count > 0)
             {
-                TextMeshProUGUI warning = UiKit.TextIn(_content, SelaContent.Cv.IncompleteEvidenceWarning(),
+                TextMeshProUGUI warning = UiKit.Paragraph(_content, SelaContent.Cv.IncompleteEvidenceWarning(),
                     UiTheme.BodyFontSize, UiTheme.MerahPeringatan, TextAlignmentOptions.TopLeft);
-                UiKit.Height(warning, 70f);
             }
             else if (state.CvAttached.Count == 0)
             {
-                TextMeshProUGUI warning = UiKit.TextIn(_content, SelaContent.Cv.NoEvidenceWarning(),
+                TextMeshProUGUI warning = UiKit.Paragraph(_content, SelaContent.Cv.NoEvidenceWarning(),
                     UiTheme.BodyFontSize, UiTheme.MerahPeringatan, TextAlignmentOptions.TopLeft);
-                UiKit.Height(warning, 70f);
             }
 
             UiKit.Divider(_content, UiTheme.HijauMeja);
-            TextMeshProUGUI schedule = UiKit.TextIn(_content,
+            TextMeshProUGUI schedule = UiKit.Paragraph(_content,
                 "Interview besok siang memerlukan Tenaga 1.\n" +
                 "Biaya: Tenaga -1, Tekanan +1, satu sesi.",
                 UiTheme.BodyFontSize, UiTheme.TextOnPaper, TextAlignmentOptions.TopLeft);
-            UiKit.Height(schedule, 60f);
 
             Button send = UiKit.Button(_content, SelaContent.Ui.SendApplication, Send,
                 UiTheme.BiruTinta, UiTheme.TextOnInk);
@@ -215,7 +209,6 @@ namespace SELA.UI
             SelaState state = SelaState.Current;
             SelaSessionFlow.Resolve(state, SelaActivity.KirimLamaran);
             state.RecordSentApplication(_offer, state.CvClaim, state.CvAttached);
-            state.ApplicationOpened[(int)_offer] = true;
             state.NotifyChanged();
             SelaSaveStore.Write(state);
             Router.Close(this);

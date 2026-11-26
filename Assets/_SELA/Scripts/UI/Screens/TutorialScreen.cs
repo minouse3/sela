@@ -134,23 +134,20 @@ namespace SELA.UI
 
         private void MockTitle(RectTransform parent, string text)
         {
-            TextMeshProUGUI title = UiKit.TextIn(parent, text, UiTheme.SectionFontSize, UiTheme.ArangHijau,
+            TextMeshProUGUI title = UiKit.Paragraph(parent, text, UiTheme.SectionFontSize, UiTheme.ArangHijau,
                 TextAlignmentOptions.TopLeft, true);
-            UiKit.Height(title, 30f);
         }
 
         private void MockText(RectTransform parent, string text)
         {
-            TextMeshProUGUI body = UiKit.TextIn(parent, text, UiTheme.SmallFontSize, UiTheme.TextOnPaper,
+            TextMeshProUGUI body = UiKit.Paragraph(parent, text, UiTheme.SmallFontSize, UiTheme.TextOnPaper,
                 TextAlignmentOptions.TopLeft);
-            UiKit.Height(body, 44f);
         }
 
         private void MockNote(RectTransform parent, string text)
         {
-            TextMeshProUGUI note = UiKit.TextIn(parent, text, UiTheme.SmallFontSize, UiTheme.HijauMeja,
+            TextMeshProUGUI note = UiKit.Paragraph(parent, text, UiTheme.SmallFontSize, UiTheme.HijauMeja,
                 TextAlignmentOptions.TopLeft);
-            UiKit.Height(note, 26f);
         }
 
         private void MockRow(RectTransform parent, string title, string state, Color color)
