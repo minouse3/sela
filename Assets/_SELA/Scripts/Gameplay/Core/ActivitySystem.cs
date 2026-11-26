@@ -121,7 +121,7 @@ namespace SELA.Core
                 case ActivityType.AttendInterview: return "Laptop";
                 case ActivityType.Rest: return "Kasur";
                 case ActivityType.Shower: return "Kamar Mandi";
-                case ActivityType.CallDita: return "Kamar Dita (06) / Ponsel";
+                case ActivityType.CallDita: return "Kamar Dita (06)";
                 case ActivityType.SitWithoutScreen: return "Kursi jendela";
                 case ActivityType.TidyDesk: return "Meja";
                 case ActivityType.FinalPrep: return "Tas / Map Tawaran";
@@ -674,7 +674,7 @@ namespace SELA.Core
             }
         }
 
-        public static string GetHudObjectiveHint(GameState state)
+        public static string GetObjectiveHint(GameState state)
         {
             if (state == null) return "";
 

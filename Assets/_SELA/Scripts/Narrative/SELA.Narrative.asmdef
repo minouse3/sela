@@ -1,0 +1,7 @@
+{
+  "name": "SELA.Narrative",
+  "rootNamespace": "SELA.Narrative",
+  "references": ["SELA.Core"],
+  "autoReferenced": true,
+  "noEngineReferences": true
+}

@@ -1,6 +1,7 @@
 using System.IO;
 using NUnit.Framework;
 using SELA.Core;
+using SELA.Narrative;
 
 namespace SELA.Core.Tests
 {
@@ -109,7 +110,7 @@ namespace SELA.Core.Tests
             Assert.IsTrue(res2.TriggeredJeda);
             Assert.AreEqual(GamePhase.AwaitingJeda, engine.State.phase);
 
-            Assert.IsTrue(engine.ResolveJeda(JedaChoice.SitBriefly));
+            Assert.IsTrue(engine.ResolveJeda());
             Assert.AreEqual(4, engine.State.pressure);
             Assert.GreaterOrEqual(engine.State.energy, 1);
             Assert.IsTrue(engine.State.jedaTriggeredToday);
@@ -175,6 +176,92 @@ namespace SELA.Core.Tests
             Assert.AreEqual(15, engine.State.currentHour);
             Assert.AreEqual(SessionType.Siang, engine.State.session);
             Assert.AreEqual(ApplicationStatus.Offered, engine.State.applicationA.status);
+        }
+
+        [TestCase(CompanyId.StudioLajur, true, 1, 0, ApplicationStatus.Offered)]
+        [TestCase(CompanyId.KoperasiPijar, true, 0, 1, ApplicationStatus.Offered)]
+        [TestCase(CompanyId.KoperasiPijar, true, 0, 2, ApplicationStatus.Rejected)]
+        [TestCase(CompanyId.StudioLajur, false, 0, 0, ApplicationStatus.Rejected)]
+        public void InterviewDialogue_RequiresBothAnswersAndRetainsTheirScoring(
+            CompanyId company, bool correctClaim, int firstAnswer, int secondAnswer, ApplicationStatus expectedStatus)
+        {
+            engine.State.day = 4;
+            var app = engine.State.GetApplication(company);
+            app.status = ApplicationStatus.Scheduled;
+            app.interviewDay = 4;
+            app.snapshotClaim1 = ClaimChoice.Exaggerated;
+            app.snapshotHasE1 = true;
+            app.snapshotHasE2 = true;
+
+            var interview = NarrativeContent.StartInterview(app);
+            interview.Session.Advance();
+            Assert.IsFalse(interview.Session.Advance(), "The CV correction requires an explicit choice.");
+            interview.Session.Advance(correctClaim ? 0 : 1);
+            interview.Session.Advance(firstAnswer);
+            Assert.IsFalse(interview.Session.Advance(), "The second question cannot use an implicit answer.");
+            Assert.IsFalse(interview.TryGetAnswers(out _), "An abandoned interview must not produce a submission.");
+            Assert.AreEqual(ApplicationStatus.Scheduled, app.status);
+            Assert.AreEqual(GameState.StartHour, engine.State.currentHour);
+
+            interview.Session.Advance(secondAnswer);
+            Assert.IsTrue(interview.TryGetAnswers(out var answers));
+            var result = engine.ExecuteActivity(new ActivityRequest(ActivityType.AttendInterview, company), answers);
+            Assert.IsTrue(result.Executed);
+            Assert.AreEqual(expectedStatus, app.status);
+            Assert.AreEqual(correctClaim, app.claimsCorrectedInInterview);
+            Assert.AreEqual(15, engine.State.currentHour);
+        }
+
+        [TestCase(true)]
+        [TestCase(false)]
+        public void DitaDialogue_PresentsTheSelectedReplyBeforeFinishing(bool wantsToBeHeard)
+        {
+            var session = NarrativeContent.StartDitaConversation(alreadyTalkedToday: false);
+            Assert.IsFalse(session.WillFinishOnAdvance);
+            session.Advance();
+            session.Advance(wantsToBeHeard ? 1 : 0);
+            Assert.IsFalse(session.IsComplete);
+            StringAssert.Contains(wantsToBeHeard ? "Cerita aja" : "bagian yang kamu kerjakan", session.Current.Text);
+            Assert.IsTrue(session.WillFinishOnAdvance);
+            session.Advance();
+            Assert.IsTrue(session.IsComplete);
+        }
+
+        [Test]
+        public void DialogueLog_SavesOnlyTheLinesSeenAndTheAnswerChosen()
+        {
+            var dialogue = NarrativeContent.StartDitaConversation(alreadyTalkedToday: false);
+            dialogue.RecordTo(engine.State.dialogueLog);
+            var opening = dialogue.Current.Text;
+            dialogue.Advance();
+            var prompt = dialogue.Current.Text;
+            var answer = dialogue.Current.ChoiceAt(1).Text;
+            var unchosenAnswer = dialogue.Current.ChoiceAt(0).Text;
+            Assert.IsFalse(dialogue.Advance(99));
+            Assert.IsTrue(dialogue.Advance(1));
+            var reply = dialogue.Current.Text;
+            dialogue.Advance();
+
+            Assert.IsTrue(saveSystem.SaveAutosave(engine.State).Success);
+            Assert.IsTrue(engine.LoadAutosave().Success);
+            var entries = engine.State.dialogueLog;
+            Assert.AreEqual(4, entries.Count);
+            Assert.AreEqual(opening, entries[0].text);
+            Assert.AreEqual(prompt, entries[1].text);
+            Assert.AreEqual("Raka", entries[2].speaker);
+            Assert.AreEqual(answer, entries[2].text);
+            Assert.AreNotEqual(unchosenAnswer, entries[2].text);
+            Assert.AreEqual(reply, entries[3].text);
+        }
+
+        [Test]
+        public void DialogueLog_CanStartRecordingFromAnOlderSave()
+        {
+            File.WriteAllText(saveSystem.AutosavePath, "{\"saveVersion\":2,\"day\":2,\"currentHour\":8}");
+            Assert.IsTrue(engine.LoadAutosave().Success);
+            var dialogue = NarrativeContent.StartDitaConversation(alreadyTalkedToday: false);
+            dialogue.RecordTo(engine.State.dialogueLog);
+            Assert.AreEqual(dialogue.Current.Text, engine.State.dialogueLog[0].text);
         }
 
         [Test]

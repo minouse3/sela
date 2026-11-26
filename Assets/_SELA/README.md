@@ -77,6 +77,15 @@ Rakitan: **SM_Kamar07_FullScene** (semua aset sudah ditata sesuai GDD: meja utar
 Script interaksi berada di `Scripts/Interaction/`, dengan script pemain di `Scripts/Player/` dan script UI di `Scripts/UI/`.
 Dibuat tanpa bisa diuji di Unity; periksa Console jika ada error kompilasi.
 
+## Dialog, laptop, dan ponsel
+
+- Duduk di kursi meja, arahkan pandangan ke laptop, lalu tekan **E**. Klik aplikasi Lamaran, Pesan Kerja, atau Catatan di desktop. Mulai interview dari undangan di Pesan Kerja pada hari yang dijadwalkan.
+- Saat berdiri, arahkan pandangan ke ponsel dan tekan **E** untuk mengambilnya. Tekan **P** saat memegangnya, lalu buka aplikasi Pesan untuk membaca chat Ibu dan Dita. **G** meletakkan ponsel kembali.
+- Untuk ngobrol dengan Dita, temui dia di Kamar 06 dan tekan **E**. Kamera memperlihatkan Raka dan Dita, dengan dialog di bagian bawah layar.
+- Klik atau gunakan angka/panah dan **Enter** untuk memilih jawaban. **Esc** membatalkan percakapan sebelum selesai tanpa memakai waktu. Pikiran singkat Raka muncul sebagai teks tanpa menghentikan gerak.
+- **Tab** atau aplikasi **Catatan** di laptop menampilkan tujuan saat ini. Buka **Esc → Log** untuk membaca ulang ucapan Raka, Dita, dan pewawancara, beserta jawaban yang dipilih. Log mengikuti autosave dan checkpoint.
+- Ubah naskah contoh di `Scripts/Narrative/NarrativeContent.cs`. Urutan pilihan kedua pertanyaan interview menentukan skor 2/1/0 (jawaban berbukti tetap memerlukan lampiran). `DialogueSession` menangani progres; tampilan perangkat ada di `CoreLoopDebugUI.Devices.cs`.
+
 ## Update: Kamar V2 (lebih lega + kamar mandi dalam)
 Interior 3,6 x 4,6 m (GDD asli 3 x 4 m). Kamar mandi dalam 1,3 x 1,8 m di sudut barat daya, dekat pintu masuk.
 FBX baru: SM_Kos_Kamar07_V2_FullScene (rakitan lengkap), SM_Kamar07_V2_Shell_KM, SM_Pintu_KM, SM_Kloset_Jongkok,

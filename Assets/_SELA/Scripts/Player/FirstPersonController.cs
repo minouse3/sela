@@ -34,8 +34,16 @@ public class FirstPersonController : MonoBehaviour
     bool isRunning;
     Vector3 standingCamLocalPos;
     float crouchOffset;
+    int conversationViewRestoredFrame = -1;
 
     public bool IsSeated => isSeated;
+    internal bool ConversationViewActive { get; private set; }
+
+    internal void SetConversationView(bool active)
+    {
+        ConversationViewActive = active;
+        if (!active) conversationViewRestoredFrame = Time.frameCount;
+    }
 
     void Awake()
     {
@@ -166,7 +174,8 @@ public class FirstPersonController : MonoBehaviour
     // Ikuti posisi mata/kepala secara halus agar kamera tidak menembus kepala/rambut saat lari atau jongkok
     void LateUpdate()
     {
-        if (!playerCamera || isSeated || (flyCamera && flyCamera.IsFlying)) return;
+        if (!playerCamera || isSeated || ConversationViewActive ||
+            conversationViewRestoredFrame == Time.frameCount || (flyCamera && flyCamera.IsFlying)) return;
 
         Vector3 targetLocal = standingCamLocalPos;
         if (TryGetEyesLocalPosition(out Vector3 eyesLocal))

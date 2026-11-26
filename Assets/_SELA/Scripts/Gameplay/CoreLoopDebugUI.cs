@@ -1,10 +1,12 @@
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using SELA.Core;
+using SELA.Narrative;
 using SELA.UI;
 
-public class CoreLoopDebugUI : MonoBehaviour
+public partial class CoreLoopDebugUI : MonoBehaviour
 {
     public static bool IsPanelOpen { get; private set; }
 
@@ -19,11 +21,28 @@ public class CoreLoopDebugUI : MonoBehaviour
     bool panelOpen;
     string activeSection = "Overview";
     Vector2 scrollPos;
+    Vector2 logScroll;
 
     ActivityRequest? pendingRequest;
-    bool interviewCorrectClaims = true;
-    int interviewQ1Choice;
-    int interviewQ2Choice;
+    LaptopInteraction laptop;
+    PlayerCarry phoneOwner;
+    DitaConversationShot ditaShot;
+    ActivityPreview ditaPreview;
+    enum LaptopPage { Home, Applications, WorkMessages, Notes }
+    enum PhonePage { Home, Inbox, Mother, Dita }
+    PhonePage phonePage;
+    LaptopPage laptopPage;
+    CompanyId interviewCompany;
+    DialogueSession dialogue;
+    Action finishDialogue;
+    int dialogueChoice = -1;
+    DialogueLine thought;
+    GameState thoughtLogDestination;
+    float thoughtTime;
+    bool initialThoughtChecked;
+
+    static readonly ActivityRequest DitaRequest = new ActivityRequest(ActivityType.CallDita);
+    static readonly string[] GeneralTabs = { "Overview", "EvidenceBoard", "Bathroom", "Bed", "BagAndOffers", "Save" };
 
     Texture2D paperTex;
     Texture2D borderTex;
@@ -43,6 +62,8 @@ public class CoreLoopDebugUI : MonoBehaviour
     GUIStyle bodyStyle;
     GUIStyle mutedStyle;
     GUIStyle buttonStyle;
+    GUIStyle dialogueChoiceStyle;
+    GUIStyle selectedChoiceStyle;
     GUIStyle toggleStyle;
 
     static readonly Color InkColor = new Color(0.176f, 0.227f, 0.204f, 1f);
@@ -51,16 +72,23 @@ public class CoreLoopDebugUI : MonoBehaviour
     void Start()
     {
         panelOpen = startPanelOpen;
-        IsPanelOpen = panelOpen;
-        if (GameLoopController.Instance != null)
-            GameLoopController.Instance.OnWorldFocusRequested += OpenStation;
+        if (GameLoopController.Instance is GameLoopController loop)
+        {
+            loop.OnWorldFocusRequested += OpenStation;
+            loop.Engine.OnActivityResolved += OnActivityResolved;
+        }
         SyncCursorAndBlock();
     }
 
     void OnDestroy()
     {
-        if (GameLoopController.Instance != null)
-            GameLoopController.Instance.OnWorldFocusRequested -= OpenStation;
+        if (GameLoopController.Instance is GameLoopController loop)
+        {
+            loop.OnWorldFocusRequested -= OpenStation;
+            loop.Engine.OnActivityResolved -= OnActivityResolved;
+        }
+        ReleaseLaptop();
+        ReleaseDitaShot();
         DestroyTextures();
         IsPanelOpen = false;
         PlayerInteractor.Blocked = false;
@@ -82,45 +110,255 @@ public class CoreLoopDebugUI : MonoBehaviour
     {
         if (PauseMenuController.IsPaused || SleepMenuController.IsOpen || SleepMenuController.IsSleeping) return;
 
-        var kb = Keyboard.current;
-        if (kb == null) return;
-
-        if (kb.f1Key.wasPressedThisFrame || kb.tabKey.wasPressedThisFrame)
+        var state = GameLoopController.Instance?.State;
+        if (state == null) return;
+        if (state.phase != GamePhase.FreeRoam && (IsDedicatedStation || !panelOpen))
         {
-            if (!panelOpen && PlayerInteractor.Blocked) return;
-            panelOpen = !panelOpen;
-            if (!panelOpen) pendingRequest = null;
-            SyncCursorAndBlock();
-        }
-        else if (panelOpen && kb.escapeKey.wasPressedThisFrame)
-        {
-            if (pendingRequest.HasValue)
-            {
-                pendingRequest = null;
-            }
-            else if (GameLoopController.Instance != null &&
-                     GameLoopController.Instance.State.phase == GamePhase.FreeRoam)
-            {
-                panelOpen = false;
-                SyncCursorAndBlock();
-            }
-        }
-
-        var ctrl = GameLoopController.Instance;
-        if (ctrl != null && ctrl.State != null && ctrl.State.phase != GamePhase.FreeRoam && !panelOpen)
-        {
+            ReleaseLaptop();
+            ReleaseDitaShot();
+            ResetPage();
             panelOpen = true;
             SyncCursorAndBlock();
         }
+        else if (phoneOwner != null && !phoneOwner.HasPhoneInHand)
+        {
+            ClosePanel();
+        }
+
+        if (!initialThoughtChecked)
+        {
+            initialThoughtChecked = true;
+            if (state.day == 1 && state.currentHour == GameState.StartHour && !state.hasE1)
+                ShowThought(NarrativeContent.MorningThought);
+        }
+        if (CanShowThought) thoughtTime -= Time.unscaledDeltaTime;
+
+        var kb = Keyboard.current;
+        if (kb == null) return;
+        if (dialogue != null)
+        {
+            if (!kb.escapeKey.wasPressedThisFrame) ReadDialogueInput(kb);
+        }
+        else if (state.phase == GamePhase.FreeRoam && laptop == null && !IsDedicatedStation &&
+                 !kb.escapeKey.wasPressedThisFrame && (kb.f1Key.wasPressedThisFrame || kb.tabKey.wasPressedThisFrame))
+        {
+            if (panelOpen) ClosePanel();
+            else if (!PlayerInteractor.Blocked) OpenStation(kb.tabKey.wasPressedThisFrame ? "Notes" : "Overview");
+        }
+    }
+
+    void LateUpdate()
+    {
+        var kb = Keyboard.current;
+        if (kb != null && kb.escapeKey.wasPressedThisFrame && !PauseMenuController.IsPaused)
+            BackOrClose();
+    }
+
+    void BackOrClose()
+    {
+        if (dialogue != null)
+        {
+            if (ditaShot != null) ClosePanel();
+            else CancelDialogue();
+        }
+        else if (pendingRequest.HasValue) BackFromConfirmation();
+        else if (laptop != null && laptopPage != LaptopPage.Home) SetLaptopPage(LaptopPage.Home);
+        else if (phoneOwner != null && phonePage != PhonePage.Home)
+            SetPhonePage(phonePage == PhonePage.Inbox ? PhonePage.Home : PhonePage.Inbox);
+        else if ((panelOpen || laptop != null) && GameLoopController.Instance?.State.phase == GamePhase.FreeRoam)
+            ClosePanel();
+    }
+
+    bool CanOpenStation()
+    {
+        return isActiveAndEnabled && !panelOpen && !PlayerInteractor.Blocked && !PauseMenuController.IsPaused &&
+               GameLoopController.Instance?.State.phase == GamePhase.FreeRoam;
     }
 
     void OpenStation(string station)
     {
-        if (PauseMenuController.IsPaused) return;
+        if (!CanOpenStation()) return;
+        ResetPage();
         activeSection = station;
         panelOpen = true;
-        pendingRequest = null;
         SyncCursorAndBlock();
+    }
+
+    bool IsDedicatedStation => laptop != null || phoneOwner != null || ditaShot != null;
+    bool CanShowThought => thoughtTime > 0 && !panelOpen && !PlayerInteractor.Blocked;
+
+    internal bool OpenPhone(PlayerCarry owner)
+    {
+        if (!CanOpenStation() || !owner || !owner.HasPhoneInHand) return false;
+        ResetPage();
+        phoneOwner = owner;
+        panelOpen = true;
+        SyncCursorAndBlock();
+        return true;
+    }
+
+    internal void OpenDita(Transform dita)
+    {
+        if (!CanOpenStation() || SeatInteraction.Current != null) return;
+        var player = FindFirstObjectByType<FirstPersonController>();
+        if (!player || !player.TryGetComponent<PlayerInteractor>(out var interactor) ||
+            !DitaConversationShot.TryBegin(dita, player, interactor.cam, out var shot)) return;
+
+        ResetPage();
+        ditaShot = shot;
+        var engine = GameLoopController.Instance.Engine;
+        ditaPreview = engine.GetPreview(DitaRequest);
+        if (ditaPreview.Availability.IsAvailable)
+            StartDialogue(NarrativeContent.StartDitaConversation(engine.State.ditaCalledToday), () => FinishDita(engine));
+        panelOpen = true;
+        SyncCursorAndBlock();
+    }
+
+    void FinishDita(GameLoopEngine engine)
+    {
+        engine.ExecuteActivity(DitaRequest);
+        if (engine.State.phase == GamePhase.FreeRoam) ClosePanel();
+        else
+        {
+            ReleaseDitaShot();
+            ResetPage();
+        }
+    }
+
+    void SetLaptopPage(LaptopPage page)
+    {
+        laptopPage = page;
+        scrollPos = Vector2.zero;
+    }
+
+    void SetPhonePage(PhonePage page)
+    {
+        phonePage = page;
+        scrollPos = Vector2.zero;
+    }
+
+    internal bool BeginLaptop(LaptopInteraction source)
+    {
+        if (panelOpen || laptop != null) return false;
+        laptop = source;
+        return true;
+    }
+
+    internal void ShowLaptop(LaptopInteraction source)
+    {
+        if (laptop != source) return;
+        ResetPage();
+        panelOpen = true;
+        SyncCursorAndBlock();
+    }
+
+    internal void OnLaptopClosed(LaptopInteraction source)
+    {
+        if (laptop != source) return;
+        laptop = null;
+        ClosePanel();
+    }
+
+    void ReleaseLaptop()
+    {
+        var source = laptop;
+        laptop = null;
+        if (source != null) source.Close();
+    }
+
+    void ReleaseDitaShot()
+    {
+        ditaShot?.Restore();
+        ditaShot = null;
+    }
+
+    void ClosePanel()
+    {
+        panelOpen = false;
+        ReleaseLaptop();
+        ReleaseDitaShot();
+        ResetPage();
+        SyncCursorAndBlock();
+    }
+
+    void ResetPage()
+    {
+        activeSection = "Overview";
+        phoneOwner = null;
+        laptopPage = LaptopPage.Home;
+        phonePage = PhonePage.Home;
+        pendingRequest = null;
+        ClearDialogue();
+        scrollPos = Vector2.zero;
+    }
+
+    void BackFromConfirmation()
+    {
+        pendingRequest = null;
+        scrollPos = Vector2.zero;
+    }
+
+    void StartDialogue(DialogueSession session, Action onComplete)
+    {
+        pendingRequest = null;
+        dialogue = session;
+        dialogue.RecordTo(GameLoopController.Instance.State.dialogueLog);
+        finishDialogue = onComplete;
+        dialogueChoice = -1;
+        scrollPos = Vector2.zero;
+    }
+
+    void CancelDialogue()
+    {
+        ClearDialogue();
+        scrollPos = Vector2.zero;
+    }
+
+    void ClearDialogue()
+    {
+        dialogue = null;
+        finishDialogue = null;
+        dialogueChoice = -1;
+    }
+
+    void AdvanceDialogue(int choice = -1)
+    {
+        if (!dialogue.Advance(choice)) return;
+        dialogueChoice = -1;
+        scrollPos = Vector2.zero;
+        if (!dialogue.IsComplete) return;
+        var onComplete = finishDialogue;
+        ClearDialogue();
+        onComplete();
+    }
+
+    void ReadDialogueInput(Keyboard kb)
+    {
+        int count = dialogue.Current.ChoiceCount;
+        if (count > 0)
+        {
+            if (kb.digit1Key.wasPressedThisFrame) { AdvanceDialogue(0); return; }
+            if (kb.digit2Key.wasPressedThisFrame) { AdvanceDialogue(1); return; }
+            if (kb.digit3Key.wasPressedThisFrame) { AdvanceDialogue(2); return; }
+            if (kb.downArrowKey.wasPressedThisFrame) dialogueChoice = (dialogueChoice + 1) % count;
+            if (kb.upArrowKey.wasPressedThisFrame) dialogueChoice = dialogueChoice <= 0 ? count - 1 : dialogueChoice - 1;
+        }
+
+        if (kb.enterKey.wasPressedThisFrame || kb.spaceKey.wasPressedThisFrame)
+            AdvanceDialogue(dialogueChoice);
+    }
+
+    void OnActivityResolved(ActivityRequest request, ActivityExecutionResult result)
+    {
+        if (result.Executed && request.Type == ActivityType.ImproveUiExample)
+            ShowThought(NarrativeContent.EvidenceThought);
+    }
+
+    void ShowThought(DialogueLine line)
+    {
+        thought = line;
+        thoughtLogDestination = GameLoopController.Instance.State;
+        thoughtTime = 5f;
     }
 
     void SyncCursorAndBlock()
@@ -210,6 +448,9 @@ public class CoreLoopDebugUI : MonoBehaviour
                 active = { background = btnActiveTex, textColor = InkColor },
                 onNormal = { background = btnHoverTex, textColor = InkColor }
             };
+            dialogueChoiceStyle = new GUIStyle(buttonStyle) { wordWrap = true, alignment = TextAnchor.MiddleLeft };
+            selectedChoiceStyle = new GUIStyle(dialogueChoiceStyle);
+            selectedChoiceStyle.normal.background = btnHoverTex;
             toggleStyle = new GUIStyle(GUI.skin.toggle)
             {
                 fontSize = 13,
@@ -232,8 +473,10 @@ public class CoreLoopDebugUI : MonoBehaviour
 
     void OnGUI()
     {
-        if (!panelOpen) return;
-        if (PauseMenuController.IsPaused || SleepMenuController.IsOpen || SleepMenuController.IsSleeping) return;
+        var pause = PauseMenuController.Instance;
+        bool showLog = pause != null && pause.IsLogOpen;
+        if (!showLog && (!panelOpen && !CanShowThought || PauseMenuController.IsPaused)) return;
+        if (SleepMenuController.IsOpen || SleepMenuController.IsSleeping) return;
 
         var ctrl = GameLoopController.Instance;
         if (ctrl == null || ctrl.Engine == null || ctrl.State == null) return;
@@ -247,10 +490,75 @@ public class CoreLoopDebugUI : MonoBehaviour
 
         Matrix4x4 prevMatrix = GUI.matrix;
         GUI.matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(uiScale, uiScale, 1f));
+        if (showLog)
+        {
+            DrawDialogueLog(pause, ctrl.State, vWidth, vHeight);
+        }
+        else if (!panelOpen)
+        {
+            DrawThought(vWidth, vHeight);
+            if (Event.current.type == EventType.Repaint && ReferenceEquals(thoughtLogDestination, ctrl.State))
+            {
+                ctrl.State.dialogueLog.Add(new DialogueLogEntry(thought.Speaker, thought.Text));
+                thoughtLogDestination = null;
+            }
+        }
+        else if (!DrawFocusedSurface(ctrl.Engine, ctrl.State, vWidth, vHeight))
+        {
+            DrawGeneralPanel(ctrl.Engine, ctrl.State, vWidth, vHeight);
+        }
+        GUI.matrix = prevMatrix;
+    }
 
-        var engine = ctrl.Engine;
-        var state = ctrl.State;
+    void DrawDialogueLog(PauseMenuController pause, GameState state, float width, float height)
+    {
+        float w = Mathf.Min(width - 48f, 620f);
+        float h = Mathf.Min(height - 64f, 450f);
+        var panel = new Rect((width - w) * 0.5f, (height - h) * 0.5f, w, h);
+        GUI.DrawTexture(new Rect(panel.x - 2f, panel.y - 2f, panel.width + 4f, panel.height + 4f), borderTex);
+        GUI.Box(panel, "", panelStyle);
+        GUILayout.BeginArea(new Rect(panel.x + 16f, panel.y + 12f, panel.width - 32f, panel.height - 24f));
+        GUILayout.BeginHorizontal();
+        GUILayout.Label("Log", headerStyle);
+        GUILayout.FlexibleSpace();
+        bool back = GUILayout.Button("Kembali [Esc]", buttonStyle);
+        GUILayout.EndHorizontal();
+        GUILayout.Space(8);
 
+        var entries = state.dialogueLog;
+        if (entries.Count == 0)
+        {
+            GUILayout.Label("Belum ada dialog.", mutedStyle);
+        }
+        else
+        {
+            logScroll = GUILayout.BeginScrollView(logScroll);
+            foreach (var entry in entries)
+            {
+                GUILayout.BeginVertical(cardStyle);
+                GUILayout.Label(entry.speaker, subStyle);
+                GUILayout.Label(entry.text, bodyStyle);
+                GUILayout.EndVertical();
+                GUILayout.Space(4);
+            }
+            GUILayout.EndScrollView();
+        }
+        GUILayout.EndArea();
+        if (back) pause.CloseLog();
+    }
+
+    bool DrawFocusedSurface(GameLoopEngine engine, GameState state, float width, float height)
+    {
+        if (state.phase != GamePhase.FreeRoam) return false;
+        if (laptop != null) DrawLaptopDevice(engine, state, width, height);
+        else if (phoneOwner != null) DrawPhoneDevice(state, width, height);
+        else if (ditaShot != null) DrawDitaScene(width, height);
+        else return false;
+        return true;
+    }
+
+    void DrawGeneralPanel(GameLoopEngine engine, GameState state, float vWidth, float vHeight)
+    {
         float w = Mathf.Min(760f, vWidth - 48f);
         float h = Mathf.Min(520f, vHeight - 64f);
         Rect panelRect = new Rect((vWidth - w) * 0.5f, (vHeight - h) * 0.5f, w, h);
@@ -262,20 +570,17 @@ public class CoreLoopDebugUI : MonoBehaviour
         GUILayout.BeginArea(new Rect(panelRect.x + 18f, panelRect.y + 14f, panelRect.width - 36f, panelRect.height - 28f));
 
         GUILayout.BeginHorizontal();
-        GUILayout.Label($"Hari {state.day}  ·  {state.FormattedTime} ({state.session})", headerStyle);
+        bool notesOpen = state.phase == GamePhase.FreeRoam && activeSection == "Notes";
+        GUILayout.Label(notesOpen ? "Catatan" : $"Hari {state.day}  ·  {state.FormattedTime}  ·  {state.session}", headerStyle);
         GUILayout.FlexibleSpace();
-        if (state.phase == GamePhase.FreeRoam && GUILayout.Button("Tutup [Esc]", buttonStyle, GUILayout.Width(110)))
-        {
-            panelOpen = false;
-            pendingRequest = null;
-            SyncCursorAndBlock();
-        }
+        bool canClose = state.phase == GamePhase.FreeRoam || dialogue != null;
+        bool closeClicked = canClose && GUILayout.Button(dialogue != null ? "Batal [Esc]" : "Tutup [Esc]", buttonStyle, GUILayout.Width(110));
         GUILayout.EndHorizontal();
 
-        GUILayout.Label($"Tenaga {state.energy}/4   ·   Tekanan {state.pressure}/6   ·   {SectionLabel(activeSection)}", mutedStyle);
+        if (!notesOpen && state.phase == GamePhase.FreeRoam) GUILayout.Label(SectionLabel(activeSection), mutedStyle);
         GUILayout.Space(6);
 
-        if (!string.IsNullOrEmpty(engine.LastStatusMessage))
+        if (!notesOpen && !string.IsNullOrEmpty(engine.LastStatusMessage))
         {
             GUILayout.Box(engine.LastStatusMessage, noticeStyle);
             GUILayout.Space(6);
@@ -283,6 +588,14 @@ public class CoreLoopDebugUI : MonoBehaviour
 
         scrollPos = GUILayout.BeginScrollView(scrollPos);
 
+        DrawPanelContents(engine, state);
+        GUILayout.EndScrollView();
+        GUILayout.EndArea();
+        if (closeClicked) BackOrClose();
+    }
+
+    void DrawPanelContents(GameLoopEngine engine, GameState state)
+    {
         switch (state.phase)
         {
             case GamePhase.AwaitingJeda:
@@ -300,15 +613,92 @@ public class CoreLoopDebugUI : MonoBehaviour
             default:
                 if (pendingRequest.HasValue)
                     DrawConfirmationView(engine, state, pendingRequest.Value);
-                else
-                    DrawFreeRoamControlPanel(engine, state);
+                else if (activeSection == "Notes") DrawNotes(state);
+                else DrawFreeRoamControlPanel(engine, state);
                 break;
         }
+    }
 
+    void DrawDitaScene(float width, float height)
+    {
+        var line = dialogue?.Current;
+        float w = Mathf.Min(width - 40f, 850f);
+        float h = Mathf.Min(height * 0.33f, line != null && line.ChoiceCount > 0 ? 204f : 153f);
+        var box = new Rect((width - w) * 0.5f, height - h - 14f, w, h);
+        GUI.DrawTexture(new Rect(box.x - 2f, box.y - 2f, box.width + 4f, box.height + 4f), borderTex);
+        GUI.Box(box, "", panelStyle);
+        GUILayout.BeginArea(new Rect(box.x + 16f, box.y + 8f, box.width - 32f, box.height - 16f));
+        GUILayout.BeginHorizontal();
+        GUILayout.Label(line?.Speaker ?? "Dita", headerStyle);
+        GUILayout.FlexibleSpace();
+        if (line != null && !ditaPreview.Availability.WillMissScheduledInterview)
+            GUILayout.Label($"{ditaPreview.DurationHours} jam jika selesai", mutedStyle, GUILayout.Height(26));
+        bool close = GUILayout.Button(line != null ? "Batal [Esc]" : "Tutup [Esc]", buttonStyle);
+        GUILayout.EndHorizontal();
+        if (line != null && ditaPreview.Availability.WillMissScheduledInterview)
+            GUILayout.Label("Jika selesai, interview pukul 13:00 akan terlewat.", warnStyle);
+
+        scrollPos = GUILayout.BeginScrollView(scrollPos);
+        int? advance = null;
+        if (line == null)
+        {
+            GUILayout.Label(ditaPreview.Availability.Reason, bodyStyle);
+        }
+        else
+        {
+            GUILayout.Label(line.Text, bodyStyle);
+            GUILayout.Space(4);
+            advance = DrawDialogueOptions(line, "[Enter] Lanjut", "[Enter] Selesai");
+        }
         GUILayout.EndScrollView();
         GUILayout.EndArea();
+        if (close) ClosePanel();
+        else if (advance.HasValue) AdvanceDialogue(advance.Value);
+    }
 
-        GUI.matrix = prevMatrix;
+    void DrawThought(float width, float height)
+    {
+        float w = Mathf.Min(width - 48f, 540f);
+        var text = new GUIContent($"{thought.Speaker}: {thought.Text}");
+        float h = noticeStyle.CalcHeight(text, w);
+        GUI.Box(new Rect((width - w) * 0.5f, height - 104f - h, w, h), text, noticeStyle);
+    }
+
+    void DrawDialogue(GameState state)
+    {
+        var line = dialogue.Current;
+        GUILayout.BeginVertical(cardStyle);
+        GUILayout.Label(line.Speaker, subStyle);
+        GUILayout.Label(line.Text, bodyStyle);
+        GUILayout.EndVertical();
+        GUILayout.Space(8);
+
+        int? advance = DrawDialogueOptions(line, "Lanjut [Enter]", "Akhiri panggilan [Enter]");
+        var app = state.GetApplication(interviewCompany);
+        GUILayout.Space(10);
+        GUILayout.Label("Bukti pada lamaran terkirim", subStyle);
+        if (app.snapshotHasE1) GUILayout.Label(EvidenceE1, bodyStyle);
+        if (app.snapshotHasE2) GUILayout.Label(EvidenceE2, bodyStyle);
+        if (!app.snapshotHasE1 && !app.snapshotHasE2) GUILayout.Label("Tidak ada lampiran E1 atau E2.", mutedStyle);
+        if (advance.HasValue) AdvanceDialogue(advance.Value);
+    }
+
+    int? DrawDialogueOptions(DialogueLine line, string nextLabel, string finishLabel)
+    {
+        if (line.ChoiceCount == 0)
+        {
+            bool isLast = dialogue.WillFinishOnAdvance;
+            return GUILayout.Button(isLast ? finishLabel : nextLabel, buttonStyle, GUILayout.Height(29)) ? -1 : (int?)null;
+        }
+
+        int? choice = null;
+        for (int i = 0; i < line.ChoiceCount; i++)
+        {
+            var style = dialogueChoice == i ? selectedChoiceStyle : dialogueChoiceStyle;
+            if (GUILayout.Button($"[{i + 1}] {line.ChoiceAt(i).Text}", style, GUILayout.MinHeight(30)))
+                choice = i;
+        }
+        return choice;
     }
 
     static string SectionLabel(string section)
@@ -316,12 +706,9 @@ public class CoreLoopDebugUI : MonoBehaviour
         switch (section)
         {
             case "Overview": return "Ringkasan";
-            case "Laptop": return "Laptop";
             case "EvidenceBoard": return "Papan Bukti";
             case "Bathroom": return "Kamar Mandi";
             case "Bed": return "Kasur";
-            case "Phone": return "Ponsel";
-            case "DitaRoom": return "Kamar Dita";
             case "BagAndOffers": return "Map Tawaran";
             case "Save": return "Simpanan";
             default: return section;
@@ -331,8 +718,7 @@ public class CoreLoopDebugUI : MonoBehaviour
     void DrawFreeRoamControlPanel(GameLoopEngine engine, GameState state)
     {
         GUILayout.BeginHorizontal();
-        string[] tabs = { "Overview", "Laptop", "EvidenceBoard", "Bathroom", "Bed", "Phone", "BagAndOffers", "Save" };
-        foreach (string tab in tabs)
+        foreach (string tab in GeneralTabs)
         {
             GUI.enabled = activeSection != tab;
             if (GUILayout.Button(SectionLabel(tab), buttonStyle)) activeSection = tab;
@@ -351,7 +737,6 @@ public class CoreLoopDebugUI : MonoBehaviour
             GUILayout.Label("Istirahat & Pemulihan", subStyle);
             DrawActivityButton(engine, new ActivityRequest(ActivityType.Rest));
             DrawActivityButton(engine, new ActivityRequest(ActivityType.Shower));
-            DrawActivityButton(engine, new ActivityRequest(ActivityType.CallDita));
             DrawActivityButton(engine, new ActivityRequest(ActivityType.SitWithoutScreen));
             DrawActivityButton(engine, new ActivityRequest(ActivityType.TidyDesk));
 
@@ -368,15 +753,7 @@ public class CoreLoopDebugUI : MonoBehaviour
         }
         else if (activeSection == "Bathroom")
         {
-            GUILayout.Label("Mandi 1 jam (+2 Tenaga, -3 Tekanan). Sekali sehari.", mutedStyle);
-            GUILayout.Space(4);
             DrawActivityButton(engine, new ActivityRequest(ActivityType.Shower));
-        }
-        else if (activeSection == "Phone" || activeSection == "DitaRoom")
-        {
-            GUILayout.Label("Ngobrol sama Dita di Kamar 06 atau lewat pesan (2 jam).", mutedStyle);
-            GUILayout.Space(4);
-            DrawActivityButton(engine, new ActivityRequest(ActivityType.CallDita));
         }
         else if (activeSection == "EvidenceBoard")
         {
@@ -385,17 +762,6 @@ public class CoreLoopDebugUI : MonoBehaviour
             DrawActivityButton(engine, new ActivityRequest(ActivityType.CompleteTestNotes));
             GUILayout.Space(8);
             DrawCvDraftEditor(engine, state);
-        }
-        else if (activeSection == "Laptop")
-        {
-            DrawCvDraftEditor(engine, state);
-            GUILayout.Space(8);
-            GUILayout.Label("Lowongan & Interview", subStyle);
-            DrawCompanyBlock(engine, state, CompanyId.StudioLajur);
-            DrawCompanyBlock(engine, state, CompanyId.KoperasiPijar);
-            DrawCompanyBlock(engine, state, CompanyId.AksesPrima);
-            GUILayout.Space(8);
-            DrawOfferChoiceSection(engine, state);
         }
         else if (activeSection == "BagAndOffers")
         {
@@ -417,6 +783,76 @@ public class CoreLoopDebugUI : MonoBehaviour
         }
     }
 
+    const string EvidenceE1 = "E1 · Perbandingan label dan pesan kesalahan formulir sebelum dan sesudah diperbaiki.";
+    const string EvidenceE2 = "E2 · Catatan untuk kolom kosong, format salah, dan data valid. Kesimpulan terbatas pada tiga kasus itu.";
+
+    void DrawLaptopApp(GameLoopEngine engine, GameState state)
+    {
+        switch (laptopPage)
+        {
+            case LaptopPage.Applications:
+                DrawCvDraftEditor(engine, state);
+                GUILayout.Space(8);
+                GUILayout.Label("Lowongan", subStyle);
+                DrawCompanyBlock(engine, state, CompanyId.StudioLajur);
+                DrawCompanyBlock(engine, state, CompanyId.KoperasiPijar);
+                DrawCompanyBlock(engine, state, CompanyId.AksesPrima);
+                break;
+            case LaptopPage.WorkMessages:
+                DrawWorkMessage(engine, state.GetApplication(CompanyId.StudioLajur));
+                DrawWorkMessage(engine, state.GetApplication(CompanyId.KoperasiPijar));
+                if (state.day >= 4)
+                {
+                    GUILayout.Label("Akses Prima · Tawaran langsung", subStyle);
+                    GUILayout.Label("Kontrak meminta ijazah asli dan membatasi pengunduran diri.", bodyStyle);
+                }
+                if (state.HasOffer(CompanyId.StudioLajur) || state.HasOffer(CompanyId.KoperasiPijar) || state.day >= 4)
+                    DrawOfferChoiceSection(engine, state);
+                if (state.day < 4 && state.applicationA.status == ApplicationStatus.NotSent &&
+                    state.applicationB.status == ApplicationStatus.NotSent)
+                    GUILayout.Label("Belum ada pesan kerja.", mutedStyle);
+                break;
+            case LaptopPage.Notes:
+                DrawNotes(state);
+                break;
+        }
+    }
+
+    void DrawNotes(GameState state)
+    {
+        GUILayout.Label("Tujuan", subStyle);
+        GUILayout.Label(ActivitySystem.GetObjectiveHint(state), bodyStyle);
+        GUILayout.Space(10);
+        GUILayout.Label("Bukti", subStyle);
+        if (state.hasE0) GUILayout.Label("E0 · Contoh antarmuka dari proyek kuliah yang kukerjakan bersama tim.", bodyStyle);
+        if (state.hasE1) GUILayout.Label(EvidenceE1, bodyStyle);
+        if (state.hasE2) GUILayout.Label(EvidenceE2, bodyStyle);
+    }
+
+    void DrawWorkMessage(GameLoopEngine engine, ApplicationRecord app)
+    {
+        if (app.status == ApplicationStatus.NotSent) return;
+        GUILayout.BeginVertical(cardStyle);
+        GUILayout.Label(ActivitySystem.GetCompanyName(app.company), subStyle);
+        switch (app.status)
+        {
+            case ApplicationStatus.Scheduled:
+                GUILayout.Label($"Undangan interview · Hari {app.interviewDay}, {app.interviewHour:00}:00", bodyStyle);
+                DrawActivityButton(engine, new ActivityRequest(ActivityType.AttendInterview, app.company));
+                break;
+            case ApplicationStatus.Rejected:
+                GUILayout.Label(app.missedInterview ? "Interview terlewat" : "Lamaran tidak dilanjutkan", bodyStyle);
+                foreach (string reason in app.rejectionReasons)
+                    GUILayout.Label(reason, mutedStyle);
+                break;
+            case ApplicationStatus.Offered:
+                GUILayout.Label("Perusahaan mengirim tawaran. Simpan sebagai pilihan sementara atau putuskan nanti.", bodyStyle);
+                break;
+        }
+        GUILayout.EndVertical();
+        GUILayout.Space(6);
+    }
+
     void DrawActivityButton(GameLoopEngine engine, ActivityRequest req)
     {
         var preview = engine.GetPreview(req);
@@ -424,8 +860,12 @@ public class CoreLoopDebugUI : MonoBehaviour
         GUI.enabled = preview.Availability.IsAvailable;
         string warn = preview.Availability.WillMissScheduledInterview ? " [LEWAT INTERVIEW]" : "";
         if (preview.WillTriggerRift > 0) warn += $" [RETAKAN {preview.WillTriggerRift}]";
-        if (GUILayout.Button($"{preview.Title} ({preview.DurationHours}j){warn}", buttonStyle, GUILayout.Width(285)))
+        string title = preview.Title;
+        if (GUILayout.Button($"{title} ({preview.DurationHours}j){warn}", buttonStyle))
+        {
             pendingRequest = req;
+            scrollPos = Vector2.zero;
+        }
         GUI.enabled = true;
 
         string info = preview.Availability.IsAvailable
@@ -485,17 +925,27 @@ public class CoreLoopDebugUI : MonoBehaviour
     {
         var ver = state.GetVerification(company);
         var app = state.GetApplication(company);
-        string status = app != null ? app.status.ToString() : (state.day >= 4 ? "Tawaran langsung" : "Masuk Hari 4");
+        string status = app != null ? ApplicationLabel(app.status) : (state.day >= 4 ? "Tawaran langsung" : "Masuk Hari 4");
         GUILayout.BeginVertical(cardStyle);
         GUILayout.Label($"{ActivitySystem.GetCompanyName(company)}  ·  {status}  ·  Cek: {(ver.isVerified ? "Sudah" : "Belum")}", subStyle);
         DrawActivityButton(engine, new ActivityRequest(ActivityType.VerifyCompany, company));
         if (app != null)
         {
             DrawActivityButton(engine, new ActivityRequest(ActivityType.SubmitApplication, company));
-            DrawActivityButton(engine, new ActivityRequest(ActivityType.AttendInterview, company));
         }
         GUILayout.EndVertical();
         GUILayout.Space(4);
+    }
+
+    static string ApplicationLabel(ApplicationStatus status)
+    {
+        switch (status)
+        {
+            case ApplicationStatus.Scheduled: return "Interview terjadwal";
+            case ApplicationStatus.Rejected: return "Tidak dilanjutkan";
+            case ApplicationStatus.Offered: return "Ada tawaran";
+            default: return "Belum dikirim";
+        }
     }
 
     void DrawOfferChoiceSection(GameLoopEngine engine, GameState state)
@@ -516,7 +966,8 @@ public class CoreLoopDebugUI : MonoBehaviour
     void DrawConfirmationView(GameLoopEngine engine, GameState state, ActivityRequest req)
     {
         var preview = engine.GetPreview(req);
-        GUILayout.Label($"{preview.Title} ({preview.DurationHours} jam)", headerStyle);
+        string title = preview.Title;
+        GUILayout.Label($"{title} ({preview.DurationHours} jam)", headerStyle);
         GUILayout.Label($"{preview.Location}  ·  {preview.StartHour:00}:00 → {preview.EndHour:00}:00 ({preview.NextSession})", mutedStyle);
         GUILayout.Label($"Tenaga {preview.EnergyBefore} → {preview.EnergyAfter}   ·   Tekanan {preview.PressureBefore} → {preview.PressureAfter}", bodyStyle);
 
@@ -528,39 +979,39 @@ public class CoreLoopDebugUI : MonoBehaviour
         if (preview.Availability.WillMissScheduledInterview)
             GUILayout.Box($"Melewati interview {ActivitySystem.GetCompanyName(preview.Availability.MissedInterviewCompany)} jam 13:00 (lamaran gugur, +1 Tekanan).", warnStyle);
 
-        if (req.Type == ActivityType.AttendInterview)
-        {
-            var app = state.GetApplication(req.Company);
-            GUILayout.Space(6);
-            GUILayout.Label("Jawaban Interview", subStyle);
-            if (app != null && app.SnapshotHasExaggeration)
-                interviewCorrectClaims = GUILayout.Toggle(interviewCorrectClaims, "Luruskan klaim CV yang berlebihan di awal", toggleStyle);
-
-            GUILayout.Label("Pertanyaan 1:", bodyStyle);
-            interviewQ1Choice = GUILayout.SelectionGrid(interviewQ1Choice, new[] { "Tunjukkan detail + bukti", "Jelaskan secara umum", "Jawab singkat tanpa bukti" }, 1, buttonStyle);
-            GUILayout.Label("Pertanyaan 2:", bodyStyle);
-            interviewQ2Choice = GUILayout.SelectionGrid(interviewQ2Choice, new[] { "Tanya batas tugas & pendampingan", "Minta contoh tugas dulu", "Iya-kan semua dulu" }, 1, buttonStyle);
-        }
+        if (!preview.Availability.IsAvailable)
+            GUILayout.Box(preview.Availability.Reason, warnStyle);
 
         GUILayout.Space(8);
         GUILayout.BeginHorizontal();
-        if (GUILayout.Button("Jalankan", buttonStyle, GUILayout.Height(32)))
-        {
-            InterviewInput? input = req.Type == ActivityType.AttendInterview
-                ? new InterviewInput
-                {
-                    CorrectExaggeratedClaims = interviewCorrectClaims,
-                    Question1ChoiceIndex = interviewQ1Choice,
-                    Question2ChoiceIndex = interviewQ2Choice
-                }
-                : (InterviewInput?)null;
-
-            engine.ExecuteActivity(req, input);
-            pendingRequest = null;
-        }
+        GUI.enabled = preview.Availability.IsAvailable;
+        string confirm = req.Type == ActivityType.AttendInterview ? "Sambungkan" : "Jalankan";
+        if (GUILayout.Button(confirm, buttonStyle, GUILayout.Height(32)))
+            StartActivity(engine, state, req);
+        GUI.enabled = true;
         if (GUILayout.Button("Batal", buttonStyle, GUILayout.Height(32)))
-            pendingRequest = null;
+            BackFromConfirmation();
         GUILayout.EndHorizontal();
+    }
+
+    void StartActivity(GameLoopEngine engine, GameState state, ActivityRequest request)
+    {
+        pendingRequest = null;
+        switch (request.Type)
+        {
+            case ActivityType.AttendInterview:
+                interviewCompany = request.Company;
+                var interview = NarrativeContent.StartInterview(state.GetApplication(request.Company));
+                StartDialogue(interview.Session, () =>
+                {
+                    if (interview.TryGetAnswers(out var answers))
+                        engine.ExecuteActivity(request, answers);
+                });
+                break;
+            default:
+                engine.ExecuteActivity(request);
+                break;
+        }
     }
 
     void DrawJedaView(GameLoopEngine engine)
@@ -569,9 +1020,7 @@ public class CoreLoopDebugUI : MonoBehaviour
         GUILayout.Label("Tekanan memuncak. Ambil jeda sebentar (Tekanan turun ke 4, waktu tidak maju).", bodyStyle);
         GUILayout.Space(8);
         if (GUILayout.Button("Duduk sebentar", buttonStyle, GUILayout.Height(34)))
-            engine.ResolveJeda(JedaChoice.SitBriefly);
-        if (GUILayout.Button("Kirim pesan ke Dita", buttonStyle, GUILayout.Height(34)))
-            engine.ResolveJeda(JedaChoice.MessageDita);
+            engine.ResolveJeda();
     }
 
     void DrawRiftView(GameLoopEngine engine, GameState state)

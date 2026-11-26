@@ -42,7 +42,7 @@ namespace SELA.Core
         public event Action<GameState> OnStateChanged;
         public event Action<ActivityRequest, ActivityExecutionResult> OnActivityResolved;
         public event Action<GameState> OnJedaRequired;
-        public event Action<JedaChoice, GameState> OnJedaResolved;
+        public event Action<GameState> OnJedaResolved;
         public event Action<int, GameState> OnRiftTriggered;
         public event Action<int, bool, GameState> OnRiftResolved;
         public event Action<int, GameState> OnDayStarted;
@@ -233,7 +233,7 @@ namespace SELA.Core
                 case ActivityType.CallDita:
                     bool firstToday = !State.ditaCalledToday;
                     State.ditaCalledToday = true;
-                    extraNotes += firstToday ? " Ngobrol sebentar sama Dita." : " Balas pesan Dita.";
+                    extraNotes += firstToday ? " Ngobrol dengan Dita." : " Mampir lagi ke kamar Dita.";
                     break;
 
                 case ActivityType.SitWithoutScreen:
@@ -306,7 +306,7 @@ namespace SELA.Core
             return exec;
         }
 
-        public bool ResolveJeda(JedaChoice choice)
+        public bool ResolveJeda()
         {
             if (State.phase != GamePhase.AwaitingJeda)
                 return false;
@@ -317,9 +317,8 @@ namespace SELA.Core
             State.ClampStats();
             State.phase = GamePhase.FreeRoam;
 
-            string label = choice == JedaChoice.SitBriefly ? "Duduk sebentar" : "Kirim pesan kepada Dita";
-            LastStatusMessage = $"Jeda selesai ({label}): Tekanan menjadi 4, Tenaga minimal 1 (tanpa memajukan jam).";
-            OnJedaResolved?.Invoke(choice, State);
+            LastStatusMessage = "Jeda selesai (Duduk sebentar): Tekanan menjadi 4, Tenaga minimal 1 (tanpa memajukan jam).";
+            OnJedaResolved?.Invoke(State);
 
             AutosaveIfStable();
             NotifyStateChanged();

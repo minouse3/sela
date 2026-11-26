@@ -3,6 +3,7 @@
   "rootNamespace": "SELA.Core.Tests",
   "references": [
     "SELA.Core",
+    "SELA.Narrative",
     "UnityEngine.TestRunner",
     "UnityEditor.TestRunner"
   ],

@@ -22,6 +22,7 @@ public class PlayerCarry : MonoBehaviour
 
     public bool Carrying => item != null;
     public string CarriedItemName => item != null ? item.itemName : "";
+    internal bool HasPhoneInHand => !busy && item != null && item.IsPhone;
 
     void Awake()
     {

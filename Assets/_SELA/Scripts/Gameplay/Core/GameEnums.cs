@@ -67,17 +67,11 @@ namespace SELA.Core
         SubmitApplication = 3, // Kirim lamaran A/B (2 jam)
         AttendInterview = 4,   // Ikuti interview A/B (2 jam, 13:00-15:00)
         Rest = 5,              // Beristirahat (2 jam, Pagi-Siang)
-        CallDita = 6,          // Hubungi Dita (2 jam)
+        CallDita = 6,          // Temui Dita (2 jam)
         SitWithoutScreen = 7,  // Duduk tanpa layar (1 jam)
         TidyDesk = 8,          // Rapikan meja (1 jam, 1x/hari)
         Shower = 9,            // Mandi di kamar mandi (1 jam, 1x/hari, +2 Tenaga / -3 Tekanan)
         FinalPrep = 10         // Kemas barang & siapkan jawaban (2 jam, Hari 4+ / Hari 7 -> Keputusan Akhir)
-    }
-
-    public enum JedaChoice
-    {
-        SitBriefly = 0,
-        MessageDita = 1
     }
 
     public enum DecisionNoteType

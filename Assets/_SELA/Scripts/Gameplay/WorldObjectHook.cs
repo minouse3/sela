@@ -10,8 +10,7 @@ public class WorldObjectHook : MonoBehaviour
         EvidenceBoard,
         Bed,
         Bathroom,
-        Phone,
-        DitaRoom,
+        DitaRoom = 5,
         Desk,
         WindowChair,
         BagAndOffers,
@@ -54,8 +53,14 @@ public class WorldObjectHook : MonoBehaviour
 
     public void TriggerStation()
     {
-        if (GameLoopController.Instance == null) return;
-        GameLoopController.Instance.RequestWorldFocus(station.ToString());
+        var loop = GameLoopController.Instance;
+        if (loop == null) return;
+        if (station == StationKind.DitaRoom)
+        {
+            if (loop.TryGetComponent<CoreLoopDebugUI>(out var panel)) panel.OpenDita(transform);
+            return;
+        }
+        loop.RequestWorldFocus(station.ToString());
     }
 
     void RefreshPrompt(GameState state)
@@ -79,11 +84,8 @@ public class WorldObjectHook : MonoBehaviour
             case StationKind.Bathroom:
                 interactable.prompt = state.showeredToday ? "Kamar mandi" : "Mandi (1 jam)";
                 break;
-            case StationKind.Phone:
-                interactable.prompt = "Cek ponsel";
-                break;
             case StationKind.DitaRoom:
-                interactable.prompt = "Temui Dita (2 jam)";
+                interactable.prompt = "Ngobrol dengan Dita";
                 break;
             case StationKind.Desk:
                 interactable.prompt = state.deskTidiedToday ? "Lihat meja" : "Rapikan meja (1 jam)";

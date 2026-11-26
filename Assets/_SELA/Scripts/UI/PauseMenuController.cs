@@ -10,6 +10,7 @@ namespace SELA.UI
     {
         public static PauseMenuController Instance { get; private set; }
         public static bool IsPaused { get; private set; }
+        internal bool IsLogOpen { get; private set; }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics()
@@ -69,6 +70,7 @@ namespace SELA.UI
             Time.timeScale = 1f;
 
             BindButtons();
+            CreateLogButton();
             BindSettings();
 
             if (rootOverlay != null) rootOverlay.SetActive(false);
@@ -93,6 +95,11 @@ namespace SELA.UI
 
             if (IsPaused)
             {
+                if (IsLogOpen)
+                {
+                    CloseLog();
+                    return;
+                }
                 PlayClick();
                 if (settingsPanel != null && settingsPanel.activeSelf)
                 {
@@ -122,6 +129,31 @@ namespace SELA.UI
             if (mainMenuButton) mainMenuButton.onClick.AddListener(OnMainMenuClicked);
             if (quitButton) quitButton.onClick.AddListener(OnQuitClicked);
             if (closeSettingsButton) closeSettingsButton.onClick.AddListener(OnCloseSettingsClicked);
+        }
+
+        void CreateLogButton()
+        {
+            if (!settingsButton || !mainPausePanel) return;
+            var logButton = Instantiate(settingsButton, settingsButton.transform.parent, false);
+            logButton.name = "DialogueLogButton";
+            logButton.transform.SetSiblingIndex(settingsButton.transform.GetSiblingIndex() + 1);
+            logButton.GetComponentInChildren<TMP_Text>(true).text = "Log";
+            logButton.onClick = new UnityEngine.UI.Button.ButtonClickedEvent();
+            logButton.onClick.AddListener(OpenLog);
+        }
+
+        void OpenLog()
+        {
+            PlayClick();
+            IsLogOpen = true;
+            mainPausePanel.SetActive(false);
+        }
+
+        internal void CloseLog()
+        {
+            PlayClick();
+            IsLogOpen = false;
+            mainPausePanel.SetActive(true);
         }
 
         void BindSettings()
@@ -180,6 +212,7 @@ namespace SELA.UI
             if (!IsPaused) return;
 
             GameSettings.Save();
+            IsLogOpen = false;
             IsPaused = false;
             Time.timeScale = 1f;
 

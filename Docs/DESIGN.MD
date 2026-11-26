@@ -169,7 +169,7 @@ Jangan meniru rambut, kostum, proporsi, atau aksesori karakter dari game referen
 
 ### 9.1 Information Hierarchy
 
-HUD memperlihatkan `Hari X/7 · HH:00 (Pagi/Siang/Malam)` disertai satu baris pengingat tujuan singkat di bawahnya (misalnya *"Interview Studio Lajur: 13:00 (butuh Tenaga 1)"* atau *"Siap menutup hari — menuju Kasur"*), serta `Tenaga` (empat kotak + angka) dan `Tekanan` (enam garis + angka). Bar stat beranimasi halus saat berubah (tidak meloncat instan). Keterangan bahwa Tekanan adalah kondisi permainan (bukan diagnosis) dicantumkan pada panel Catatan. Catatan rinci muncul saat Tab, bukan selalu memenuhi layar.
+Kartu waktu di kiri atas menampilkan `Hari X | Pagi/Siang/Malam` pada baris pertama dan jam pada baris kedua. Tenaga dan Tekanan ada di kanan atas. Buka Catatan lewat `Tab` atau aplikasi Catatan di laptop untuk melihat tujuan saat ini.
 
 Prompt berada dekat bawah tengah dan berisi tombol serta kata kerja. Benda interaktif tidak dikelilingi garis menyala. Penjepit kuning, sudut kartu, dan prompt sudah cukup untuk membedakannya. Panel mendukung fokus keyboard melalui tombol panah, aktivasi Enter/Spasi, serta scroll Page Up/Page Down. Fokus memakai garis tebal dan mengikuti urutan baca. Modal mengunci input ke panel teratas; saat ditutup, fokus kembali ke tombol pemanggil. Tab tetap untuk Catatan dan tidak membuka overlay baru di atas konfirmasi modal.
 
@@ -179,7 +179,7 @@ Teks utama memakai Noto Sans atau font sans-serif berlisensi terbuka dengan kara
 
 Lihat [Layar Laptop](visuals/04-antarmuka-laptop-verifikasi.webp) dan [Papan Bukti](visuals/05-papan-bukti-closeup.webp).
 
-Laptop menampilkan tiga tab bernama Lamaran, Pesan, dan Catatan. Panel kiri berisi daftar; panel kanan memuat isi. Satu tawaran dibuka pada satu waktu agar syarat tidak dipadatkan menjadi kolom kecil. Semua daftar bisa digulir dan memiliki indikator posisi.
+Laptop membuka desktop dengan tiga aplikasi: Lamaran, Pesan Kerja, dan Catatan. Klik ikon untuk membuka aplikasi; kembali ke desktop untuk membuka aplikasi lain. Area baca dalam aplikasi bisa digulir.
 
 Meja Bukti memakai kartu yang dipilih lewat klik lalu dipasang ke penjepit. Pemilihan terlihat melalui garis tebal dan label Dipilih, bukan hanya perubahan warna. Klaim tanpa dukungan memiliki teks Bukti belum mendukung kalimat ini. Ikon gembok tidak dipakai karena opsi dialog tidak dikunci oleh stat.
 
@@ -193,7 +193,7 @@ Pause merupakan panel sederhana dengan teks terang pada bidang gelap yang cukup 
 
 ### 9.4 Screen States and HUD Specification
 
-Lihat [12: HUD and Focus](visuals/12-hud-focus-states.jpg). Acuan posisi mengikuti ilustrasi HUD yang sudah ada: Hari/Sesi di kiri atas, Tenaga/Tekanan di kiri bawah, prompt di bawah tengah. Pada kanvas acuan 1280 × 720, sisakan margin aman minimal 32 px. Panel fokus menggunakan margin luar 48 px dan area isi yang dapat digulir. Nilai ini mengatur layout awal, bukan mengganti pengujian pada ukuran teks 150%.
+Lihat [12: HUD and Focus](visuals/12-hud-focus-states.jpg) untuk gaya visual. Kartu waktu berada di kiri atas, kartu stat berada di kanan atas, dan prompt tetap di bawah tengah. Panel fokus memiliki area isi yang dapat digulir.
 
 Tenaga selalu memakai tepat empat kotak dan angka `3/4`, sedangkan Tekanan memakai tepat enam garis dan angka `2/6`. Kotak atau garis kosong tetap terlihat. Label Tekanan memiliki keterangan `Kondisi permainan, bukan diagnosis` pada panel Catatan; tidak ada detak visual yang makin cepat ketika nilainya meningkat.
 
@@ -220,7 +220,7 @@ Lihat [13: Activity States](visuals/13-activity-states.jpg), [24: Room Activity 
 | Ikuti interview | Nama perekrut dan `2 pertanyaan`; `2 jam` (`13:00–15:00`), Tenaga −1, Tekanan +2 | Hari interview saat `jam ≤ 13:00`; kekurangan Tenaga tetap dijelaskan |
 | Beristirahat | Pandangan kasur dan hasil pemulihan; `2 jam`, Tenaga +3, Tekanan −2 | Tersedia `08:00–17:59` (Pagi–Siang), termasuk Tenaga 0; mulai `18:00` kasur menawarkan `Tidur / Tutup hari` |
 | Mandi | Pandangan kamar mandi (`SM_Shower`/`SM_Bak_Mandi`) dan catatan kesegaran; `1 jam`, Tenaga +2, Tekanan −3 | Maksimal sekali sehari (`Sudah mandi hari ini`); pemulihan Tekanan terbesar |
-| Hubungi Dita | Ponsel dan percakapan aktivitas; `2 jam`, Tenaga +2, Tekanan −2 | Selalu tersedia selama waktu cukup sebelum `22:00`; baca pesan saja gratis |
+| Temui Dita | Percakapan di Kamar 06 dengan Raka dan Dita dalam satu bidikan serta kotak dialog di bawah; `2 jam`, Tenaga +2, Tekanan −2 | Tersedia selama waktu cukup sebelum `22:00`; pesan masuk di ponsel tidak menghabiskan waktu |
 | Duduk tanpa layar | Komposisi kursi/jendela; `1 jam`, Tenaga +2, Tekanan −2 | Selalu tersedia selama waktu cukup sebelum `22:00`; animasi dapat dilewati |
 | Rapikan meja | Perbandingan dua susunan benda; `1 jam`, Tenaga +1, Tekanan −1 | Setelah sekali: `Meja sudah dirapikan hari ini`; tersedia kembali besok |
 | Kemas barang & siapkan jawaban | Pandangan tas dan map tawaran; `2 jam`, Tenaga 0, Tekanan 0 | Mulai Hari 4 (atau kapan saja Hari 7, tidak diblokir batas `22:00`); membuka Keputusan Akhir |
@@ -241,7 +241,7 @@ Lihat [14: Calendar and Sleep](visuals/14-calendar-sleep.jpg). Kalender menampil
 
 Undangan interview memakai teks lengkap, misalnya `Hari 4 · 13:00 (Siang) · Koperasi Pijar`. Batas lamaran menyebut akhir hari (`22:00`). Retakan tidak ditampilkan sebagai jadwal tetap pada kalender karena dipicu oleh Tekanan (`≥ 5`).
 
-Panel pengiriman menyebut `Interview besok pukul 13:00 memerlukan Tenaga 1`. Kartu bangun pagi (`08:00`) dan baris pengingat HUD pada hari interview menyebut `Interview hari ini pukul 13:00 memerlukan Tenaga 1`, beserta kondisi saat ini. Kalender hari 7 menampilkan keberangkatan bus pagi hari 8 sebagai informasi cerita, tanpa kotak hari 8 yang dapat dimainkan.
+Panel pengiriman dan tujuan di Catatan mengingatkan bahwa interview pukul `13:00` memerlukan Tenaga 1. Kalender hari 7 menampilkan keberangkatan bus pagi hari 8 sebagai informasi cerita, tanpa kotak hari 8 yang dapat dimainkan.
 
 Mulai pukul `18:00` (`Malam`) pada Hari 1–6, prompt kasur berubah menjadi `E · Tidur / Tutup hari`. Panel menampilkan pemulihan tidur `Tenaga +2, Tekanan −1` beserta nilai akhir yang sudah dibatasi, lalu melompat ke hari berikutnya pukul `08:00`. Sebelum `18:00`, kasur menawarkan `Beristirahat` (`2 jam`, `+3 Tenaga, −2 Tekanan`). Pada Hari 7 mulai `18:00` (atau kapan saja melalui Tas/Map Tawaran mulai Hari 4), pemain dapat menjalankan `Kemas barang & siapkan jawaban` menuju panel `Keputusan Akhir`.
 
@@ -253,7 +253,7 @@ Lihat [15: Pressure and Jeda](visuals/15-pressure-jeda.jpg). Tekanan `0–2` mem
 
 Saat Tekanan mencapai `5` atau `6` sesudah aktivitas dan Retakan babak tersebut belum diselesaikan hari ini, permainan masuk ke **Retakan Ruang** terkait. Menyelesaikan Retakan (langsung atau lewat bantuan `Selesaikan adegan`) menurunkan `Tekanan → 3` dan `Tenaga ≥ 1` tanpa menghabiskan jam.
 
-Jika angka `6` tercapai ketika tidak ada Retakan yang memenuhi syarat (dan Jeda belum terjadi hari ini), **Jeda cadangan** membuka panel kertas dengan dua pilihan setara: `Duduk sebentar` dan `Kirim pesan kepada Dita`. Ringkasan menyebut `Tekanan menjadi 4; Tenaga minimal 1; tanpa memakai waktu`. Jika angka 6 tercapai lagi pada hari yang sama setelah Jeda, HUD tetap `6/6` tanpa membuka ulang modal. Mode atmosfer Rendah mematikan pergeseran bayangan dan gema tambahan; aturan Retakan dan Jeda tidak berubah.
+Jika angka `6` tercapai ketika tidak ada Retakan yang memenuhi syarat (dan Jeda belum terjadi hari ini), **Jeda cadangan** membuka panel kertas dengan tombol `Duduk sebentar`. Ringkasan menyebut `Tekanan menjadi 4; Tenaga minimal 1; tanpa memakai waktu`. Jika angka 6 tercapai lagi pada hari yang sama setelah Jeda, HUD tetap `6/6` tanpa membuka ulang modal. Mode atmosfer Rendah mematikan pergeseran bayangan dan gema tambahan; aturan Retakan dan Jeda tidak berubah.
 
 ### 9.8 CV Claims and Application Snapshot
 
@@ -293,9 +293,9 @@ Lihat [19: Messages and Notes](visuals/19-messages-notes.jpg). Pesan menggunakan
 
 Undangan memiliki tanggal/sesi dan tombol `Ikuti interview` hanya pada sesi yang sah. Pesan hasil memiliki tautan ke penjelasan atau surat tawaran. Pesan lama tidak mengulang biaya atau perubahan Tekanan. Notifikasi kecil menunjuk inbox tanpa memaksa pemain segera membacanya.
 
-Ponsel membedakan tombol `Baca pesan` (Ibu & Dita, gratis waktu) dan `Temui / Hubungi Dita` (`2 jam`, dapat dilakukan lewat Ponsel maupun mengunjungi Kamar 06 di seberang lorong). Membaca ulang percakapan tidak memberi pemulihan baru. Aktivitas Temui / Hubungi Dita menampilkan dialog pertama yang berbeda tiap hari dan versi pendek untuk pengulangan.
+Ponsel hanya bisa dibuka saat dipegang. Aplikasi Pesan berisi dua chat masuk, Ibu dan Dita; membacanya tidak memajukan waktu. Untuk percakapan mendalam, pemain mendatangi Dita di Kamar 06. Kamera menampilkan kedua tokoh, dan kotak dialog berada di bawah agar tidak menutupi wajah mereka.
 
-Tab Catatan pada laptop dan overlay Tab menampilkan isi yang sama: Bukti, Jadwal, Fakta ruang, dan Riwayat hasil. Ini kategori dalam Catatan, bukan aplikasi tambahan. Fakta yang diperlukan puzzle selalu dapat dibuka ketika puzzle aktif. Dari interview, Catatan kembali ke interview; dari Free Roam kembali ke kamera semula. Riwayat hasil tidak memajang skor interview atau statistik produktivitas.
+Aplikasi Catatan di laptop dan panel yang dibuka dengan `Tab` sama-sama menampilkan tujuan saat ini dan bukti. Menu jeda memiliki Log untuk membaca kembali ucapan dan jawaban yang sudah dipilih. Riwayat tidak menampilkan pilihan dialog yang tidak diambil.
 
 Hari 5-7 memakai pesan dasar dengan sisipan dua tawaran, satu tawaran, atau belum ada tawaran. Ajakan klarifikasi membuka hasil yang sudah diperoleh atau panel pemeriksaan (`2 jam`) yang belum dilakukan. Pesan tidak membeli pemeriksaan ulang dan tidak menahan syarat penting sampai akhir minggu. Pesan ibu tentang tiket (*Tiketnya tetap boleh dipakai*) masuk pagi Hari 5; Hari 7 membahas keberangkatan atau rencana tinggal (sementara sesi persiapan akhir sudah dapat dipilih mulai Hari 4). Materi ini memakai panel yang sama tanpa aplikasi baru.
 

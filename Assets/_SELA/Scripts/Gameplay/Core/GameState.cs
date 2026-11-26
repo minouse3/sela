@@ -82,6 +82,19 @@ namespace SELA.Core
     }
 
     [Serializable]
+    public struct DialogueLogEntry
+    {
+        public string speaker;
+        public string text;
+
+        public DialogueLogEntry(string speaker, string text)
+        {
+            this.speaker = speaker;
+            this.text = text;
+        }
+    }
+
+    [Serializable]
     public class GameState
     {
         public const int CurrentSaveVersion = 2;
@@ -145,6 +158,7 @@ namespace SELA.Core
         // Track desk visual state & read messages.
         public bool isDeskTidy;
         public List<string> readMessageIds = new List<string>();
+        public List<DialogueLogEntry> dialogueLog = new List<DialogueLogEntry>();
         public int sitObservationsSeen;
         public int tidyObservationsSeen;
         public int showerObservationsSeen;

@@ -1,20 +1,17 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class LaptopInteraction : MonoBehaviour
 {
     [Header("Referensi")]
     public Transform laptopView;
-    public GameObject laptopUI;
 
     [Header("Pengaturan")]
     public bool requireSeated = true;
     public float moveTime = 0.5f;
-    public float reach = 3f;            // jarak pandang untuk menekan E saat duduk
 
     FirstPersonController player;
-    PlayerInteractor interactor;
+    CoreLoopDebugUI panel;
     SeatInteraction seat;
     Camera cam;
     Vector3 savedPos;
@@ -30,13 +27,13 @@ public class LaptopInteraction : MonoBehaviour
         AnyOpen = false;
     }
 
-    public bool IsOpen => isOpen;
-    public bool IsLookingAtLaptop => !isOpen && LookingAtLaptop();
-
-    // Dipanggil dari Interactable -> On Interact (tetap boleh dipakai)
     public void Open()
     {
-        if (isOpen || !laptopView || PlayerInteractor.Blocked) return;
+        if (AnyOpen || !laptopView || PlayerInteractor.Blocked) return;
+
+        var loop = GameLoopController.Instance;
+        if (loop == null || loop.State.phase != SELA.Core.GamePhase.FreeRoam ||
+            !loop.TryGetComponent(out panel) || !panel.isActiveAndEnabled) return;
 
         seat = SeatInteraction.Current;
         if (requireSeated && (seat == null || seat.pose == SeatInteraction.Pose.Kasur)) return;
@@ -47,19 +44,17 @@ public class LaptopInteraction : MonoBehaviour
         if (!cam) return;
         var fly = cam.GetComponent<FlyCamera>();
         if (fly && fly.IsFlying) return;
-        interactor = player.GetComponent<PlayerInteractor>();
+        if (!panel.BeginLaptop(this)) return;
 
         savedPos = cam.transform.position;
         savedRot = cam.transform.rotation;
 
         if (seat) seat.lookLocked = true;
-        PlayerInteractor.Blocked = true;
-
         player.SetTyping(true);
 
         isOpen = true;
         AnyOpen = true;
-        if (routine != null) StopCoroutine(routine);
+        PlayerInteractor.Blocked = true;
         routine = StartCoroutine(MoveCamera());
     }
 
@@ -76,42 +71,8 @@ public class LaptopInteraction : MonoBehaviour
             cam.transform.rotation = Quaternion.Slerp(r0, laptopView.rotation, k);
             yield return null;
         }
-        if (laptopUI) laptopUI.SetActive(true);
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
-    }
-
-    void Update()
-    {
-        var kb = Keyboard.current;
-        if (kb == null) return;
-
-        if (isOpen)
-        {
-            if (kb.escapeKey.wasPressedThisFrame) Close();
-            return;
-        }
-
-        // Saat duduk: E pada laptop yang sedang dilihat
-        if (!PlayerInteractor.Blocked && kb.eKey.wasPressedThisFrame && LookingAtLaptop())
-            Open();
-    }
-
-    bool LookingAtLaptop()
-    {
-        var s = SeatInteraction.Current;
-        if (s == null || s.pose == SeatInteraction.Pose.Kasur || s.lookLocked) return false;
-
-        var c = Camera.main;
-        if (!c) return false;
-        var fly = c.GetComponent<FlyCamera>();
-        if (fly && fly.IsFlying) return false;
-
-        var hits = Physics.RaycastAll(c.transform.position, c.transform.forward, reach,
-                                      ~0, QueryTriggerInteraction.Collide);
-        foreach (var h in hits)
-            if (h.collider.transform.IsChildOf(transform)) return true;
-        return false;
+        routine = null;
+        panel.ShowLaptop(this);
     }
 
     void OnDisable()
@@ -126,7 +87,6 @@ public class LaptopInteraction : MonoBehaviour
         AnyOpen = false;
 
         if (routine != null) { StopCoroutine(routine); routine = null; }
-        if (laptopUI) laptopUI.SetActive(false);
 
         if (cam)
         {
@@ -136,9 +96,6 @@ public class LaptopInteraction : MonoBehaviour
 
         if (player) player.SetTyping(false);
         if (seat) seat.lookLocked = false;
-        PlayerInteractor.Blocked = false;
-
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        if (panel) panel.OnLaptopClosed(this);
     }
 }

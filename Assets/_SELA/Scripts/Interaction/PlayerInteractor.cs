@@ -18,7 +18,6 @@ public class PlayerInteractor : MonoBehaviour
     readonly RaycastHit[] hits = new RaycastHit[32];
     InteractionOutline outline;
     PlayerCarry carry;
-    LaptopInteraction laptop;
     Interactable target;
     string message;
 
@@ -36,11 +35,6 @@ public class PlayerInteractor : MonoBehaviour
         if (promptContainer != null) promptContainer.SetActive(false);
     }
 
-    void Start()
-    {
-        laptop = Object.FindFirstObjectByType<LaptopInteraction>();
-    }
-
     void OnDisable()
     {
         SetTarget(null);
@@ -51,21 +45,53 @@ public class PlayerInteractor : MonoBehaviour
     {
         if (Blocked || !cam) { SetTarget(null); SetMessage(null); return; }
 
-        if (SeatInteraction.Current != null)
+        var kb = Keyboard.current;
+        var seat = SeatInteraction.Current;
+        if (seat != null && seat.pose == SeatInteraction.Pose.Kasur)
         {
             SetTarget(null);
-            if (SeatInteraction.Current.pose == SeatInteraction.Pose.Kasur)
-            {
-                SetMessage($"[{key}] Tidur   ·   [Q] Bangun");
-            }
-            else
-            {
-                bool canOpenLaptop = laptop != null && laptop.IsLookingAtLaptop;
-                SetMessage(canOpenLaptop ? $"[{key}] Buka laptop   ·   [Q] Berdiri" : "[Q] Berdiri");
-            }
+            SetMessage($"[{key}] Tidur   ·   [Q] Bangun");
             return;
         }
 
+        var found = FindTarget();
+        var laptop = found != null ? found.GetComponent<LaptopInteraction>() : null;
+        if (seat != null && laptop == null) found = null;
+        SetTarget(seat == null ? found : null);
+
+        bool phoneInHand = carry != null && carry.HasPhoneInHand;
+        if (phoneInHand && kb != null && kb.pKey.wasPressedThisFrame &&
+            GameLoopController.Instance is GameLoopController loop &&
+            loop.TryGetComponent<CoreLoopDebugUI>(out var panel) && panel.OpenPhone(carry))
+        {
+            SetTarget(null);
+            SetMessage(null);
+            return;
+        }
+
+        bool requiresSeat = laptop != null && laptop.requireSeated && seat == null;
+        string promptLabel = null;
+        if (requiresSeat)
+            promptLabel = "Duduk dulu untuk buka laptop";
+        else if (found != null)
+            promptLabel = $"[{key}] {(string.IsNullOrWhiteSpace(found.prompt) ? "Interaksi" : found.prompt)}";
+        if (phoneInHand) AppendHint(ref promptLabel, "[P] Cek ponsel");
+        if (seat != null)
+            AppendHint(ref promptLabel, "[Q] Berdiri");
+        else if (carry != null && carry.Carrying)
+            AppendHint(ref promptLabel, $"[G] Letakkan {carry.CarriedItemName}");
+        SetMessage(promptLabel);
+
+        if (found == null || kb == null) return;
+        if (!requiresSeat && kb[key].wasPressedThisFrame)
+        {
+            found.Interact();
+            if (!found || !found.canInteract || Blocked) { SetTarget(null); SetMessage(null); }
+        }
+    }
+
+    Interactable FindTarget()
+    {
         Interactable found = null;
         int count = Physics.RaycastNonAlloc(cam.transform.position, cam.transform.forward, hits,
                                            range, mask, QueryTriggerInteraction.Ignore);
@@ -77,38 +103,12 @@ public class PlayerInteractor : MonoBehaviour
             closest = hit.distance;
             found = hit.collider.GetComponentInParent<Interactable>();
         }
+        return found != null && found.canInteract ? found : null;
+    }
 
-        if (found != null && !found.canInteract) found = null;
-        SetTarget(found);
-
-        string promptLabel = null;
-        bool blockedBySeat = false;
-        if (found != null)
-        {
-            var lap = found.GetComponent<LaptopInteraction>();
-            if (lap != null && lap.requireSeated && SeatInteraction.Current == null)
-            {
-                blockedBySeat = true;
-                promptLabel = "Duduk dulu untuk buka laptop";
-            }
-            else
-            {
-                promptLabel = string.IsNullOrWhiteSpace(found.prompt) ? $"[{key}] Interaksi" : $"[{key}] {found.prompt}";
-            }
-        }
-
-        if (carry != null && carry.Carrying)
-        {
-            string dropHint = $"[G] Letakkan {carry.CarriedItemName}";
-            promptLabel = string.IsNullOrEmpty(promptLabel) ? dropHint : $"{promptLabel}   ·   {dropHint}";
-        }
-
-        SetMessage(promptLabel);
-        if (found != null && !blockedBySeat && Keyboard.current != null && Keyboard.current[key].wasPressedThisFrame)
-        {
-            found.Interact();
-            if (!found || !found.canInteract || Blocked) { SetTarget(null); SetMessage(null); }
-        }
+    static void AppendHint(ref string current, string hint)
+    {
+        current = string.IsNullOrEmpty(current) ? hint : $"{current}   ·   {hint}";
     }
 
     void SetTarget(Interactable value)

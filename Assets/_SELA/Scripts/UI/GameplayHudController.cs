@@ -9,12 +9,12 @@ namespace SELA.UI
     {
         [Header("Root")]
         [SerializeField] GameObject hudRoot;
+        [SerializeField] GameObject crosshair;
 
-        [Header("Top-Left Day & Objective Note")]
+        [Header("Clock")]
         [SerializeField] TMP_Text dayTimeText;
-        [SerializeField] TMP_Text objectiveText;
 
-        [Header("Bottom-Left Stat Card")]
+        [Header("Stats")]
         [SerializeField] Image[] energySlots;
         [SerializeField] Image[] pressureSlots;
 
@@ -41,16 +41,15 @@ namespace SELA.UI
             if (!subscribed)
                 TrySubscribe();
 
-            if (hudRoot != null)
-            {
-                bool shouldShow = !PauseMenuController.IsPaused &&
-                                  !SleepMenuController.IsOpen &&
-                                  !SleepMenuController.IsSleeping &&
-                                  !CoreLoopDebugUI.IsPanelOpen &&
-                                  !LaptopInteraction.AnyOpen;
-                if (hudRoot.activeSelf != shouldShow)
-                    hudRoot.SetActive(shouldShow);
-            }
+            bool shouldShow = !PauseMenuController.IsPaused &&
+                              !SleepMenuController.IsOpen &&
+                              !SleepMenuController.IsSleeping &&
+                              !CoreLoopDebugUI.IsPanelOpen &&
+                              !LaptopInteraction.AnyOpen;
+            if (hudRoot != null && hudRoot.activeSelf != shouldShow)
+                hudRoot.SetActive(shouldShow);
+            if (crosshair != null && crosshair.activeSelf != shouldShow)
+                crosshair.SetActive(shouldShow);
         }
 
         void TrySubscribe()
@@ -67,10 +66,7 @@ namespace SELA.UI
             if (state == null) return;
 
             if (dayTimeText != null)
-                dayTimeText.text = $"Hari {state.day}  ·  {state.FormattedTime}  ·  {state.session}";
-
-            if (objectiveText != null)
-                objectiveText.text = ActivitySystem.GetHudObjectiveHint(state);
+                dayTimeText.text = $"Hari {state.day} | {state.session}\n{state.FormattedTime}";
 
             if (energySlots != null)
             {
